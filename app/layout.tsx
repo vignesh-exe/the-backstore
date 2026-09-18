@@ -50,9 +50,9 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-[#080808] font-sans antialiased">
         <ReduxProvider>
-          <PageTransition>
+          {/* <PageTransition> */}
             <StorefrontChrome>{children}</StorefrontChrome>
-          </PageTransition>
+          {/* </PageTransition> */}
         </ReduxProvider>
 
         {/* Floating WhatsApp */}

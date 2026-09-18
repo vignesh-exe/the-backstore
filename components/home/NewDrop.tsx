@@ -1,301 +1,892 @@
 "use client";
 
-const products = [
-  {
-    id: 1,
-    name: "THE BACKSIDE TEE",
-    price: "₹999",
-    category: "OVERSIZED / BLACK",
-    tag: "NEW",
-    bg: "bg-[#e9e9e9]",
-    shirt: "bg-black",
-  },
-  {
-    id: 2,
-    name: "GOOD DOG TEE",
-    price: "₹999",
-    category: "GRAPHIC / WHITE",
-    tag: "HOT",
-    bg: "bg-[#f3f3f3]",
-    shirt: "bg-white",
-  },
-  {
-    id: 3,
-    name: "NO RULES TEE",
-    price: "₹1,099",
-    category: "OVERSIZED / RED",
-    tag: "DROP 03",
-    bg: "bg-[#e8e8e8]",
-    shirt: "bg-[#ff2d32]",
-  },
-  {
-    id: 4,
-    name: "STREET PACK TEE",
-    price: "₹999",
-    category: "GRAPHIC / BLACK",
-    tag: "NEW",
-    bg: "bg-[#ededed]",
-    shirt: "bg-black",
-  },
-];
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-hot-toast";
 
-function ArrowIcon() {
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "@/lib/features/wishlist/wishlistSlice";
+import { supabase } from "@/lib/supabase";
+
+type ProductImage = {
+  id?: string;
+  image_url?: string | null;
+  cloudinary_public_id?: string | null;
+  alt_text?: string | null;
+  sort_order?: number | null;
+  is_primary?: boolean | null;
+};
+
+type BackendProduct = {
+  id: string;
+  name: string;
+  sku?: string | null;
+  collection?: string | null;
+  category?: string | null;
+  gender?: string | null;
+  fit?: string | null;
+  mrp?: number | string | null;
+  price?: number | string | null;
+  stock?: number | null;
+  description?: string | null;
+  tags?: string[] | null;
+  is_featured?: boolean | null;
+  featured?: boolean | null;
+  is_active?: boolean | null;
+  status?: string | null;
+  created_at?: string | null;
+  product_images?: ProductImage[] | null;
+};
+
+type Product = BackendProduct & {
+  image: string;
+  categoryLabel: string;
+  tag: string;
+  priceLabel: string;
+};
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function formatPrice(value: number | string | null | undefined) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return "₹—";
+  }
+
+  return `₹${numericValue.toLocaleString("en-IN")}`;
+}
+
+function getPrimaryImage(product: BackendProduct) {
+  const images = [...(product.product_images ?? [])].sort((a, b) => {
+    if (Boolean(a.is_primary) !== Boolean(b.is_primary)) {
+      return a.is_primary ? -1 : 1;
+    }
+
+    return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
+  });
+
+  return images[0]?.image_url ?? "";
+}
+
+function normalizeProduct(product: BackendProduct): Product | null {
+  if (!product?.id || !product?.name) {
+    return null;
+  }
+
+  const image = getPrimaryImage(product);
+
+  if (!image) {
+    return null;
+  }
+
+  const collection = product.collection?.trim();
+  const category = product.category?.trim();
+  const gender = product.gender?.trim();
+
+  const categoryLabel =
+    [category, gender].filter(Boolean).join(" / ") ||
+    collection ||
+    "The Backstore";
+
+  const tag =
+    product.is_featured || product.featured
+      ? "FEATURED"
+      : collection || "NEW DROP";
+
+  return {
+    ...product,
+    image,
+    categoryLabel,
+    tag,
+    priceLabel: formatPrice(product.price),
+  };
+}
+
+/* ============================================================
+   ICONS
+============================================================ */
+
+function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      className="h-5 w-5"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
     >
-      <path d="M5 12h14" />
-      <path d="m13 6 6 6-6 6" />
+      <ellipse cx="7.1" cy="7.1" rx="2.05" ry="2.75" />
+      <ellipse cx="12" cy="5.1" rx="2.05" ry="2.8" />
+      <ellipse cx="16.9" cy="7.1" rx="2.05" ry="2.75" />
+
+      <path d="M12 10.2c-3.25 0-5.85 2.3-5.85 5.05 0 2.15 1.7 3.25 3.6 2.65 1-.3 1.55-1.05 2.25-1.05s1.25.75 2.25 1.05c1.9.6 3.6-.5 3.6-2.65 0-2.75-2.6-5.05-5.85-5.05Z" />
     </svg>
   );
 }
 
-function HeartIcon() {
+function ArrowRightIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
-      className="h-5 w-5"
+      strokeWidth="1.7"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M5 12h13" />
+      <path d="m13 7 5 5-5 5" />
+    </svg>
+  );
+}
+
+function HeartIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="h-4 w-4"
+      aria-hidden="true"
     >
       <path d="M20.8 8.7c0 5.5-8.8 11-8.8 11S3.2 14.2 3.2 8.7A4.7 4.7 0 0 1 12 6.2a4.7 4.7 0 0 1 8.8 2.5Z" />
     </svg>
   );
 }
 
-export default function NewDrop() {
+function ChevronLeftIcon() {
   return (
-    <section className="relative overflow-hidden bg-white py-24 text-black sm:py-28 lg:py-36">
-      {/* =========================================================
-          COMIC BACKGROUND
-      ========================================================= */}
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="m14.5 6-6 6 6 6" />
+    </svg>
+  );
+}
 
-      {/* Halftone */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.045]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, #000 1.2px, transparent 1.2px)",
-          backgroundSize: "12px 12px",
-        }}
-      />
+function ChevronRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="m9.5 6 6 6-6 6" />
+    </svg>
+  );
+}
 
-      {/* Red diagonal graphic */}
-      <div
-        className="pointer-events-none absolute -right-[15%] top-[15%] h-[350px] w-[65%] rotate-[-8deg] bg-[#ff2d32] opacity-90 sm:h-[450px]"
-        style={{
-          clipPath:
-            "polygon(8% 0, 100% 12%, 92% 88%, 0 100%)",
-        }}
-      />
+/* ============================================================
+   PRODUCT CARD
+============================================================ */
 
-      {/* Black diagonal graphic */}
+function ProductCard({
+  product,
+  index,
+  isWishlisted,
+  onWishlist,
+  wishlistLoading,
+}: {
+  product: Product;
+  index: number;
+  isWishlisted: boolean;
+  onWishlist: () => void;
+  wishlistLoading?: boolean;
+}) {
+  const router = useRouter();
+
+  const openProduct = () => {
+    router.push(`/shop/t-shirts/product/${slugify(product.name)}`);
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openProduct();
+    }
+  };
+
+  return (
+    <article
+      className="group relative min-w-0 cursor-pointer"
+      role="link"
+      tabIndex={0}
+      aria-label={`View ${product.name}`}
+      onClick={openProduct}
+    >
       <div
-        className="pointer-events-none absolute -left-[20%] bottom-[10%] h-[180px] w-[60%] rotate-[5deg] bg-black sm:h-[230px]"
-        style={{
-          clipPath:
-            "polygon(0 18%, 90% 0, 100% 80%, 8% 100%)",
-        }}
-      />
+        className="
+          relative
+          aspect-[0.82/1]
+          overflow-hidden
+          rounded-[22px]
+          border
+          border-[#CBCAC8]/10
+          bg-[#424141]
+          shadow-[0_20px_70px_rgba(0,0,0,0.22)]
+          transition-all
+          duration-500
+          group-hover:-translate-y-1
+          group-hover:border-[#CBCAC8]/20
+          group-hover:shadow-[0_28px_80px_rgba(0,0,0,0.34)]
+        "
+      >
+        <img
+          src={product.image}
+          alt={product.name}
+          className="
+            absolute
+            inset-0
+            h-full
+            w-full
+            object-cover
+            transition-transform
+            duration-700
+            group-hover:scale-[1.045]
+          "
+        />
+
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#161616]/75 via-transparent to-[#161616]/5" />
+
+        <div className="pointer-events-none absolute -bottom-20 -right-16 h-40 w-40 rounded-full bg-[#DA0D12]/15 blur-[65px]" />
+
+        <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between">
+          <div
+            className="
+              flex
+              items-center
+              gap-1.5
+              rounded-full
+              border
+              border-[#CBCAC8]/10
+              bg-[#161616]/65
+              px-2.5
+              py-1.5
+              backdrop-blur-xl
+            "
+          >
+            <PawIcon className="h-2.5 w-2.5 text-[#DA0D12]" />
+
+            <span className="font-mono text-[6px] uppercase tracking-[0.2em] text-[#CBCAC8]/75">
+              {product.tag}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            aria-label={
+              isWishlisted
+                ? `Remove ${product.name} from wishlist`
+                : `Add ${product.name} to wishlist`
+            }
+            onClick={(event) => {
+              event.stopPropagation();
+              onWishlist();
+            }}
+            disabled={wishlistLoading}
+            aria-busy={wishlistLoading}
+            className={`
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-[#CBCAC8]/10
+              bg-[#161616]/65
+              text-[#CBCAC8]/70
+              backdrop-blur-xl
+              transition-all
+              duration-300
+              hover:border-[#DA0D12]/40
+              hover:bg-[#DA0D12]
+              hover:text-[#CBCAC8]
+              disabled:cursor-wait
+              disabled:opacity-70
+            ${
+              isWishlisted
+                ? "border-[#DA0D12]/50 bg-[#DA0D12] text-[#CBCAC8]"
+                : ""
+            }`}
+          >
+            <HeartIcon filled={isWishlisted} />
+          </button>
+        </div>
+
+        <div className="absolute bottom-4 left-4 z-20">
+          <span className="font-mono text-[6px] tracking-[0.2em] text-[#CBCAC8]/45">
+            PACK / {String(index + 1).padStart(2, "0")}
+          </span>
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#161616]/25 to-transparent" />
+      </div>
+
+      <div className="px-1 pt-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3
+              className="
+                truncate
+                text-[18px]
+                leading-none
+                tracking-[0.01em]
+                text-[#CBCAC8]
+              "
+              style={{
+                fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+              }}
+            >
+              {product.name}
+            </h3>
+
+            <p className="mt-1.5 truncate font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+              {product.categoryLabel}
+            </p>
+          </div>
+
+          <span className="shrink-0 font-mono text-[8px] tracking-[0.08em] text-[#CBCAC8]/80">
+            {product.priceLabel}
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/* ============================================================
+   MAIN SECTION
+============================================================ */
+
+type WishlistEntry = {
+  id?: string | number;
+  product_id?: string | number;
+  product?: Product | null;
+};
+
+type WishlistState = {
+  wishlist?: {
+    wishlistItems?: WishlistEntry[];
+  };
+};
+
+export default function NewDrop() {
+  const router = useRouter();
+  const dispatch = useDispatch();
+
+  const wishlistItems = useSelector(
+    (state: WishlistState) => state.wishlist?.wishlistItems ?? [],
+  );
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [wishlistLoadingIds, setWishlistLoadingIds] = useState<string[]>([]);
+  const [persistedWishlistIds, setPersistedWishlistIds] = useState<string[]>(
+    [],
+  );
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProducts = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await fetch("/api/admin/products", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load products (${response.status})`);
+        }
+
+        const payload = await response.json();
+
+        const rawProducts: BackendProduct[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.products)
+            ? payload.products
+            : Array.isArray(payload?.data)
+              ? payload.data
+              : [];
+
+        const normalizedProducts = rawProducts
+          .filter(
+            (product) =>
+              product?.is_active !== false &&
+              (product?.is_featured === true || product?.featured === true),
+          )
+          .map(normalizeProduct)
+          .filter((product): product is Product => Boolean(product));
+
+        if (!cancelled) {
+          setProducts(normalizedProducts);
+          setCurrentIndex(0);
+        }
+      } catch (fetchError) {
+        if (!cancelled) {
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : "Unable to load products.",
+          );
+          setProducts([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /*
+   * Load the logged-in user's wishlist from Supabase.
+   * Supabase is the persistent source of truth; Redux is the shared UI
+   * state used by the Navbar and WishlistDrawer.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadWishlist = async () => {
+      try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (!session?.user) {
+          if (!cancelled) {
+            setPersistedWishlistIds([]);
+          }
+          return;
+        }
+
+        const { data, error: wishlistError } = await supabase
+          .from("wishlist_items")
+          .select("product_id")
+          .eq("user_id", session.user.id);
+
+        if (wishlistError) {
+          throw wishlistError;
+        }
+
+        if (!cancelled) {
+          setPersistedWishlistIds(
+            (data ?? []).map((item) => String(item.product_id)).filter(Boolean),
+          );
+        }
+      } catch (wishlistError) {
+        console.error("Failed to load wishlist:", wishlistError);
+
+        if (!cancelled) {
+          setPersistedWishlistIds([]);
+        }
+      }
+    };
+
+    loadWishlist();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /*
+   * Hydrate Redux after both the products and persisted wishlist are
+   * available. This is what makes the Navbar count and WishlistDrawer
+   * reflect wishlist items saved in Supabase.
+   */
+  useEffect(() => {
+    if (!products.length || !persistedWishlistIds.length) {
+      return;
+    }
+
+    persistedWishlistIds.forEach((productId) => {
+      const product = products.find((item) => item.id === productId);
+
+      if (product) {
+        dispatch(addToWishlist({ product: product as any }));
+      }
+    });
+  }, [dispatch, persistedWishlistIds, products]);
+
+  const getWishlistProductId = (item: WishlistEntry) =>
+    String(item.product_id ?? item.product?.id ?? item.id ?? "");
+
+  const toggleWishlist = async (id: string) => {
+    if (wishlistLoadingIds.includes(id)) {
+      return;
+    }
+
+    setWishlistLoadingIds((current) =>
+      current.includes(id) ? current : [...current, id],
+    );
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        router.push(
+          `/login?redirect=${encodeURIComponent(window.location.pathname)}`,
+        );
+        return;
+      }
+
+      const userId = session.user.id;
+      const isCurrentlyWishlisted = wishlistItems.some(
+        (item) => getWishlistProductId(item) === id,
+      );
+
+      if (isCurrentlyWishlisted) {
+        const { error: deleteError } = await supabase
+          .from("wishlist_items")
+          .delete()
+          .eq("user_id", userId)
+          .eq("product_id", id);
+
+        if (deleteError) {
+          throw deleteError;
+        }
+
+        dispatch(removeFromWishlist({ productId: id }));
+        setPersistedWishlistIds((current) =>
+          current.filter((productId) => productId !== id),
+        );
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from("wishlist_items")
+        .insert({
+          user_id: userId,
+          product_id: id,
+        });
+
+      if (insertError && insertError.code !== "23505") {
+        throw insertError;
+      }
+
+      const product = products.find((item) => item.id === id);
+
+      if (product) {
+        dispatch(addToWishlist({ product: product as any }));
+      }
+
+      setPersistedWishlistIds((current) =>
+        current.includes(id) ? current : [...current, id],
+      );
+    } catch (wishlistError) {
+      console.error("Wishlist update failed:", wishlistError);
+
+      toast.error(
+        wishlistError instanceof Error
+          ? wishlistError.message
+          : "Unable to update wishlist.",
+      );
+    } finally {
+      setWishlistLoadingIds((current) => current.filter((item) => item !== id));
+    }
+  };
+
+  const carouselProducts =
+    products.length > 0 ? [...products, ...products] : [];
+
+  useEffect(() => {
+    if (products.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((current) => current + 1);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [products.length]);
+
+  useEffect(() => {
+    if (products.length === 0) return;
+
+    if (currentIndex >= products.length) {
+      const timeout = setTimeout(() => {
+        setCurrentIndex(0);
+      }, 750);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, products.length]);
+
+  return (
+    <section
+      id="new-drop"
+      className="
+        relative
+        overflow-hidden
+        bg-[#161616]
+        py-16
+        text-[#CBCAC8]
+        sm:py-20
+        lg:py-24
+      "
+    >
+      {/* ======================================================
+          BACKGROUND
+      ====================================================== */}
+
+      <div className="pointer-events-none absolute inset-0">
+        {/* Grid */}
+
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage: `
+              linear-gradient(
+                to right,
+                #CBCAC8 1px,
+                transparent 1px
+              ),
+              linear-gradient(
+                to bottom,
+                #CBCAC8 1px,
+                transparent 1px
+              )
+            `,
+            backgroundSize: "90px 90px",
+          }}
+        />
+
+        {/* Dots */}
+
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage: `
+              radial-gradient(
+                circle,
+                #CBCAC8 1px,
+                transparent 1.2px
+              )
+            `,
+            backgroundSize: "34px 34px",
+          }}
+        />
+
+        {/* Red atmosphere */}
+
+        <div className="absolute left-[-180px] top-[25%] h-[420px] w-[420px] rounded-full bg-[#DA0D12]/[0.035] blur-[130px]" />
+
+        <div className="absolute right-[-180px] top-[55%] h-[450px] w-[450px] rounded-full bg-[#80060B]/[0.05] blur-[140px]" />
+
+        <div className="absolute left-1/2 top-[-200px] h-[450px] w-[700px] -translate-x-1/2 rounded-full bg-[#424141]/10 blur-[150px]" />
+      </div>
+
+      {/* ======================================================
+          CONTENT
+      ====================================================== */}
 
       <div className="relative z-10 mx-auto max-w-[1500px] px-5 sm:px-8 lg:px-12">
-        {/* =======================================================
-            SECTION HEADER
-        ======================================================= */}
+        {/* ====================================================
+            HEADER
+        ==================================================== */}
 
-        <div className="mb-14 flex flex-col justify-between gap-8 md:flex-row md:items-end">
-          <div>
-            {/* Small comic label */}
-            <div className="mb-5 inline-flex -rotate-2 items-center gap-2 border-2 border-black bg-[#ff2d32] px-4 py-2 shadow-[5px_5px_0_#000]">
-              <span className="font-mono text-[10px] font-black uppercase tracking-[0.25em]">
-                Fresh from the pack
+        <div className="mb-10 flex flex-col gap-7 lg:mb-14 lg:flex-row lg:items-end lg:justify-between">
+          {/* Left */}
+
+          <div className="max-w-[700px]">
+            <div className="mb-5 flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#CBCAC8]/10 bg-[#CBCAC8]/[0.035]">
+                <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
               </span>
+
+              <div>
+                <p className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#DA0D12]">
+                  The pack collection
+                </p>
+
+                <p className="mt-0.5 font-mono text-[6px] uppercase tracking-[0.22em] text-[#666362]">
+                  Fresh members / 2026
+                </p>
+              </div>
             </div>
 
             <h2
-              className="text-[clamp(4rem,9vw,8rem)] font-black uppercase leading-[0.75] tracking-[-0.06em]"
+              className="
+                text-[clamp(4.5rem,10vw,8rem)]
+                leading-[0.72]
+                tracking-[-0.035em]
+                text-[#CBCAC8]
+              "
               style={{
-                fontFamily:
-                  "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
-                WebkitTextStroke: "1.5px #000",
+                fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
             >
-              NEW
-              <br />
-              <span className="text-[#ff2d32]">DROP.</span>
+              NEW <span className="text-[#DA0D12]">PACK.</span>
             </h2>
           </div>
 
-          {/* Right description */}
-          <div className="max-w-sm md:pb-2">
-            <p className="font-mono text-xs font-bold uppercase leading-relaxed tracking-[0.12em] text-black/60">
-              Fresh designs. Heavy attitude.
-              <br />
-              Limited pieces from the latest
-              <br />
-              Backstore collection.
+          {/* Right */}
+
+          <div className="max-w-[390px] lg:pb-1">
+            <p className="text-[11px] leading-[1.8] text-[#666362] sm:text-xs">
+              Meet the latest members of The Backstore. Original graphics,
+              relaxed fits and pieces made for people who move with their own
+              pack.
             </p>
 
-            <a
-              href="/shop"
-              className="group mt-6 inline-flex items-center gap-3 border-b-2 border-black pb-2 text-xs font-black uppercase tracking-[0.15em]"
-            >
-              View All Products
+            <div className="mt-5 flex items-center gap-4">
+              <a
+                href="/shop"
+                className="
+                  group
+                  inline-flex
+                  items-center
+                  gap-3
+                  rounded-full
+                  border
+                  border-[#CBCAC8]/10
+                  bg-[#CBCAC8]/[0.035]
+                  px-5
+                  py-2.5
+                  font-mono
+                  text-[7px]
+                  uppercase
+                  tracking-[0.2em]
+                  text-[#CBCAC8]/75
+                  backdrop-blur-xl
+                  transition-all
+                  duration-300
+                  hover:border-[#DA0D12]/40
+                  hover:bg-[#DA0D12]
+                  hover:text-[#CBCAC8]
+                "
+              >
+                View all
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  <ArrowRightIcon />
+                </span>
+              </a>
 
-              <span className="transition-transform duration-200 group-hover:translate-x-2">
-                <ArrowIcon />
+              <span className="hidden font-mono text-[6px] uppercase tracking-[0.2em] text-[#424141] sm:block">
+                Scroll the pack
               </span>
-            </a>
+            </div>
           </div>
         </div>
 
-        {/* =======================================================
-            PRODUCT GRID
-        ======================================================= */}
+        {/* ====================================================
+            PRODUCT CAROUSEL
+            ----------------------------------------------------
+            Desktop: 5 products visible
+            Tablet: 3 products visible
+            Mobile: 1.25 products visible
+        ==================================================== */}
 
-        <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-4">
-          {products.map((product, index) => (
-            <article
-              key={product.id}
-              className="group relative"
-            >
-              {/* Product image area */}
+        {isLoading && (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, index) => (
               <div
-                className={`relative aspect-[4/5] overflow-hidden border-[3px] border-black ${product.bg}`}
-              >
-                {/* Comic rays */}
+                key={index}
+                className="aspect-[0.82/1] animate-pulse rounded-[22px] border border-[#CBCAC8]/8 bg-[#CBCAC8]/[0.035]"
+              />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="rounded-[18px] border border-[#DA0D12]/20 bg-[#DA0D12]/[0.04] px-5 py-4 font-mono text-[7px] uppercase tracking-[0.16em] text-[#CBCAC8]/60">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && products.length === 0 && (
+          <div className="rounded-[18px] border border-[#CBCAC8]/8 bg-[#CBCAC8]/[0.025] px-5 py-8 text-center font-mono text-[7px] uppercase tracking-[0.16em] text-[#666362]">
+            No products available right now.
+          </div>
+        )}
+
+        {!isLoading && !error && products.length > 0 && (
+          <div className="overflow-hidden">
+            <div
+              className="
+                flex
+                gap-4
+                transition-transform
+                duration-700
+                ease-[cubic-bezier(0.22,1,0.36,1)]
+                [--slide-width:calc((100%_-_16px)_/_1.25)]
+                [--slide-gap:16px]
+                sm:gap-5
+                sm:[--slide-width:calc((100%_-_40px)_/_3)]
+                sm:[--slide-gap:20px]
+                lg:gap-6
+                lg:[--slide-width:calc((100%_-_96px)_/_5)]
+                lg:[--slide-gap:24px]
+              "
+              style={{
+                transform:
+                  "translateX(calc(-1 * " +
+                  currentIndex +
+                  " * (var(--slide-width) + var(--slide-gap))))",
+              }}
+            >
+              {carouselProducts.map((product, index) => (
                 <div
-                  className="absolute inset-0 opacity-10 transition-transform duration-700 group-hover:scale-110"
-                  style={{
-                    background:
-                      "repeating-conic-gradient(from 0deg, #000 0deg 5deg, transparent 5deg 15deg)",
-                  }}
-                />
-
-                {/* Dummy shirt */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div
-                    className={`relative h-[62%] w-[57%] ${product.shirt} transition-transform duration-500 group-hover:scale-105 group-hover:rotate-[-2deg]`}
-                    style={{
-                      clipPath:
-                        "polygon(23% 0, 39% 7%, 61% 7%, 77% 0, 100% 16%, 87% 38%, 76% 27%, 76% 100%, 24% 100%, 24% 27%, 13% 38%, 0 16%)",
-                    }}
-                  >
-                    {/* Shirt graphic */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div
-                          className={`text-3xl font-black uppercase ${
-                            product.shirt === "bg-white"
-                              ? "text-black"
-                              : "text-white"
-                          }`}
-                          style={{
-                            fontFamily:
-                              "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
-                          }}
-                        >
-                          B
-                        </div>
-
-                        <div
-                          className={`mt-1 text-[7px] font-black uppercase tracking-[0.3em] ${
-                            product.shirt === "bg-white"
-                              ? "text-black"
-                              : "text-white"
-                          }`}
-                        >
-                          BACKSTORE
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Product tag */}
-                <div className="absolute left-4 top-4 -rotate-3 border-2 border-black bg-[#ff2d32] px-3 py-1 shadow-[3px_3px_0_#000]">
-                  <span className="font-mono text-[9px] font-black uppercase tracking-wider">
-                    {product.tag}
-                  </span>
-                </div>
-
-                {/* Wishlist */}
-                <button
-                  type="button"
-                  aria-label={`Add ${product.name} to wishlist`}
-                  className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center border-2 border-black bg-white text-black transition-all duration-200 hover:bg-[#ff2d32]"
+                  key={`${product.id}-${index}`}
+                  className="
+                    w-[var(--slide-width)]
+                    shrink-0
+                  "
                 >
-                  <HeartIcon />
-                </button>
-
-                {/* Hover shop button */}
-                <div className="absolute inset-x-4 bottom-4 translate-y-3 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                  <button
-                    type="button"
-                    className="flex h-12 w-full items-center justify-center gap-3 border-2 border-black bg-[#ff2d32] text-xs font-black uppercase tracking-[0.12em] shadow-[4px_4px_0_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-                  >
-                    Quick Add
-                    <ArrowIcon />
-                  </button>
+                  <ProductCard
+                    product={product}
+                    index={index % Math.max(products.length, 1)}
+                    isWishlisted={wishlistItems.some(
+                      (item) => getWishlistProductId(item) === product.id,
+                    )}
+                    wishlistLoading={wishlistLoadingIds.includes(product.id)}
+                    onWishlist={() => {
+                      void toggleWishlist(product.id);
+                    }}
+                  />
                 </div>
-
-                {/* Comic number */}
-                <span className="absolute bottom-3 left-4 font-mono text-[9px] font-black text-black/40">
-                  0{index + 1}
-                </span>
-              </div>
-
-              {/* Product information */}
-              <div className="relative border-x-[3px] border-b-[3px] border-black bg-white p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3
-                      className="text-xl font-black uppercase leading-none tracking-[-0.02em]"
-                      style={{
-                        fontFamily:
-                          "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
-                      }}
-                    >
-                      {product.name}
-                    </h3>
-
-                    <p className="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-black/50">
-                      {product.category}
-                    </p>
-                  </div>
-
-                  <span className="shrink-0 text-sm font-black">
-                    {product.price}
-                  </span>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {/* =======================================================
-            BOTTOM COMIC CTA
-        ======================================================= */}
-
-        <div className="mt-14 flex justify-center">
-          <a
-            href="/shop"
-            className="group relative inline-flex items-center gap-5 border-[3px] border-black bg-black px-8 py-4 text-white shadow-[7px_7px_0_#ff2d32] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[10px_10px_0_#ff2d32]"
-          >
-            <span className="font-black uppercase tracking-[0.12em]">
-              See the whole pack
-            </span>
-
-            <span className="transition-transform duration-200 group-hover:translate-x-2">
-              <ArrowIcon />
-            </span>
-          </a>
-        </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

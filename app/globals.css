@@ -1,7 +1,12 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /* ============================================================
    THE BACKSTORE — GLOBAL DESIGN SYSTEM
+   Dog / Pack Theme
    ============================================================ */
 
 :root {
@@ -9,43 +14,63 @@
      BRAND COLORS
      ---------------------------------------------------------- */
 
-  --background: #080808;
-  --foreground: #ffffff;
+  --backstore-red: #da0d12;
+  --backstore-red-dark: #80060b;
 
-  --backstore-red: #ff2d32;
-  --backstore-red-dark: #d91f25;
+  --backstore-black: #161616;
+  --backstore-white: #cbcac8;
 
-  --backstore-black: #080808;
-  --backstore-white: #ffffff;
-
-  --backstore-gray: #171717;
-  --backstore-light-gray: #ededed;
+  --backstore-gray: #424141;
+  --backstore-light-gray: #666362;
 
   /* ----------------------------------------------------------
      BORDERS / SHADOWS
      ---------------------------------------------------------- */
 
-  --comic-border: 3px solid #000000;
+  --comic-border: 2px solid #424141;
 
-  --comic-shadow:
-    6px 6px 0 #000000;
+  --comic-shadow: 6px 6px 0 #161616;
 
-  --comic-red-shadow:
-    6px 6px 0 #ff2d32;
+  --comic-red-shadow: 6px 6px 0 #da0d12;
 
   /* ----------------------------------------------------------
      RADIUS
-     ----------------------------------------------------------
-
-     We intentionally keep this very low.
-
-     The Backstore should feel like:
-     comic paper + stickers + streetwear
-     rather than a typical rounded SaaS website.
-     */
+     ---------------------------------------------------------- */
 
   --radius-none: 0px;
   --radius-small: 2px;
+  --background: oklch(1 0 0);
+  --foreground: var(--backstore-white);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--backstore-white);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--backstore-white);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: var(--backstore-white);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: var(--backstore-white);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 /* ============================================================
@@ -63,8 +88,45 @@
   --color-backstore-gray: var(--backstore-gray);
   --color-backstore-light-gray: var(--backstore-light-gray);
 
-  --font-sans: var(--font-dm-sans);
+  --font-sans: var(--font-sans);
   --font-display: var(--font-bebas-neue);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 /* ============================================================
@@ -83,10 +145,7 @@ html {
 body {
   margin: 0;
 
-  background: var(--background);
-  color: var(--foreground);
-
-  font-family: var(--font-dm-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -107,10 +166,7 @@ h6 {
   margin: 0;
 
   font-family:
-    var(--font-bebas-neue),
-    Impact,
-    Haettenschweiler,
-    "Arial Narrow Bold",
+    var(--font-bebas-neue), Impact, Haettenschweiler, "Arial Narrow Bold",
     sans-serif;
 
   font-weight: 400;
@@ -123,7 +179,7 @@ h6 {
    ============================================================ */
 
 a {
-  color: inherit;
+  color: var(--backstore-white);
   text-decoration: none;
 }
 
@@ -156,12 +212,12 @@ img {
 
 ::selection {
   background: var(--backstore-red);
-  color: var(--backstore-black);
+  color: var(--backstore-white);
 }
 
 ::-moz-selection {
   background: var(--backstore-red);
-  color: var(--backstore-black);
+  color: var(--backstore-white);
 }
 
 /* ============================================================
@@ -169,7 +225,7 @@ img {
    ============================================================ */
 
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 9px;
 }
 
 ::-webkit-scrollbar-track {
@@ -189,26 +245,21 @@ img {
 
 html {
   scrollbar-width: thin;
-  scrollbar-color:
-    var(--backstore-red)
-    var(--backstore-black);
+  scrollbar-color: var(--backstore-red) var(--backstore-black);
 }
 
 /* ============================================================
-   COMIC DISPLAY FONT
+   DISPLAY FONT
    ============================================================ */
 
 .font-display {
   font-family:
-    var(--font-bebas-neue),
-    Impact,
-    Haettenschweiler,
-    "Arial Narrow Bold",
+    var(--font-bebas-neue), Impact, Haettenschweiler, "Arial Narrow Bold",
     sans-serif;
 }
 
 /* ============================================================
-   COMIC PAPER
+   BACKSTORE PAPER
    ============================================================ */
 
 .comic-paper {
@@ -218,14 +269,13 @@ html {
 
   color: var(--backstore-black);
 
-  border: 3px solid var(--backstore-black);
+  border: 2px solid var(--backstore-gray);
 
-  box-shadow:
-    6px 6px 0 var(--backstore-black);
+  box-shadow: 6px 6px 0 var(--backstore-black);
 }
 
 /* ============================================================
-   COMIC RED PAPER
+   RED PAPER
    ============================================================ */
 
 .comic-red-paper {
@@ -233,16 +283,15 @@ html {
 
   background: var(--backstore-red);
 
-  color: var(--backstore-black);
+  color: var(--backstore-white);
 
-  border: 3px solid var(--backstore-black);
+  border: 2px solid var(--backstore-black);
 
-  box-shadow:
-    6px 6px 0 var(--backstore-black);
+  box-shadow: 6px 6px 0 var(--backstore-black);
 }
 
 /* ============================================================
-   COMIC BLACK PAPER
+   BLACK PAPER
    ============================================================ */
 
 .comic-black-paper {
@@ -252,139 +301,124 @@ html {
 
   color: var(--backstore-white);
 
-  border: 3px solid var(--backstore-white);
+  border: 2px solid var(--backstore-gray);
 
-  box-shadow:
-    6px 6px 0 var(--backstore-red);
+  box-shadow: 6px 6px 0 var(--backstore-red-dark);
 }
 
 /* ============================================================
-   COMIC SHADOW
+   SHADOWS
    ============================================================ */
 
 .comic-shadow {
-  box-shadow:
-    7px 7px 0 var(--backstore-black);
+  box-shadow: 7px 7px 0 var(--backstore-black);
 }
 
 .comic-red-shadow {
-  box-shadow:
-    7px 7px 0 var(--backstore-red);
+  box-shadow: 7px 7px 0 var(--backstore-red);
 }
 
 /* ============================================================
-   HALFTONE TEXTURE
+   SUBTLE GRID / DOT TEXTURE
    ============================================================ */
 
 .comic-halftone {
-  background-image:
-    radial-gradient(
-      circle,
-      rgba(0, 0, 0, 0.18) 1px,
-      transparent 1px
-    );
+  background-image: radial-gradient(
+    circle,
+    rgba(203, 202, 200, 0.12) 1px,
+    transparent 1px
+  );
 
-  background-size: 10px 10px;
+  background-size: 13px 13px;
 }
 
 .comic-halftone-white {
-  background-image:
-    radial-gradient(
-      circle,
-      rgba(255, 255, 255, 0.18) 1px,
-      transparent 1px
-    );
+  background-image: radial-gradient(
+    circle,
+    rgba(203, 202, 200, 0.1) 1px,
+    transparent 1px
+  );
 
-  background-size: 10px 10px;
+  background-size: 13px 13px;
 }
 
 /* ============================================================
-   COMIC SPEED LINES
+   SUBTLE SPEED LINES
    ============================================================ */
 
 .comic-speed-lines {
-  background-image:
-    repeating-linear-gradient(
-      170deg,
-      transparent 0px,
-      transparent 14px,
-      rgba(0, 0, 0, 0.12) 15px,
-      transparent 16px
-    );
+  background-image: repeating-linear-gradient(
+    170deg,
+    transparent 0px,
+    transparent 14px,
+    rgba(203, 202, 200, 0.05) 15px,
+    transparent 16px
+  );
 }
 
 /* ============================================================
-   COMIC TEXT STROKE
+   DISPLAY TEXT
    ============================================================ */
 
 .comic-text {
   font-family:
-    var(--font-bebas-neue),
-    Impact,
-    Haettenschweiler,
-    "Arial Narrow Bold",
+    var(--font-bebas-neue), Impact, Haettenschweiler, "Arial Narrow Bold",
     sans-serif;
 
   color: var(--backstore-white);
 
-  -webkit-text-stroke: 2px var(--backstore-black);
+  -webkit-text-stroke: 1px var(--backstore-black);
 
-  text-shadow:
-    6px 6px 0 var(--backstore-black);
+  text-shadow: 5px 5px 0 var(--backstore-black);
 }
 
 .comic-text-red {
   font-family:
-    var(--font-bebas-neue),
-    Impact,
-    Haettenschweiler,
-    "Arial Narrow Bold",
+    var(--font-bebas-neue), Impact, Haettenschweiler, "Arial Narrow Bold",
     sans-serif;
 
   color: var(--backstore-red);
 
-  -webkit-text-stroke: 2px var(--backstore-black);
+  -webkit-text-stroke: 1px var(--backstore-black);
 
-  text-shadow:
-    6px 6px 0 var(--backstore-black);
+  text-shadow: 5px 5px 0 var(--backstore-black);
 }
 
 /* ============================================================
-   TORN PAPER — BASIC UTILITY
+   TORN PAPER
    ============================================================ */
 
 .torn-paper {
-  clip-path:
-    polygon(
-      0% 3%,
-      8% 6%,
-      16% 2%,
-      25% 6%,
-      34% 3%,
-      43% 7%,
-      52% 2%,
-      61% 6%,
-      70% 3%,
-      79% 7%,
-      88% 3%,
-      100% 6%,
-      98% 93%,
-      90% 96%,
-      81% 92%,
-      72% 97%,
-      63% 93%,
-      54% 98%,
-      45% 93%,
-      36% 97%,
-      27% 92%,
-      18% 97%,
-      9% 93%,
-      2% 96%
-    );
+  clip-path: polygon(
+    0% 3%,
+    8% 6%,
+    16% 2%,
+    25% 6%,
+    34% 3%,
+    43% 7%,
+    52% 2%,
+    61% 6%,
+    70% 3%,
+    79% 7%,
+    88% 3%,
+    100% 6%,
+    98% 93%,
+    90% 96%,
+    81% 92%,
+    72% 97%,
+    63% 93%,
+    54% 98%,
+    45% 93%,
+    36% 97%,
+    27% 92%,
+    18% 97%,
+    9% 93%,
+    2% 96%
+  );
 }
 
 /* ============================================================
-   COMIC BUTTON
+   BACKSTORE BUTTON
    ============================================================ */
 
 .comic-button {
@@ -395,49 +429,104 @@ html {
 
   min-height: 52px;
 
-  padding:
-    0 24px;
+  padding: 0 24px;
 
   background: var(--backstore-red);
 
-  color: var(--backstore-black);
+  color: var(--backstore-white);
 
-  border:
-    3px solid var(--backstore-black);
+  border: 2px solid var(--backstore-red);
 
-  box-shadow:
-    6px 6px 0 var(--backstore-black);
+  border-radius: 999px;
 
-  font-family:
-    var(--font-bebas-neue),
-    Impact,
-    sans-serif;
+  box-shadow: 0 8px 24px rgba(218, 13, 18, 0.18);
 
-  font-size: 18px;
+  font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
 
-  letter-spacing: 0.04em;
+  font-size: 14px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.08em;
 
   text-transform: uppercase;
 
   transition:
     transform 180ms ease,
-    box-shadow 180ms ease;
+    box-shadow 180ms ease,
+    background-color 180ms ease;
 }
 
 .comic-button:hover {
-  transform:
-    translate(-2px, -2px);
+  transform: translateY(-2px);
 
-  box-shadow:
-    9px 9px 0 var(--backstore-black);
+  background: var(--backstore-red-dark);
+
+  box-shadow: 0 12px 30px rgba(218, 13, 18, 0.24);
 }
 
 .comic-button:active {
-  transform:
-    translate(3px, 3px);
+  transform: translateY(1px);
 
-  box-shadow:
-    3px 3px 0 var(--backstore-black);
+  box-shadow: 0 5px 14px rgba(218, 13, 18, 0.18);
+}
+
+/* ============================================================
+   GLASS MORPHISM
+   ============================================================ */
+
+.glass-panel {
+  background: rgba(66, 65, 65, 0.35);
+
+  border: 1px solid rgba(203, 202, 200, 0.12);
+
+  backdrop-filter: blur(18px);
+
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.glass-pill {
+  background: rgba(22, 22, 22, 0.72);
+
+  border: 1px solid rgba(203, 202, 200, 0.14);
+
+  border-radius: 999px;
+
+  backdrop-filter: blur(18px);
+
+  -webkit-backdrop-filter: blur(18px);
+
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+}
+
+/* ============================================================
+   DOG / PACK ACCENT
+   ============================================================ */
+
+.pack-accent {
+  color: var(--backstore-red);
+
+  font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
+
+  font-weight: 600;
+
+  letter-spacing: 0.18em;
+
+  text-transform: uppercase;
+}
+
+.pack-label {
+  color: var(--backstore-light-gray);
+
+  font-family: var(--font-outfit), Arial, Helvetica, sans-serif;
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+  letter-spacing: 0.2em;
+
+  text-transform: uppercase;
 }
 
 /* ============================================================
@@ -445,11 +534,9 @@ html {
    ============================================================ */
 
 :focus-visible {
-  outline:
-    3px solid var(--backstore-red);
+  outline: 2px solid var(--backstore-red);
 
-  outline-offset:
-    3px;
+  outline-offset: 3px;
 }
 
 /* ============================================================
@@ -460,8 +547,9 @@ html {
   .comic-button:hover {
     transform: none;
 
-    box-shadow:
-      6px 6px 0 var(--backstore-black);
+    background: var(--backstore-red);
+
+    box-shadow: 0 8px 24px rgba(218, 13, 18, 0.18);
   }
 }
 
@@ -480,5 +568,81 @@ html {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+
+  --foreground: var(--backstore-white);
+
+  --card: oklch(0.205 0 0);
+
+  --card-foreground: var(--backstore-white);
+
+  --popover: oklch(0.205 0 0);
+
+  --popover-foreground: var(--backstore-white);
+
+  --primary: oklch(0.922 0 0);
+
+  --primary-foreground: oklch(0.205 0 0);
+
+  --secondary: oklch(0.269 0 0);
+
+  --secondary-foreground: var(--backstore-white);
+
+  --muted: oklch(0.269 0 0);
+
+  --muted-foreground: oklch(0.708 0 0);
+
+  --accent: oklch(0.269 0 0);
+
+  --accent-foreground: var(--backstore-white);
+
+  --destructive: oklch(0.704 0.191 22.216);
+
+  --border: oklch(1 0 0 / 10%);
+
+  --input: oklch(1 0 0 / 15%);
+
+  --ring: oklch(0.556 0 0);
+
+  --chart-1: oklch(0.87 0 0);
+
+  --chart-2: oklch(0.556 0 0);
+
+  --chart-3: oklch(0.439 0 0);
+
+  --chart-4: oklch(0.371 0 0);
+
+  --chart-5: oklch(0.269 0 0);
+
+  --sidebar: oklch(0.205 0 0);
+
+  --sidebar-foreground: oklch(0.985 0 0);
+
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+
+  --sidebar-accent: oklch(0.269 0 0);
+
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+
+  --sidebar-border: oklch(1 0 0 / 10%);
+
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }

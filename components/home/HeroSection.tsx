@@ -1,23 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import TextType from "@/components/TextType";
 
 /*
  * ============================================================
- * THE BACKSTORE — HERO COLLECTION MEDIA
+ * THE BACKSTORE — HERO SECTION
+ * DOG / PACK INSPIRED STREETWEAR
  * ============================================================
  *
- * Put your collection media inside:
+ * MOBILE ORDER
+ * ------------
+ * Navbar
+ * Image / Collection Card
+ * Hero Heading
+ * Description
+ * CTA
+ * Identity Tag
+ * Bottom Strip
  *
- * public/images/hero/
- *
- * Files:
- *
- * doomsday-poster.png
- * midnight-poster.png
- * street-poster.png
- * collection-video.mp4
- *
+ * DESKTOP
+ * --------
+ * Content + Collection Card side by side
  * ============================================================
  */
 
@@ -27,579 +31,1272 @@ const collectionMedia = [
     type: "image",
     src: "/images/hero/doomsday-poster.png",
     alt: "Doomsday Collection",
+    collection: "Doomsday",
+    code: "TB / 001",
   },
   {
     id: 2,
     type: "image",
     src: "/images/hero/midnight-poster.png",
     alt: "Midnight Collection",
+    collection: "Midnight",
+    code: "TB / 002",
   },
   {
     id: 3,
     type: "image",
     src: "/images/hero/street-poster.png",
     alt: "Street Collection",
+    collection: "Street",
+    code: "TB / 003",
   },
   {
     id: 4,
     type: "video",
     src: "/images/hero/collection-video.mp4",
     alt: "The Backstore Collection Video",
+    collection: "The Pack",
+    code: "TB / 004",
   },
 ];
+
+/* ============================================================
+   ICONS
+   ============================================================ */
+
+function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <ellipse cx="7.1" cy="7.1" rx="2.05" ry="2.75" />
+      <ellipse cx="12" cy="5.1" rx="2.05" ry="2.8" />
+      <ellipse cx="16.9" cy="7.1" rx="2.05" ry="2.75" />
+
+      <path d="M12 10.2c-3.25 0-5.85 2.3-5.85 5.05 0 2.15 1.7 3.25 3.6 2.65 1-.3 1.55-1.05 2.25-1.05s1.25.75 2.25 1.05c1.9.6 3.6-.5 3.6-2.65 0-2.75-2.6-5.05-5.85-5.05Z" />
+    </svg>
+  );
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M5 12h13" />
+      <path d="m13 7 5 5-5 5" />
+    </svg>
+  );
+}
+
+function ArrowUpRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M7 17 17 7" />
+      <path d="M8 7h9v9" />
+    </svg>
+  );
+}
+
+function ArrowDownIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14" />
+      <path d="m6.5 13.5 5.5 5.5 5.5-5.5" />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="m14.5 6-6 6 6 6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="m9.5 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M20 13.2 13.2 20a2 2 0 0 1-2.8 0L4 13.6V4h9.6L20 10.4a2 2 0 0 1 0 2.8Z" />
+      <circle cx="8.5" cy="8.5" r="1.2" />
+    </svg>
+  );
+}
+
+/* ============================================================
+   COLLECTION CARD
+ * ============================================================ */
+
+function CollectionCard({
+  activeMedia,
+  setActiveMedia,
+  previousMedia,
+  nextMedia,
+  mobile = false,
+}: {
+  activeMedia: number;
+  setActiveMedia: (index: number) => void;
+  previousMedia: () => void;
+  nextMedia: () => void;
+  mobile?: boolean;
+}) {
+  const activeItem = collectionMedia[activeMedia];
+
+  return (
+    <div
+      className={`
+        relative
+        mx-auto
+        w-full
+        ${mobile ? "max-w-[650px]" : "max-w-[730px]"}
+      `}
+    >
+      {/* ======================================================
+          SHADOW
+      ====================================================== */}
+
+      <div
+        className={`
+          absolute
+          inset-x-[8%]
+          rounded-full
+          bg-black/60
+          blur-[45px]
+          ${mobile ? "bottom-[-20px] h-[55px]" : "bottom-[-30px] h-[80px]"}
+        `}
+      />
+
+      {/* ======================================================
+          COLLAR BUCKLE
+      ====================================================== */}
+
+      <div
+        className="
+          pointer-events-none
+          absolute
+          left-1/2
+          top-[-14px]
+          z-40
+          flex
+          -translate-x-1/2
+          items-center
+          justify-center
+        "
+      >
+        <div
+          className={`
+            rounded-[9px]
+            border
+            border-[#CBCAC8]/10
+            bg-[#161616]/90
+            shadow-[0_15px_40px_rgba(0,0,0,0.3)]
+            backdrop-blur-xl
+            ${mobile ? "h-[32px] w-[68px]" : "h-[44px] w-[88px]"}
+          `}
+        >
+          <div
+            className={`
+              mx-auto
+              rounded-[5px]
+              border
+              border-[#666362]/40
+              ${mobile ? "mt-[6px] h-[19px] w-[34px]" : "mt-[9px] h-[24px] w-[44px]"}
+            `}
+          >
+            <div
+              className={`
+                mx-auto
+                rounded-[2px]
+                bg-[#DA0D12]/60
+                ${mobile ? "mt-[5px] h-[7px] w-[13px]" : "mt-[7px] h-[8px] w-[16px]"}
+              `}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ======================================================
+          OUTER GLASS FRAME
+      ====================================================== */}
+
+      <div
+        className={`
+          relative
+          border
+          border-[#CBCAC8]/10
+          bg-[#CBCAC8]/[0.025]
+          shadow-[0_30px_100px_rgba(0,0,0,0.35)]
+          backdrop-blur-xl
+          ${mobile ? "rounded-[28px] p-1.5" : "rounded-[42px] p-2.5"}
+        `}
+      >
+        <div
+          className={`
+            relative
+            overflow-hidden
+            bg-[#424141]
+            ${mobile ? "aspect-[1.08/1] rounded-[22px]" : "aspect-[1.03/1] rounded-[34px]"}
+          `}
+        >
+          {/* ==================================================
+              MEDIA
+          ================================================== */}
+
+          {collectionMedia.map((media, index) => {
+            const isActive = index === activeMedia;
+
+            if (media.type === "video") {
+              return (
+                <video
+                  key={media.id}
+                  src={media.src}
+                  autoPlay={isActive}
+                  muted
+                  loop
+                  playsInline
+                  className={`
+                    absolute
+                    inset-0
+                    h-full
+                    w-full
+                    object-cover
+                    transition-all
+                    duration-1000
+                    ${
+                      isActive
+                        ? "z-10 scale-100 opacity-100"
+                        : "z-0 scale-[1.05] opacity-0"
+                    }
+                  `}
+                />
+              );
+            }
+
+            return (
+              <img
+                key={media.id}
+                src={media.src}
+                alt={media.alt}
+                className={`
+                  absolute
+                  inset-0
+                  h-full
+                  w-full
+                  object-cover
+                  transition-all
+                  duration-1000
+                  ${
+                    isActive
+                      ? "z-10 scale-100 opacity-100"
+                      : "z-0 scale-[1.05] opacity-0"
+                  }
+                `}
+              />
+            );
+          })}
+
+          {/* ==================================================
+              IMAGE OVERLAY
+          ================================================== */}
+
+          <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-[#161616]/85 via-transparent to-[#161616]/10" />
+
+          <div className="pointer-events-none absolute bottom-[-80px] right-[-60px] z-20 h-[190px] w-[190px] rounded-full bg-[#DA0D12]/10 blur-[75px]" />
+
+          {/* ==================================================
+              CORNER MARKERS
+          ================================================== */}
+
+          <div
+            className={`
+              pointer-events-none
+              absolute
+              left-4
+              top-4
+              z-30
+              border-l
+              border-t
+              border-[#CBCAC8]/35
+              ${mobile ? "h-5 w-5" : "left-8 top-8 h-6 w-6"}
+            `}
+          />
+
+          <div
+            className={`
+              pointer-events-none
+              absolute
+              right-4
+              top-4
+              z-30
+              border-r
+              border-t
+              border-[#CBCAC8]/35
+              ${mobile ? "h-5 w-5" : "right-8 top-8 h-6 w-6"}
+            `}
+          />
+
+          <div
+            className={`
+              pointer-events-none
+              absolute
+              bottom-4
+              left-4
+              z-30
+              border-b
+              border-l
+              border-[#CBCAC8]/25
+              ${mobile ? "h-5 w-5" : "bottom-8 left-8 h-6 w-6"}
+            `}
+          />
+
+          <div
+            className={`
+              pointer-events-none
+              absolute
+              bottom-4
+              right-4
+              z-30
+              border-b
+              border-r
+              border-[#CBCAC8]/25
+              ${mobile ? "h-5 w-5" : "bottom-8 right-8 h-6 w-6"}
+            `}
+          />
+
+          {/* ==================================================
+              TOP LEFT LABEL
+          ================================================== */}
+
+          <div
+            className={`
+              absolute
+              z-40
+              flex
+              items-center
+              gap-1.5
+              rounded-full
+              border
+              border-[#CBCAC8]/10
+              bg-[#161616]/70
+              backdrop-blur-xl
+              ${
+                mobile
+                  ? "left-4 top-4 px-2.5 py-1.5"
+                  : "left-7 top-7 px-3 py-1.5"
+              }
+            `}
+          >
+            <PawIcon
+              className={
+                mobile ? "h-2.5 w-2.5 text-[#DA0D12]" : "h-3 w-3 text-[#DA0D12]"
+              }
+            />
+
+            <span
+              className={`
+                font-mono
+                uppercase
+                tracking-[0.2em]
+                text-[#CBCAC8]/70
+                ${mobile ? "text-[5.5px]" : "text-[6px]"}
+              `}
+            >
+              Pack collection
+            </span>
+          </div>
+
+          {/* ==================================================
+              TOP RIGHT CODE
+          ================================================== */}
+
+          <div
+            className={`
+              absolute
+              right-4
+              top-4
+              z-40
+              rounded-full
+              border
+              border-[#CBCAC8]/10
+              bg-[#161616]/70
+              font-mono
+              tracking-[0.15em]
+              text-[#CBCAC8]/60
+              backdrop-blur-xl
+              ${
+                mobile
+                  ? "px-2.5 py-1.5 text-[5.5px]"
+                  : "right-7 top-7 px-3 py-1.5 text-[6px]"
+              }
+            `}
+          >
+            {activeItem.code}
+          </div>
+
+          {/* ==================================================
+              COLLECTION TITLE
+          ================================================== */}
+
+          <div
+            className={`
+              absolute
+              bottom-4
+              left-4
+              z-40
+              ${mobile ? "" : "bottom-8 left-8"}
+            `}
+          >
+            <div
+              className={`
+                mb-1.5
+                flex
+                items-center
+                gap-1.5
+                ${mobile ? "" : "mb-2 gap-2"}
+              `}
+            >
+              <span
+                className={`
+                  flex
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-[#DA0D12]/20
+                  ${mobile ? "h-4 w-4" : "h-5 w-5"}
+                `}
+              >
+                <PawIcon
+                  className={
+                    mobile
+                      ? "h-2 w-2 text-[#DA0D12]"
+                      : "h-2.5 w-2.5 text-[#DA0D12]"
+                  }
+                />
+              </span>
+
+              <span
+                className={`
+                  font-mono
+                  uppercase
+                  tracking-[0.24em]
+                  text-[#CBCAC8]/60
+                  ${mobile ? "text-[5.5px]" : "text-[6px]"}
+                `}
+              >
+                Current member
+              </span>
+            </div>
+
+            <h2
+              className={`
+                leading-[0.78]
+                text-[#CBCAC8]
+                drop-shadow-[0_5px_20px_rgba(0,0,0,0.4)]
+                ${mobile ? "text-[42px]" : "text-[70px]"}
+              `}
+              style={{
+                fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+              }}
+            >
+              {activeItem.collection}
+            </h2>
+          </div>
+
+          {/* ==================================================
+              OPEN COLLECTION
+          ================================================== */}
+
+          <a
+            href="/shop"
+            aria-label={`Explore ${activeItem.collection}`}
+            className={`
+              group
+              absolute
+              right-4
+              z-40
+              flex
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-[#CBCAC8]/20
+              bg-[#161616]/65
+              text-[#CBCAC8]
+              backdrop-blur-xl
+              transition-all
+              duration-300
+              hover:border-[#DA0D12]/50
+              hover:bg-[#DA0D12]
+              ${mobile ? "bottom-4 h-10 w-10" : "bottom-8 right-8 h-12 w-12"}
+            `}
+          >
+            <ArrowUpRightIcon />
+          </a>
+        </div>
+      </div>
+
+      {/* ======================================================
+          SLIDER CONTROLS
+      ====================================================== */}
+
+      <div
+        className={`
+          flex
+          items-center
+          justify-between
+          px-1
+          ${mobile ? "mt-3" : "mt-4 px-3"}
+        `}
+      >
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Previous collection"
+            onClick={previousMedia}
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-[#CBCAC8]/10
+              bg-[#CBCAC8]/[0.025]
+              text-[#666362]
+              transition-all
+              hover:border-[#CBCAC8]/20
+              hover:text-[#CBCAC8]
+            "
+          >
+            <ChevronLeftIcon />
+          </button>
+
+          <button
+            type="button"
+            aria-label="Next collection"
+            onClick={nextMedia}
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-[#CBCAC8]/10
+              bg-[#CBCAC8]/[0.025]
+              text-[#666362]
+              transition-all
+              hover:border-[#CBCAC8]/20
+              hover:text-[#CBCAC8]
+            "
+          >
+            <ChevronRightIcon />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {collectionMedia.map((media, index) => (
+            <button
+              key={media.id}
+              type="button"
+              aria-label={`Go to collection ${index + 1}`}
+              onClick={() => setActiveMedia(index)}
+              className={`
+                h-1
+                rounded-full
+                transition-all
+                duration-500
+                ${
+                  index === activeMedia
+                    ? "w-7 bg-[#DA0D12]"
+                    : "w-2 bg-[#CBCAC8]/15"
+                }
+              `}
+            />
+          ))}
+        </div>
+
+        <div className="font-mono text-[6px] tracking-[0.18em] text-[#666362]">
+          <span className="text-[#CBCAC8]">
+            {String(activeMedia + 1).padStart(2, "0")}
+          </span>
+
+          <span className="mx-1">/</span>
+
+          <span>04</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
 
 export default function HeroSection() {
   const [loaded, setLoaded] = useState(false);
   const [activeMedia, setActiveMedia] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
-  /*
-   * ============================================================
-   * PAGE LOAD
-   * ============================================================
-   */
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
-    }, 150);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, []);
-
-  /*
-   * ============================================================
-   * AUTO SLIDER
-   * ============================================================
-   */
 
   useEffect(() => {
     if (isPaused) return;
 
     const timer = setInterval(() => {
       setActiveMedia((current) =>
-        current === collectionMedia.length - 1
-          ? 0
-          : current + 1,
+        current === collectionMedia.length - 1 ? 0 : current + 1,
       );
-    }, 2000);
+    }, 2200);
 
     return () => clearInterval(timer);
   }, [isPaused]);
 
-  /*
-   * ============================================================
-   * PREVIOUS
-   * ============================================================
-   */
-
   const previousMedia = () => {
     setActiveMedia((current) =>
-      current === 0
-        ? collectionMedia.length - 1
-        : current - 1,
+      current === 0 ? collectionMedia.length - 1 : current - 1,
     );
   };
 
-  /*
-   * ============================================================
-   * NEXT
-   * ============================================================
-   */
-
   const nextMedia = () => {
     setActiveMedia((current) =>
-      current === collectionMedia.length - 1
-        ? 0
-        : current + 1,
+      current === collectionMedia.length - 1 ? 0 : current + 1,
     );
   };
 
   return (
     <section
-      className={`relative min-h-screen overflow-hidden bg-[#080808] text-white transition-opacity duration-700 ${
-        loaded ? "opacity-100" : "opacity-0"
-      }`}
+      className={`
+        relative
+        min-h-screen
+        overflow-hidden
+        bg-[#161616]
+        text-[#CBCAC8]
+        transition-opacity
+        duration-700
+        ${loaded ? "opacity-100" : "opacity-0"}
+      `}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* =========================================================
-          COMIC BACKGROUND
-      ========================================================= */}
+      {/* ======================================================
+          BACKGROUND
+      ====================================================== */}
 
-      <div className="pointer-events-none absolute inset-0">
-        {/* Red comic panel */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.34]"
+        style={{
+          backgroundImage: "url('/images/hero/hero-background.png')",
+        }}
+      />
+
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="
+            absolute
+            left-1/2
+            top-[40%]
+            h-[650px]
+            w-[650px]
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-full
+            bg-[#DA0D12]/[0.045]
+            blur-[140px]
+          "
+        />
 
         <div
-          className="absolute inset-x-0 top-[8%] h-[70%] bg-[#ff2d32]"
+          className="absolute inset-0 opacity-[0.028]"
           style={{
-            clipPath:
-              "polygon(0 7%, 8% 3%, 17% 8%, 28% 2%, 39% 7%, 52% 1%, 64% 6%, 76% 2%, 88% 7%, 100% 1%, 100% 91%, 91% 96%, 79% 91%, 68% 98%, 56% 92%, 44% 98%, 31% 92%, 19% 97%, 8% 91%, 0 96%)",
+            backgroundImage: `
+              linear-gradient(
+                to right,
+                #CBCAC8 1px,
+                transparent 1px
+              ),
+              linear-gradient(
+                to bottom,
+                #CBCAC8 1px,
+                transparent 1px
+              )
+            `,
+            backgroundSize: "80px 80px",
           }}
         />
 
-        {/* Black comic shadow */}
-
         <div
-          className="absolute -left-[8%] top-[18%] h-[55%] w-[65%] bg-black/90"
+          className="absolute inset-0 opacity-[0.035]"
           style={{
-            clipPath:
-              "polygon(0 8%, 14% 0, 27% 5%, 42% 1%, 56% 8%, 72% 2%, 100% 12%, 94% 90%, 77% 100%, 60% 92%, 45% 100%, 28% 92%, 12% 98%, 0 88%)",
+            backgroundImage: `
+              radial-gradient(
+                circle at 25% 25%,
+                #CBCAC8 1.2px,
+                transparent 1.5px
+              )
+            `,
+            backgroundSize: "44px 44px",
           }}
         />
 
-        {/* Halftone */}
-
         <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #ffffff 1.2px, transparent 1.2px)",
-            backgroundSize: "12px 12px",
-          }}
+          className="
+            absolute
+            left-1/2
+            top-0
+            h-[260px]
+            w-[800px]
+            -translate-x-1/2
+            rounded-full
+            bg-[#424141]/20
+            blur-[120px]
+          "
         />
 
-        {/* Speed lines */}
-
-        <div className="absolute left-0 top-[42%] h-px w-[45%] rotate-[-8deg] bg-white/30" />
-
-        <div className="absolute left-[-5%] top-[46%] h-px w-[50%] rotate-[-8deg] bg-white/20" />
-
-        <div className="absolute left-[5%] top-[78%] h-px w-[45%] rotate-[4deg] bg-[#ff2d32]" />
-
-        <div className="absolute right-0 top-[32%] h-px w-[30%] rotate-[8deg] bg-[#ff2d32]" />
-
-        {/* Comic burst */}
-
         <div
-          className="absolute right-[5%] top-[12%] h-[260px] w-[260px] opacity-40"
-          style={{
-            background:
-              "repeating-conic-gradient(from 0deg, #ff2d32 0deg 7deg, transparent 7deg 16deg)",
-          }}
+          className="
+            absolute
+            right-[-180px]
+            top-[30%]
+            h-[420px]
+            w-[420px]
+            rounded-full
+            bg-[#DA0D12]/[0.025]
+            blur-[120px]
+          "
         />
       </div>
 
-      {/* =========================================================
-          HERO CONTENT WRAPPER
-      ========================================================= */}
+      {/* ======================================================
+          DECORATIVE PAWS
+      ====================================================== */}
 
-      <div className="relative z-10 mx-auto max-w-[1500px] px-6 pt-32 pb-28 sm:px-10 sm:pb-28 lg:px-16 lg:pt-20 lg:pb-24">
-        {/* =======================================================
-            TOP BRAND LABEL
-        ======================================================= */}
+      <div className="pointer-events-none absolute left-[4%] top-[30%] hidden opacity-[0.055] lg:block">
+        <PawIcon className="h-24 w-24 text-[#CBCAC8]" />
+      </div>
 
-        <div className="mb-5 flex items-center gap-4 lg:mb-3">
-          <span className="h-[2px] w-12 bg-white" />
+      <div className="pointer-events-none absolute right-[5%] bottom-[22%] hidden opacity-[0.04] lg:block">
+        <PawIcon className="h-32 w-32 rotate-12 text-[#CBCAC8]" />
+      </div>
 
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.35em] text-white/80 sm:text-xs">
-            Made in India
-          </span>
+      {/* ======================================================
+          MAIN WRAPPER
+      ====================================================== */}
 
-          <span className="h-[2px] w-16 bg-white/40" />
-        </div>
+      <div
+        className="
+          relative
+          z-10
+          mx-auto
+          flex
+          min-h-screen
+          w-full
+          max-w-[1500px]
+          flex-col
+          px-4
+          pb-6
+          pt-[82px]
+          sm:px-7
+          sm:pb-7
+          sm:pt-[94px]
+          lg:px-12
+          lg:pb-8
+          lg:pt-[106px]
+        "
+      >
+        {/* ====================================================
+            TOP META
+        ==================================================== */}
 
-        {/* =======================================================
-            MAIN HERO GRID
-        ======================================================= */}
-
-        <div className="grid items-center gap-8 lg:min-h-[calc(100vh-170px)] lg:grid-cols-[1.02fr_0.98fr] lg:gap-5 xl:gap-8">
-          {/* =====================================================
-              LEFT SIDE
-          ===================================================== */}
-
-          <div className="relative z-20 pb-4 lg:pb-8">
-            {/* Comic label */}
-
-            <div className="mb-5 inline-flex -rotate-2 items-center border-2 border-white bg-black px-4 py-2 shadow-[5px_5px_0_#ff2d32]">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.25em]">
-                THE ORIGINAL STREETWEAR
-              </span>
+        <div className="order-1 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#CBCAC8]/10 bg-[#CBCAC8]/[0.035]">
+              <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
             </div>
 
-            {/* ===================================================
-                MAIN HEADING
-            =================================================== */}
+            <div>
+              <p className="font-mono text-[7px] uppercase tracking-[0.25em] text-[#666362]">
+                The Backstore
+              </p>
 
-            <div className="relative max-w-[850px]">
-              <h1
-                className="select-none text-[clamp(4.5rem,11vw,10rem)] font-black uppercase leading-[0.76] tracking-[-0.07em]"
-                style={{
-                  fontFamily:
-                    "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
-                  WebkitTextStroke: "2px #000",
-                  textShadow:
-                    "8px 8px 0 #000, 14px 14px 0 rgba(0,0,0,0.35)",
-                }}
-              >
-                <span className="block text-white">
-                  WEAR IT.
-                </span>
-
-                <span
-                  className="relative block text-[#ff2d32]"
-                  style={{
-                    WebkitTextStroke: "3px #000",
-                  }}
-                >
-                  YOUR WAY.
-                </span>
-              </h1>
-
-              {/* Comic underline */}
-
-              <div className="absolute -bottom-5 left-0 h-4 w-[70%] -rotate-2 bg-white sm:h-5">
-                <div className="absolute right-[-18px] top-[-3px] h-7 w-10 -skew-x-12 bg-white" />
-              </div>
-            </div>
-
-            {/* ===================================================
-                DESCRIPTION
-            =================================================== */}
-
-            <p className="mt-14 max-w-xl text-sm font-bold uppercase leading-relaxed tracking-[0.12em] text-white/85 sm:text-base">
-              Bold designs. Oversized fits. Original attitude.
-              <br />
-              Built for people who don&apos;t follow the crowd.
-            </p>
-
-            {/* ===================================================
-                CTA BUTTONS
-            =================================================== */}
-
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              {/* SHOP */}
-
-              <button className="group relative inline-flex h-14 items-center justify-center overflow-hidden border-2 border-black bg-[#ff2d32] px-8 font-black uppercase tracking-wide text-black shadow-[6px_6px_0_#000] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[9px_9px_0_#000]">
-                <span>
-                  Shop the Drop
-                </span>
-
-                <span className="ml-5 text-xl transition-transform duration-200 group-hover:translate-x-2">
-                  →
-                </span>
-              </button>
-
-              {/* CUSTOMIZE */}
-
-              <button className="group inline-flex h-14 items-center justify-center border-2 border-white bg-black px-8 font-black uppercase tracking-wide text-white shadow-[6px_6px_0_#ff2d32] transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1">
-                <span>
-                  Customize Your Tee
-                </span>
-
-                <span className="ml-5 text-xl transition-transform duration-200 group-hover:translate-x-2">
-                  →
-                </span>
-              </button>
-            </div>
-
-            {/* ===================================================
-                BRAND DETAILS
-            =================================================== */}
-
-            <div className="mt-7 flex w-full flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap font-mono text-[7px] font-bold uppercase tracking-[0.15em] text-white/60 sm:mt-9 sm:gap-4 sm:text-[9px] sm:tracking-[0.2em] lg:text-[10px] lg:tracking-[0.25em]">
-              <span className="shrink-0">
-                BOLD DESIGNS
-              </span>
-
-              <span className="shrink-0">
-                •
-              </span>
-
-              <span className="shrink-0">
-                OVERSIZED FITS
-              </span>
-
-              <span className="shrink-0">
-                •
-              </span>
-
-              <span className="shrink-0">
-                MADE IN INDIA
-              </span>
+              <p className="mt-0.5 text-[9px] text-[#CBCAC8]/70">
+                Find your pack
+              </p>
             </div>
           </div>
 
-          {/* =====================================================
-              RIGHT SIDE — COMIC SWIPER
-          ===================================================== */}
+          <div className="hidden items-center gap-3 md:flex">
+            <span className="h-px w-10 bg-[#CBCAC8]/10" />
 
-          <div
-            className="relative flex min-h-[420px] items-center justify-center pb-16 sm:min-h-[470px] lg:min-h-0 lg:translate-y-[-5px] lg:pb-8"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-          >
+            <span className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#666362]">
+              Chennai / India
+            </span>
+
+            <span className="h-px w-10 bg-[#CBCAC8]/10" />
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="hidden font-mono text-[7px] uppercase tracking-[0.2em] text-[#666362] sm:block">
+              EST. 2026
+            </span>
+
+            <span className="h-1.5 w-1.5 rounded-full bg-[#DA0D12] shadow-[0_0_12px_rgba(218,13,18,0.5)]" />
+          </div>
+        </div>
+
+        {/* ====================================================
+            MOBILE COLLECTION CARD
+
+            IMPORTANT:
+            ORDER 2
+            This now appears BEFORE the hero content.
+        ==================================================== */}
+
+        <div
+          className="
+            order-2
+            mt-6
+            w-full
+            lg:hidden
+          "
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <CollectionCard
+            activeMedia={activeMedia}
+            setActiveMedia={setActiveMedia}
+            previousMedia={previousMedia}
+            nextMedia={nextMedia}
+            mobile
+          />
+        </div>
+
+        {/* ====================================================
+            MAIN CONTENT
+        ==================================================== */}
+
+        <div
+          className="
+            order-3
+            flex
+            flex-1
+            items-center
+            justify-center
+            py-7
+            lg:py-5
+          "
+        >
+          <div className="grid w-full items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-12 xl:grid-cols-[0.88fr_1.12fr] xl:gap-16">
             {/* =================================================
-                COMIC BURST
+                CONTENT
             ================================================= */}
 
             <div
-              className="absolute h-[360px] w-[360px] rotate-6 bg-white/10 sm:h-[470px] sm:w-[470px] lg:h-[510px] lg:w-[510px]"
-              style={{
-                clipPath:
-                  "polygon(50% 0%, 58% 19%, 72% 5%, 76% 25%, 94% 18%, 86% 37%, 100% 50%, 84% 58%, 95% 76%, 75% 74%, 80% 95%, 61% 83%, 50% 100%, 41% 82%, 22% 95%, 25% 75%, 5% 80%, 16% 60%, 0% 50%, 17% 40%, 5% 21%, 25% 27%, 23% 6%, 42% 19%)",
-              }}
-            />
+              className="
+                relative
+                mx-auto
+                w-full
+                max-w-[650px]
+                text-center
+                lg:mx-0
+                lg:text-left
+              "
+            >
+              {/* Pack label */}
 
-            {/* =================================================
-                CARD WRAPPER
-            ================================================= */}
+              <div className="mb-4 flex items-center justify-center gap-3 lg:mb-5 lg:justify-start">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DA0D12]/10">
+                  <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
+                </div>
 
-            <div className="relative z-10 w-[91%] max-w-[600px] rotate-[-3deg] sm:w-[87%] lg:w-[84%]">
-              {/* =================================================
-                  RED OFFSET
-              ================================================= */}
+                <div className="text-left">
+                  <p className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#DA0D12]">
+                    Pack member / 001
+                  </p>
 
-              <div
-                className="absolute inset-0 translate-x-3 translate-y-3 bg-[#ff2d32]"
-                style={{
-                  clipPath:
-                    "polygon(1% 2%, 15% 0, 29% 3%, 43% 1%, 57% 4%, 72% 1%, 88% 4%, 99% 1%, 97% 94%, 84% 98%, 69% 94%, 55% 99%, 40% 95%, 25% 98%, 10% 94%, 1% 97%)",
-                }}
-              />
-
-              {/* =================================================
-                  BLACK OFFSET
-              ================================================= */}
-
-              <div
-                className="absolute inset-0 translate-x-5 translate-y-5 bg-black"
-                style={{
-                  clipPath:
-                    "polygon(1% 2%, 15% 0, 29% 3%, 43% 1%, 57% 4%, 72% 1%, 88% 4%, 99% 1%, 97% 94%, 84% 98%, 69% 94%, 55% 99%, 40% 95%, 25% 98%, 10% 94%, 1% 97%)",
-                }}
-              />
-
-              {/* =================================================
-                  MAIN CARD
-              ================================================= */}
-
-              <div
-                className="relative overflow-hidden border-[5px] border-black bg-[#ff2d32] p-[7px]"
-                style={{
-                  clipPath:
-                    "polygon(1% 2%, 15% 0, 29% 3%, 43% 1%, 57% 4%, 72% 1%, 88% 4%, 99% 1%, 97% 94%, 84% 98%, 69% 94%, 55% 99%, 40% 95%, 25% 98%, 10% 94%, 1% 97%)",
-                }}
-              >
-                {/* =================================================
-                    MEDIA
-                ================================================= */}
-
-                <div className="relative aspect-square overflow-hidden bg-[#ff2d32]">
-                  {collectionMedia.map((media, index) => {
-                    const isActive =
-                      index === activeMedia;
-
-                    if (media.type === "video") {
-                      return (
-                        <video
-                          key={media.id}
-                          src={media.src}
-                          autoPlay={isActive}
-                          muted
-                          loop
-                          playsInline
-                          className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ${
-                            isActive
-                              ? "z-10 scale-100 opacity-100"
-                              : "z-0 scale-105 opacity-0"
-                          }`}
-                        />
-                      );
-                    }
-
-                    return (
-                      <img
-                        key={media.id}
-                        src={media.src}
-                        alt={media.alt}
-                        className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ${
-                          isActive
-                            ? "z-10 scale-100 opacity-100"
-                            : "z-0 scale-105 opacity-0"
-                        }`}
-                      />
-                    );
-                  })}
-
-                  {/* Halftone */}
-
-                  <div
-                    className="pointer-events-none absolute inset-0 z-20 opacity-[0.08]"
-                    style={{
-                      backgroundImage:
-                        "radial-gradient(circle, #ffffff 1px, transparent 1px)",
-                      backgroundSize: "11px 11px",
-                    }}
-                  />
-
-                  {/* Inner frame */}
-
-                  <div className="pointer-events-none absolute inset-5 z-30 border-[3px] border-white/60 sm:inset-7" />
-
-                  {/* Corners */}
-
-                  <div className="pointer-events-none absolute left-5 top-5 z-40 h-8 w-8 border-l-[4px] border-t-[4px] border-white sm:left-7 sm:top-7" />
-
-                  <div className="pointer-events-none absolute right-5 top-5 z-40 h-8 w-8 border-r-[4px] border-t-[4px] border-white sm:right-7 sm:top-7" />
-
-                  <div className="pointer-events-none absolute bottom-5 left-5 z-40 h-8 w-8 border-b-[4px] border-l-[4px] border-white sm:bottom-7 sm:left-7" />
-
-                  <div className="pointer-events-none absolute bottom-5 right-5 z-40 h-8 w-8 border-b-[4px] border-r-[4px] border-white sm:right-7 sm:bottom-7" />
+                  <p className="mt-0.5 font-mono text-[6px] uppercase tracking-[0.22em] text-[#666362]">
+                    New collection
+                  </p>
                 </div>
               </div>
 
               {/* =================================================
-                  LEFT ARROW
+                  TWO-LINE MAIN HEADING
               ================================================= */}
 
-              <button
-                type="button"
-                aria-label="Previous collection"
-                onClick={previousMedia}
-                className="absolute -left-5 top-1/2 z-50 flex h-11 w-11 -translate-y-1/2 items-center justify-center border-[4px] border-black bg-white text-black shadow-[5px_5px_0_#ff2d32] transition-all duration-200 hover:-translate-x-1 hover:bg-[#ff2d32] sm:-left-9 sm:h-12 sm:w-12"
+              <h1
+                className="
+                  select-none
+                  text-[clamp(5.3rem,17vw,10rem)]
+                  leading-[0.7]
+                  tracking-[-0.06em]
+                  sm:text-[clamp(6rem,15vw,10.5rem)]
+                  lg:text-[clamp(6.5rem,9vw,10.5rem)]
+                  xl:text-[clamp(7rem,8.5vw,11rem)]
+                "
+                style={{
+                  fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+                }}
               >
-                <span className="text-2xl font-black">
-                  ←
-                </span>
-              </button>
+                {/* LINE 1 */}
 
-              {/* =================================================
-                  RIGHT ARROW
-              ================================================= */}
-
-              <button
-                type="button"
-                aria-label="Next collection"
-                onClick={nextMedia}
-                className="absolute -right-5 top-1/2 z-50 flex h-11 w-11 -translate-y-1/2 items-center justify-center border-[4px] border-black bg-[#ff2d32] text-black shadow-[5px_5px_0_#000] transition-all duration-200 hover:translate-x-1 hover:bg-white sm:-right-9 sm:h-12 sm:w-12"
-              >
-                <span className="text-2xl font-black">
-                  →
-                </span>
-              </button>
-
-              {/* =================================================
-                  SPEECH BUBBLE
-              ================================================= */}
-
-              <div className="absolute -right-2 -top-9 z-50 rotate-6 border-[4px] border-black bg-white px-4 py-3 text-center shadow-[6px_6px_0_#000] sm:-right-8 sm:-top-9 sm:px-5 sm:py-4">
-                <p
-                  className="text-base font-black uppercase leading-none text-black sm:text-2xl"
-                  style={{
-                    fontFamily:
-                      "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif",
-                  }}
-                >
-                  GOOD TEES.
-                  <br />
-                  BAD RULES.
-                </p>
-
-                <div className="absolute -bottom-5 left-7 h-7 w-7 rotate-45 border-b-[4px] border-r-[4px] border-black bg-white" />
-              </div>
-
-              {/* =================================================
-                  NOT JUST A BRAND
-              ================================================= */}
-
-              <div className="absolute -bottom-5 -left-5 z-50 flex h-20 w-20 rotate-[-12deg] items-center justify-center rounded-full border-[5px] border-black bg-[#ff2d32] p-3 text-center shadow-[6px_6px_0_#000] sm:-bottom-10 sm:-left-10 sm:h-28 sm:w-28">
-                <span className="text-[9px] font-black uppercase leading-tight text-black sm:text-base">
-                  Not
-                  <br />
-                  Just
-                  <br />
-                  A Brand
-                </span>
-              </div>
-
-              {/* =================================================
-                  DOTS
-              ================================================= */}
-
-              <div className="absolute -bottom-8 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 sm:-bottom-12">
-                {collectionMedia.map((media, index) => (
-                  <button
-                    key={media.id}
-                    type="button"
-                    aria-label={`Go to collection ${index + 1}`}
-                    onClick={() =>
-                      setActiveMedia(index)
-                    }
-                    className={`transition-all duration-300 ${
-                      index === activeMedia
-                        ? "h-[5px] w-10 bg-[#ff2d32]"
-                        : "h-[4px] w-5 bg-white/40 hover:bg-white"
-                    }`}
+                <span className="block whitespace-nowrap text-[#CBCAC8]">
+                  <TextType
+                    text={["WEAR IT."]}
+                    typingSpeed={75}
+                    pauseDuration={1500}
+                    showCursor
+                    cursorCharacter="_"
+                    deletingSpeed={50}
+                    cursorBlinkDuration={0.5}
                   />
-                ))}
+                </span>
+
+                {/* LINE 2 */}
+
+                <span className="block whitespace-nowrap text-[#DA0D12]">
+                  <TextType
+                    text={["YOUR WAY."]}
+                    typingSpeed={75}
+                    pauseDuration={1500}
+                    showCursor
+                    cursorCharacter="_"
+                    deletingSpeed={50}
+                    cursorBlinkDuration={0.5}
+                  />
+                </span>
+              </h1>
+
+              {/* =================================================
+                  COLLAR LINE
+              ================================================= */}
+
+              <div className="relative mx-auto mt-6 h-[2px] w-full max-w-[570px] bg-[#424141] lg:mx-0 lg:mt-8">
+                <div className="absolute left-0 top-1/2 h-[7px] w-[7px] -translate-y-1/2 rounded-full border border-[#DA0D12] bg-[#161616]" />
+
+                <div className="absolute left-[18%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
+
+                <div className="absolute left-[35%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
+
+                <div className="absolute left-[52%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
+
+                <div className="absolute left-[69%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
+
+                <div className="absolute right-0 top-1/2 h-[7px] w-[7px] -translate-y-1/2 rounded-full border border-[#DA0D12] bg-[#161616]" />
+              </div>
+
+              {/* =================================================
+                  DESCRIPTION
+              ================================================= */}
+
+              <p className="mx-auto mt-5 max-w-[500px] text-[10px] leading-[1.85] text-[#666362] sm:text-[11px] lg:mx-0 lg:mt-7 lg:text-xs">
+                Original designs. Relaxed fits. A little attitude. Built for the
+                ones who move together, stand apart and wear their identity
+                without asking permission.
+              </p>
+
+              {/* =================================================
+                  BUTTONS
+              ================================================= */}
+
+              <div className="mt-6 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center lg:mt-8 lg:items-start lg:justify-start">
+                <a
+                  href="/shop"
+                  className="
+                    group
+                    inline-flex
+                    h-[48px]
+                    items-center
+                    justify-center
+                    gap-5
+                    rounded-full
+                    bg-[#DA0D12]
+                    px-7
+                    text-[9px]
+                    font-semibold
+                    uppercase
+                    tracking-[0.16em]
+                    text-[#CBCAC8]
+                    shadow-[0_12px_35px_rgba(218,13,18,0.14)]
+                    transition-all
+                    duration-300
+                    hover:-translate-y-0.5
+                    hover:shadow-[0_18px_45px_rgba(218,13,18,0.2)]
+                  "
+                >
+                  <span>Explore the pack</span>
+
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">
+                    <ArrowRightIcon />
+                  </span>
+                </a>
+
+                <a
+                  href="/customize"
+                  className="
+                    inline-flex
+                    h-[48px]
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-[#CBCAC8]/10
+                    bg-[#CBCAC8]/[0.025]
+                    px-7
+                    text-[9px]
+                    font-medium
+                    uppercase
+                    tracking-[0.16em]
+                    text-[#666362]
+                    backdrop-blur-md
+                    transition-all
+                    duration-300
+                    hover:border-[#CBCAC8]/20
+                    hover:bg-[#CBCAC8]/[0.055]
+                    hover:text-[#CBCAC8]
+                  "
+                >
+                  Customize
+                </a>
+              </div>
+
+              {/* =================================================
+                  IDENTITY TAG
+              ================================================= */}
+
+              <div className="mt-7 flex items-center justify-center gap-3 lg:mt-9 lg:justify-start">
+                <div className="flex h-10 w-10 rotate-[-5deg] items-center justify-center rounded-[10px] border border-[#CBCAC8]/10 bg-[#CBCAC8]/[0.025] text-[#666362]">
+                  <TagIcon />
+                </div>
+
+                <div className="text-left">
+                  <p className="font-mono text-[6px] uppercase tracking-[0.25em] text-[#666362]">
+                    Identity tag
+                  </p>
+
+                  <p
+                    className="mt-1 text-[18px] leading-none text-[#CBCAC8]"
+                    style={{
+                      fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+                    }}
+                  >
+                    WEAR IT. YOUR WAY.
+                  </p>
+                </div>
+
+                <div className="ml-2 hidden h-8 w-px bg-[#CBCAC8]/10 sm:block" />
+
+                <div className="hidden sm:block">
+                  <p className="font-mono text-[6px] uppercase tracking-[0.25em] text-[#666362]">
+                    Origin
+                  </p>
+
+                  <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.15em] text-[#CBCAC8]/65">
+                    Made in India
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* =================================================
+                DESKTOP COLLECTION CARD
+            ================================================= */}
+
+            <div
+              className="relative hidden lg:block"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
+              <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#CBCAC8]/[0.045]" />
+
+              <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#DA0D12]/[0.05]" />
+
+              <CollectionCard
+                activeMedia={activeMedia}
+                setActiveMedia={setActiveMedia}
+                previousMedia={previousMedia}
+                nextMedia={nextMedia}
+              />
+
+              {/* =================================================
+                  FLOATING DOG TAG
+              ================================================= */}
+
+              <div className="absolute -right-8 bottom-[70px] z-50 hidden rotate-[5deg] xl:block">
+                <div className="relative flex h-[74px] w-[110px] items-center justify-center rounded-[16px] border border-[#CBCAC8]/10 bg-[#161616]/85 shadow-[0_15px_45px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+                  <div className="absolute left-3 top-3 h-2 w-2 rounded-full border border-[#666362]" />
+
+                  <div className="text-center">
+                    <PawIcon className="mx-auto h-4 w-4 text-[#DA0D12]" />
+
+                    <p className="mt-1 font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+                      Member
+                    </p>
+
+                    <p
+                      className="mt-0.5 text-[14px] leading-none text-[#CBCAC8]"
+                      style={{
+                        fontFamily:
+                          "var(--font-bebas-neue), Impact, sans-serif",
+                      }}
+                    >
+                      TB / 26
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* =========================================================
-          BOTTOM COMIC STRIP
-          
-          IMPORTANT:
-          This stays above the page background but DOES NOT
-          overlap the hero card because the hero wrapper reserves
-          bottom space using pb-28 / lg:pb-24.
-      ========================================================= */}
+        {/* ====================================================
+            BOTTOM STRIP
 
-      <div className="absolute bottom-0 left-0 right-0 z-30 border-t-2 border-white/20 bg-black/95">
-        <div className="mx-auto flex h-[70px] max-w-[1500px] items-center justify-between px-6 sm:px-10 lg:px-16">
-          {/* Slider counter */}
+            ORDER 4
+        ==================================================== */}
 
-          <div className="flex items-center gap-3 font-mono text-[9px] font-bold uppercase tracking-[0.3em] text-white/60 sm:text-[10px]">
-            <span className="text-white">
-              {String(activeMedia + 1).padStart(2, "0")}
-            </span>
+        <div className="order-4 border-t border-[#CBCAC8]/8 pt-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-center gap-2 sm:justify-start">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#DA0D12]/10">
+                <PawIcon className="h-3 w-3 text-[#DA0D12]" />
+              </span>
 
-            <span>
-              /
-            </span>
+              <span className="font-mono text-[7px] uppercase tracking-[0.2em] text-[#666362]">
+                Good clothes. Good energy. Same pack.
+              </span>
+            </div>
 
-            <span>
-              04
-            </span>
+            <div className="hidden items-center gap-3 md:flex">
+              <span className="h-px w-10 bg-[#CBCAC8]/10" />
 
-            <span className="ml-3 h-[2px] w-16 bg-white/20">
-              <span
-                className="block h-full bg-[#ff2d32] transition-all duration-500"
-                style={{
-                  width: `${
-                    ((activeMedia + 1) /
-                      collectionMedia.length) *
-                    100
-                  }%`,
-                }}
-              />
-            </span>
-          </div>
+              <span className="font-mono text-[6px] uppercase tracking-[0.25em] text-[#424141]">
+                Designed for the pack
+              </span>
 
-          {/* Scroll indicator */}
+              <span className="h-px w-10 bg-[#CBCAC8]/10" />
+            </div>
 
-          <div className="hidden items-center gap-3 font-mono text-[9px] font-bold uppercase tracking-[0.3em] text-white/60 sm:flex">
-            <span>
-              Scroll Down
-            </span>
+            <a
+              href="#new-drop"
+              className="
+                group
+                flex
+                items-center
+                justify-center
+                gap-2
+                font-mono
+                text-[7px]
+                uppercase
+                tracking-[0.2em]
+                text-[#666362]
+                transition-colors
+                hover:text-[#CBCAC8]
+                sm:justify-start
+              "
+            >
+              <span>Discover more</span>
 
-            <span className="text-lg text-white">
-              ↓
-            </span>
+              <span className="transition-transform duration-300 group-hover:translate-y-1">
+                <ArrowDownIcon />
+              </span>
+            </a>
           </div>
         </div>
       </div>
 
-      {/* =========================================================
-          TOP / BOTTOM COMIC DETAILS
-      ========================================================= */}
+      {/* ======================================================
+          DESKTOP SIDE LABELS
+      ====================================================== */}
 
-      <div className="pointer-events-none absolute bottom-[70px] left-5 z-20 h-5 w-5 border-b-2 border-l-2 border-white/30" />
+      <div className="pointer-events-none absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 -rotate-90 items-center gap-3 xl:flex">
+        <span className="h-px w-8 bg-[#CBCAC8]/10" />
 
-      <div className="pointer-events-none absolute right-5 top-32 z-20 h-5 w-5 border-r-2 border-t-2 border-white/30" />
+        <span className="font-mono text-[6px] uppercase tracking-[0.3em] text-[#424141]">
+          One pack / One identity
+        </span>
+      </div>
+
+      <div className="pointer-events-none absolute right-4 top-1/2 z-20 hidden translate-y-1/2 rotate-90 items-center gap-3 xl:flex">
+        <span className="font-mono text-[6px] uppercase tracking-[0.3em] text-[#424141]">
+          Wear your identity
+        </span>
+
+        <span className="h-px w-8 bg-[#CBCAC8]/10" />
+      </div>
+
+      {/* ======================================================
+          CORNER MARKERS
+      ====================================================== */}
+
+      <div className="pointer-events-none absolute left-5 top-[18%] hidden h-4 w-4 border-l border-t border-[#CBCAC8]/10 lg:block" />
+
+      <div className="pointer-events-none absolute right-5 top-[18%] hidden h-4 w-4 border-r border-t border-[#CBCAC8]/10 lg:block" />
+
+      <div className="pointer-events-none absolute bottom-[9%] left-5 hidden h-4 w-4 border-b border-l border-[#CBCAC8]/10 lg:block" />
+
+      <div className="pointer-events-none absolute bottom-[9%] right-5 hidden h-4 w-4 border-b border-r border-[#CBCAC8]/10 lg:block" />
     </section>
   );
 }

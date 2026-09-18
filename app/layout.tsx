@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, DM_Sans } from "next/font/google";
-import Navbar from "@/components/navbar/Navbar";
-import Footer from "@/components/Footer";
+import { Bebas_Neue, Outfit, Geist } from "next/font/google";
+
 import "./globals.css";
+import StorefrontChrome from "@/components/layout/StorefrontChrome";
+import PageTransition from "@/components/PageTransition";
+import ReduxProvider from "@/components/ReduxProvider";
+import CookieBanner from "@/components/cookie/CookieBanner";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import { Toaster } from "react-hot-toast";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 const bebasNeue = Bebas_Neue({
   variable: "--font-bebas-neue",
@@ -10,8 +21,8 @@ const bebasNeue = Bebas_Neue({
   weight: "400",
 });
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -30,14 +41,31 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${bebasNeue.variable}`}
+      className={cn(
+        outfit.variable,
+        bebasNeue.variable,
+        "font-sans",
+        geist.variable,
+      )}
     >
       <body className="min-h-screen bg-[#080808] font-sans antialiased">
-        <Navbar />
+        <ReduxProvider>
+          <PageTransition>
+            <StorefrontChrome>{children}</StorefrontChrome>
+          </PageTransition>
+        </ReduxProvider>
 
-        {children}
+        {/* Floating WhatsApp */}
+        <FloatingWhatsApp />
 
-        <Footer />
+        <CookieBanner />
+
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+          }}
+        />
       </body>
     </html>
   );

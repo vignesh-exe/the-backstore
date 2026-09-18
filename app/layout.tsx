@@ -56,7 +56,7 @@ export default function RootLayout({
         </ReduxProvider>
 
         {/* Floating WhatsApp */}
-        <FloatingWhatsApp />
+        {/* <FloatingWhatsApp /> */}
 
         <CookieBanner />
 

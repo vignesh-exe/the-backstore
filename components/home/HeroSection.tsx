@@ -60,6 +60,13 @@ const collectionMedia = [
   },
 ];
 
+// iOS Safari can struggle with repeatedly mounting/autoplaying a video
+// inside an animated mobile carousel. Keep the mobile carousel image-only.
+// Desktop continues to use the full collectionMedia list, including video.
+const mobileCollectionMedia = collectionMedia.filter(
+  (media) => media.type === "image",
+);
+
 /* ============================================================
    ICONS
    ============================================================ */
@@ -180,19 +187,21 @@ function TagIcon() {
  * ============================================================ */
 
 function CollectionCard({
+  mediaList,
   activeMedia,
   setActiveMedia,
   previousMedia,
   nextMedia,
   mobile = false,
 }: {
+  mediaList: typeof collectionMedia;
   activeMedia: number;
   setActiveMedia: (index: number) => void;
   previousMedia: () => void;
   nextMedia: () => void;
   mobile?: boolean;
 }) {
-  const activeItem = collectionMedia[activeMedia];
+  const activeItem = mediaList[activeMedia] ?? mediaList[0];
 
   return (
     <div
@@ -294,7 +303,7 @@ function CollectionCard({
               MEDIA
           ================================================== */}
 
-          {collectionMedia.map((media, index) => {
+          {mediaList.map((media, index) => {
             const isActive = index === activeMedia;
 
             if (media.type === "video") {
@@ -302,7 +311,7 @@ function CollectionCard({
                 <video
                   key={media.id}
                   src={media.src}
-                  autoPlay={isActive}
+                  autoPlay={isActive && !mobile}
                   muted
                   loop
                   playsInline
@@ -649,7 +658,7 @@ function CollectionCard({
         </div>
 
         <div className="flex items-center gap-1.5">
-          {collectionMedia.map((media, index) => (
+          {mediaList.map((media, index) => (
             <button
               key={media.id}
               type="button"
@@ -677,7 +686,7 @@ function CollectionCard({
 
           <span className="mx-1">/</span>
 
-          <span>04</span>
+          <span>{String(mediaList.length).padStart(2, "0")}</span>
         </div>
       </div>
     </div>
@@ -705,25 +714,57 @@ export default function HeroSection() {
     if (isPaused) return;
 
     const timer = setInterval(() => {
-      setActiveMedia((current) =>
-        current === collectionMedia.length - 1 ? 0 : current + 1,
-      );
+      setActiveMedia((current) => {
+        const mediaLength =
+          window.innerWidth < 1024
+            ? mobileCollectionMedia.length
+            : collectionMedia.length;
+
+        return current === mediaLength - 1 ? 0 : current + 1;
+      });
     }, 2200);
 
     return () => clearInterval(timer);
   }, [isPaused]);
 
   const previousMedia = () => {
-    setActiveMedia((current) =>
-      current === 0 ? collectionMedia.length - 1 : current - 1,
-    );
+    setActiveMedia((current) => {
+      const mediaLength =
+        window.innerWidth < 1024
+          ? mobileCollectionMedia.length
+          : collectionMedia.length;
+
+      return current === 0 ? mediaLength - 1 : current - 1;
+    });
   };
 
   const nextMedia = () => {
-    setActiveMedia((current) =>
-      current === collectionMedia.length - 1 ? 0 : current + 1,
-    );
+    setActiveMedia((current) => {
+      const mediaLength =
+        window.innerWidth < 1024
+          ? mobileCollectionMedia.length
+          : collectionMedia.length;
+
+      return current === mediaLength - 1 ? 0 : current + 1;
+    });
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setActiveMedia((current) =>
+          current >= mobileCollectionMedia.length
+            ? 0
+            : current,
+        );
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <section
@@ -924,6 +965,7 @@ export default function HeroSection() {
           onMouseLeave={() => setIsPaused(false)}
         >
           <CollectionCard
+            mediaList={mobileCollectionMedia}
             activeMedia={activeMedia}
             setActiveMedia={setActiveMedia}
             previousMedia={previousMedia}
@@ -1173,6 +1215,7 @@ export default function HeroSection() {
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#DA0D12]/[0.05]" />
 
               <CollectionCard
+                mediaList={collectionMedia}
                 activeMedia={activeMedia}
                 setActiveMedia={setActiveMedia}
                 previousMedia={previousMedia}

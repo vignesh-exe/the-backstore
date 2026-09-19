@@ -3,7 +3,6 @@ import { Bebas_Neue, Outfit, Geist } from "next/font/google";
 
 import "./globals.css";
 import StorefrontChrome from "@/components/layout/StorefrontChrome";
-import PageTransition from "@/components/PageTransition";
 import ReduxProvider from "@/components/ReduxProvider";
 import CookieBanner from "@/components/cookie/CookieBanner";
 import { Toaster } from "react-hot-toast";
@@ -49,9 +48,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-[#080808] font-sans antialiased">
         <ReduxProvider>
-          <PageTransition>
-            <StorefrontChrome>{children}</StorefrontChrome>
-          </PageTransition>
+          <StorefrontChrome>{children}</StorefrontChrome>
         </ReduxProvider>
 
         <CookieBanner />

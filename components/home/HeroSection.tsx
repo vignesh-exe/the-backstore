@@ -985,7 +985,7 @@ export default function HeroSection() {
                   TWO-LINE MAIN HEADING
               ================================================= */}
 
-              <h1
+              {/* <h1
                 className="
                   select-none
                   text-[clamp(5.3rem,17vw,10rem)]
@@ -998,10 +998,10 @@ export default function HeroSection() {
                 style={{
                   fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                 }}
-              >
+              > */}
                 {/* LINE 1 */}
 
-                <span className="block whitespace-nowrap text-[#CBCAC8]">
+                {/* <span className="block whitespace-nowrap text-[#CBCAC8]">
                   <TextType
                     text={["WEAR IT."]}
                     typingSpeed={75}
@@ -1011,11 +1011,11 @@ export default function HeroSection() {
                     deletingSpeed={50}
                     cursorBlinkDuration={0.5}
                   />
-                </span>
+                </span> */}
 
                 {/* LINE 2 */}
 
-                <span className="block whitespace-nowrap text-[#DA0D12]">
+                {/* <span className="block whitespace-nowrap text-[#DA0D12]">
                   <TextType
                     text={["YOUR WAY."]}
                     typingSpeed={75}
@@ -1025,8 +1025,8 @@ export default function HeroSection() {
                     deletingSpeed={50}
                     cursorBlinkDuration={0.5}
                   />
-                </span>
-              </h1>
+                </span> */}
+              {/* </h1> */}
 
               {/* =================================================
                   COLLAR LINE

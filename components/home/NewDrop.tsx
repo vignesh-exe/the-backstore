@@ -217,7 +217,9 @@ function ProductCard({
     router.push(`/shop/t-shirts/product/${slugify(product.name)}`);
   };
 
-  const handleCardKeyDown = (event: KeyboardEvent) => {
+  const handleCardKeyDown = (
+  event: React.KeyboardEvent<HTMLElement>,
+) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       openProduct();
@@ -231,6 +233,7 @@ function ProductCard({
       tabIndex={0}
       aria-label={`View ${product.name}`}
       onClick={openProduct}
+      onKeyDown={handleCardKeyDown}
     >
       <div
         className="
@@ -280,7 +283,6 @@ function ProductCard({
               bg-[#161616]/65
               px-2.5
               py-1.5
-              backdrop-blur-xl
             "
           >
             <PawIcon className="h-2.5 w-2.5 text-[#DA0D12]" />
@@ -314,7 +316,6 @@ function ProductCard({
               border-[#CBCAC8]/10
               bg-[#161616]/65
               text-[#CBCAC8]/70
-              backdrop-blur-xl
               transition-all
               duration-300
               hover:border-[#DA0D12]/40
@@ -322,11 +323,12 @@ function ProductCard({
               hover:text-[#CBCAC8]
               disabled:cursor-wait
               disabled:opacity-70
-            ${
-              isWishlisted
-                ? "border-[#DA0D12]/50 bg-[#DA0D12] text-[#CBCAC8]"
-                : ""
-            }`}
+              ${
+                isWishlisted
+                  ? "border-[#DA0D12]/50 bg-[#DA0D12] text-[#CBCAC8]"
+                  : ""
+              }
+            `}
           >
             <HeartIcon filled={isWishlisted} />
           </button>
@@ -513,7 +515,9 @@ export default function NewDrop() {
 
         if (!cancelled) {
           setPersistedWishlistIds(
-            (data ?? []).map((item) => String(item.product_id)).filter(Boolean),
+            (data ?? [])
+              .map((item) => String(item.product_id))
+              .filter(Boolean),
           );
         }
       } catch (wishlistError) {
@@ -628,7 +632,9 @@ export default function NewDrop() {
           : "Unable to update wishlist.",
       );
     } finally {
-      setWishlistLoadingIds((current) => current.filter((item) => item !== id));
+      setWishlistLoadingIds((current) =>
+        current.filter((item) => item !== id),
+      );
     }
   };
 
@@ -700,7 +706,9 @@ export default function NewDrop() {
     }
   };
 
-  const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handlePointerCancel = (
+    event: React.PointerEvent<HTMLDivElement>,
+  ) => {
     isDraggingRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
@@ -883,7 +891,6 @@ export default function NewDrop() {
                   uppercase
                   tracking-[0.2em]
                   text-[#CBCAC8]/75
-                  backdrop-blur-xl
                   transition-all
                   duration-300
                   hover:border-[#DA0D12]/40
@@ -938,6 +945,7 @@ export default function NewDrop() {
         {!isLoading && !error && products.length > 0 && (
           <div className="relative">
             {/* Manual carousel controls */}
+
             {products.length > 1 && (
               <div className="mb-4 flex items-center justify-end gap-2">
                 <button
@@ -956,7 +964,6 @@ export default function NewDrop() {
                     border-[#CBCAC8]/10
                     bg-[#CBCAC8]/[0.035]
                     text-[#CBCAC8]/70
-                    backdrop-blur-xl
                     transition-all
                     duration-300
                     hover:border-[#DA0D12]/40
@@ -984,7 +991,6 @@ export default function NewDrop() {
                     border-[#CBCAC8]/10
                     bg-[#CBCAC8]/[0.035]
                     text-[#CBCAC8]/70
-                    backdrop-blur-xl
                     transition-all
                     duration-300
                     hover:border-[#DA0D12]/40

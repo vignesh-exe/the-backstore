@@ -6,9 +6,9 @@ export default function Home() {
   return (
     <main>
       <HeroSection />
-      <NewDrop />
+      {/* <NewDrop /> */}
       {/* Floating WhatsApp */}
-      <FloatingWhatsApp />
+      {/* <FloatingWhatsApp /> */}
     </main>
   );
 }

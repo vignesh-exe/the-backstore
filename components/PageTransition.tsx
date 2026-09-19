@@ -25,6 +25,16 @@ function getPageName(href: string) {
   return pageNames[path] ?? "The Backstore";
 }
 
+function isIOSDevice() {
+  const userAgent = window.navigator.userAgent;
+  const platform = window.navigator.platform;
+
+  return (
+    /iPad|iPhone|iPod/.test(userAgent) ||
+    (platform === "MacIntel" && window.navigator.maxTouchPoints > 1)
+  );
+}
+
 export default function PageTransition({
   children,
 }: {
@@ -35,28 +45,6 @@ export default function PageTransition({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
   const [pageName, setPageName] = useState("The Backstore");
-
-  /*
-   * iOS Safari and iOS Chrome both use WebKit. The full-screen
-   * Framer Motion transition can create a large composited layer
-   * and make the page unresponsive when combined with the site's
-   * blur/backdrop effects.
-   *
-   * Keep the transition on desktop/Android, but bypass the overlay
-   * completely on iOS. Navigation still happens normally.
-   */
-  const [isIOS, setIsIOS] = useState(false);
-
-  useEffect(() => {
-    const userAgent = window.navigator.userAgent;
-    const platform = window.navigator.platform;
-
-    const isiOSDevice =
-      /iPad|iPhone|iPod/.test(userAgent) ||
-      (platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
-
-    setIsIOS(isiOSDevice);
-  }, []);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -115,19 +103,16 @@ export default function PageTransition({
         return;
       }
 
+      // iOS Safari and iOS Chrome both use WebKit. Let native Next.js
+      // navigation handle those devices instead of creating a full-screen
+      // Framer Motion layer that can block touch input.
+      if (isIOSDevice()) {
+        return;
+      }
+
       // =========================================================
       // START TRANSITION
       // =========================================================
-
-      /*
-       * iOS-safe path:
-       * Do not create the full-screen Framer Motion overlay.
-       * Let Next.js navigate normally so Safari/WebKit does not
-       * have to composite another full-screen animated layer.
-       */
-      if (isIOS) {
-        return;
-      }
 
       event.preventDefault();
 
@@ -141,7 +126,7 @@ export default function PageTransition({
     return () => {
       document.removeEventListener("click", handleClick);
     };
-  }, [isIOS]);
+  }, [router]);
 
   // =============================================================
   // NAVIGATE AFTER TRANSITION
@@ -176,7 +161,7 @@ export default function PageTransition({
       {/* PAGE TRANSITION */}
       {/* ========================================================= */}
 
-      {isTransitioning && !isIOS && (
+      {isTransitioning && (
         <motion.div
           initial={{ x: "-100%" }}
           animate={{ x: "0%" }}

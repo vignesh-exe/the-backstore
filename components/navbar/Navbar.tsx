@@ -194,7 +194,6 @@ function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
       <ellipse cx="7.2" cy="7.2" rx="2.1" ry="2.8" />
       <ellipse cx="12" cy="5.2" rx="2.1" ry="2.8" />
       <ellipse cx="16.8" cy="7.2" rx="2.1" ry="2.8" />
-
       <path d="M12 10.1c-3.3 0-5.9 2.4-5.9 5.1 0 2.1 1.6 3.2 3.5 2.6 1-.3 1.6-1 2.4-1s1.4.7 2.4 1c1.9.6 3.5-.5 3.5-2.6 0-2.7-2.6-5.1-5.9-5.1Z" />
     </svg>
   );
@@ -458,7 +457,8 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const isShopActive = pathname === "/shop" || pathname.startsWith("/shop/");
+  const isShopActive =
+    pathname === "/shop" || pathname.startsWith("/shop/");
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -804,7 +804,9 @@ export default function Navbar() {
                         }
                       `}
                     >
-                      {active && <PawIcon className="h-3 w-3 text-[#80060B]" />}
+                      {active && (
+                        <PawIcon className="h-3 w-3 text-[#80060B]" />
+                      )}
 
                       {item.label}
                     </a>
@@ -864,25 +866,25 @@ export default function Navbar() {
                   }
                   onClick={openAccount}
                   className={`
-                  flex
-                  h-8
-                  min-w-8
-                  items-center
-                  justify-center
-                  gap-1.5
-                  rounded-full
-                  px-2.5
-                  text-[8px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.08em]
-                  transition-all
-                  ${
-                    loggedInFirstName
-                      ? "bg-[#CBCAC8] text-[#161616] hover:bg-[#424141] hover:text-[#CBCAC8]"
-                      : "bg-[#DA0D12] text-[#CBCAC8] hover:bg-[#80060B]"
-                  }
-                `}
+                    flex
+                    h-8
+                    min-w-8
+                    items-center
+                    justify-center
+                    gap-1.5
+                    rounded-full
+                    px-2.5
+                    text-[8px]
+                    font-semibold
+                    uppercase
+                    tracking-[0.08em]
+                    transition-all
+                    ${
+                      loggedInFirstName
+                        ? "bg-[#CBCAC8] text-[#161616] hover:bg-[#424141] hover:text-[#CBCAC8]"
+                        : "bg-[#DA0D12] text-[#CBCAC8] hover:bg-[#80060B]"
+                    }
+                  `}
                 >
                   <UserIcon />
                   <span className="max-w-[70px] truncate">
@@ -930,7 +932,9 @@ export default function Navbar() {
                       <span className="flex h-4 w-4 items-center justify-center text-[12px]">
                         ↪
                       </span>
-                      <span>{isLoggingOut ? "Logging out..." : "Log Out"}</span>
+                      <span>
+                        {isLoggingOut ? "Logging out..." : "Log Out"}
+                      </span>
                     </button>
                   </div>
                 )}
@@ -958,8 +962,6 @@ export default function Navbar() {
               bg-[#161616]/80
               px-1.5
               shadow-[0_15px_40px_rgba(0,0,0,0.22)]
-              backdrop-blur-2xl
-              backdrop-saturate-150
             "
           >
             {/* glass highlight */}

@@ -646,3 +646,13 @@ html {
     @apply font-sans;
   }
 }
+
+/* iOS GPU / WebKit diagnostic */
+* {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+[class*="blur-["] {
+  filter: none !important;
+}

@@ -239,7 +239,7 @@ export default function CustomProductPage() {
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 60vw"
-                    className="object-contain p-8 sm:p-14"
+                    className="object-cover transition-transform duration-700 ease-out"
                   />
 
                   <div className="absolute left-5 top-5 rounded-full border border-[#CBCAC8]/10 bg-[#080808]/75 px-3 py-2 backdrop-blur-md">

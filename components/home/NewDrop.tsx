@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
@@ -405,6 +405,13 @@ export default function NewDrop() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  const dragStartXRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const dragDeltaXRef = useRef(0);
+  const suppressClickRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -628,10 +635,100 @@ export default function NewDrop() {
   const carouselProducts =
     products.length > 0 ? [...products, ...products] : [];
 
+  const moveCarousel = (direction: "next" | "previous") => {
+    if (products.length <= 1) return;
+
+    setCurrentIndex((current) =>
+      direction === "next" ? current + 1 : Math.max(0, current - 1),
+    );
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    dragStartXRef.current = event.clientX;
+    dragDeltaXRef.current = 0;
+    isDraggingRef.current = true;
+    setIsDragging(true);
+
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is not available in every browser context.
+    }
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    const delta = event.clientX - dragStartXRef.current;
+    dragDeltaXRef.current = delta;
+    setDragOffset(delta);
+
+    if (Math.abs(delta) > 8) {
+      suppressClickRef.current = true;
+    }
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    const delta = dragDeltaXRef.current;
+
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    setDragOffset(0);
+
+    if (Math.abs(delta) >= 50) {
+      moveCarousel(delta < 0 ? "next" : "previous");
+    }
+
+    dragDeltaXRef.current = 0;
+
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture may already have been released.
+    }
+
+    if (suppressClickRef.current) {
+      window.setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 0);
+    }
+  };
+
+  const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    setDragOffset(0);
+    dragDeltaXRef.current = 0;
+
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture may already have been released.
+    }
+
+    suppressClickRef.current = false;
+  };
+
+  const handleCarouselClickCapture = (
+    event: React.MouseEvent<HTMLDivElement>,
+  ) => {
+    if (suppressClickRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   useEffect(() => {
     if (products.length <= 1) return;
 
     const interval = setInterval(() => {
+      if (isDraggingRef.current) return;
       setCurrentIndex((current) => current + 1);
     }, 2000);
 
@@ -839,52 +936,134 @@ export default function NewDrop() {
         )}
 
         {!isLoading && !error && products.length > 0 && (
-          <div className="overflow-hidden">
-            <div
-              className="
-                flex
-                gap-4
-                transition-transform
-                duration-700
-                ease-[cubic-bezier(0.22,1,0.36,1)]
-                [--slide-width:calc((100%_-_16px)_/_1.25)]
-                [--slide-gap:16px]
-                sm:gap-5
-                sm:[--slide-width:calc((100%_-_40px)_/_3)]
-                sm:[--slide-gap:20px]
-                lg:gap-6
-                lg:[--slide-width:calc((100%_-_96px)_/_5)]
-                lg:[--slide-gap:24px]
-              "
-              style={{
-                transform:
-                  "translateX(calc(-1 * " +
-                  currentIndex +
-                  " * (var(--slide-width) + var(--slide-gap))))",
-              }}
-            >
-              {carouselProducts.map((product, index) => (
-                <div
-                  key={`${product.id}-${index}`}
+          <div className="relative">
+            {/* Manual carousel controls */}
+            {products.length > 1 && (
+              <div className="mb-4 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  aria-label="Previous products"
+                  onClick={() => moveCarousel("previous")}
+                  disabled={currentIndex === 0}
                   className="
-                    w-[var(--slide-width)]
-                    shrink-0
+                    flex
+                    h-9
+                    w-9
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-[#CBCAC8]/10
+                    bg-[#CBCAC8]/[0.035]
+                    text-[#CBCAC8]/70
+                    backdrop-blur-xl
+                    transition-all
+                    duration-300
+                    hover:border-[#DA0D12]/40
+                    hover:bg-[#DA0D12]
+                    hover:text-[#CBCAC8]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-30
                   "
                 >
-                  <ProductCard
-                    product={product}
-                    index={index % Math.max(products.length, 1)}
-                    isWishlisted={wishlistItems.some(
-                      (item) => getWishlistProductId(item) === product.id,
-                    )}
-                    wishlistLoading={wishlistLoadingIds.includes(product.id)}
-                    onWishlist={() => {
-                      void toggleWishlist(product.id);
-                    }}
-                  />
-                </div>
-              ))}
+                  <ChevronLeftIcon />
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Next products"
+                  onClick={() => moveCarousel("next")}
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-[#CBCAC8]/10
+                    bg-[#CBCAC8]/[0.035]
+                    text-[#CBCAC8]/70
+                    backdrop-blur-xl
+                    transition-all
+                    duration-300
+                    hover:border-[#DA0D12]/40
+                    hover:bg-[#DA0D12]
+                    hover:text-[#CBCAC8]
+                  "
+                >
+                  <ChevronRightIcon />
+                </button>
+              </div>
+            )}
+
+            <div
+              className="overflow-hidden touch-pan-y select-none"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
+              onClickCapture={handleCarouselClickCapture}
+              style={{
+                cursor: isDragging ? "grabbing" : "grab",
+              }}
+            >
+              <div
+                className={`
+                  flex
+                  gap-4
+                  ${
+                    isDragging
+                      ? "transition-none"
+                      : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                  }
+                  [--slide-width:calc((100%_-_16px)_/_1.25)]
+                  [--slide-gap:16px]
+                  sm:gap-5
+                  sm:[--slide-width:calc((100%_-_40px)_/_3)]
+                  sm:[--slide-gap:20px]
+                  lg:gap-6
+                  lg:[--slide-width:calc((100%_-_96px)_/_5)]
+                  lg:[--slide-gap:24px]
+                `}
+                style={{
+                  transform:
+                    "translateX(calc(-1 * " +
+                    currentIndex +
+                    " * (var(--slide-width) + var(--slide-gap)) + " +
+                    dragOffset +
+                    "px))",
+                }}
+              >
+                {carouselProducts.map((product, index) => (
+                  <div
+                    key={`${product.id}-${index}`}
+                    className="
+                      w-[var(--slide-width)]
+                      shrink-0
+                    "
+                  >
+                    <ProductCard
+                      product={product}
+                      index={index % Math.max(products.length, 1)}
+                      isWishlisted={wishlistItems.some(
+                        (item) => getWishlistProductId(item) === product.id,
+                      )}
+                      wishlistLoading={wishlistLoadingIds.includes(product.id)}
+                      onWishlist={() => {
+                        void toggleWishlist(product.id);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {products.length > 1 && (
+              <p className="mt-3 text-center font-mono text-[6px] uppercase tracking-[0.2em] text-[#666362] sm:hidden">
+                Swipe to explore
+              </p>
+            )}
           </div>
         )}
       </div>

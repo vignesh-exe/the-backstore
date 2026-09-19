@@ -785,11 +785,64 @@ export default function ProductSlugPage() {
   };
 
   const addProductToCart = async (goToCheckout = false) => {
-    if (!product || !canPurchase || actionLoading || showViewCart) {
+    if (!product || !canPurchase || actionLoading) {
       return;
     }
 
-    setActionLoading(goToCheckout ? "buy" : "cart");
+    /*
+     * BUY NOW is intentionally separate from ADD TO CART.
+     *
+     * It must NOT:
+     * - write to Supabase cart_items
+     * - update Redux cart state
+     *
+     * Instead, it creates a temporary checkout-only item in
+     * sessionStorage and sends the customer directly to checkout.
+     */
+    if (goToCheckout) {
+      setActionLoading("buy");
+
+      try {
+        const buyNowItem = {
+          productId: product.id,
+          size: selectedSize,
+          quantity,
+          productType: "normal",
+          productImage: images[0]?.url,
+          productName: product.name,
+          productPrice: Number(product.price ?? 0),
+        };
+
+        sessionStorage.setItem(
+          "backstore-buy-now-item",
+          JSON.stringify(buyNowItem),
+        );
+
+        router.push("/checkout?buyNow=true");
+      } catch (requestError) {
+        console.error("Failed to prepare Buy Now checkout:", requestError);
+
+        toast.error(
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to start checkout.",
+        );
+
+        setActionLoading(null);
+      }
+
+      return;
+    }
+
+    /*
+     * ADD TO CART is the only action that persists the selected
+     * quantity to Supabase and Redux.
+     */
+    if (showViewCart) {
+      return;
+    }
+
+    setActionLoading("cart");
 
     try {
       const saved = await persistCartQuantity(quantity);
@@ -797,10 +850,6 @@ export default function ProductSlugPage() {
       if (!saved) return;
 
       setAddedNotice(true);
-
-      if (goToCheckout) {
-        router.push("/checkout");
-      }
     } catch (requestError) {
       console.error("Add to cart failed:", requestError);
       setAddedNotice(false);
@@ -815,7 +864,7 @@ export default function ProductSlugPage() {
     }
   };
 
-  const increaseQuantity = async () => {
+  const increaseQuantity = () => {
     if (!product || actionLoading) return;
 
     const maxStock = hasSizeInventory
@@ -824,23 +873,38 @@ export default function ProductSlugPage() {
 
     if (!selectedSize || maxStock <= 0 || quantity >= maxStock) return;
 
-    const nextQuantity = Math.min(quantity + 1, maxStock);
-
-    setActionLoading("cart");
-
-    try {
-      await persistCartQuantity(nextQuantity);
-    } catch (requestError) {
-      console.error("Failed to increase cart quantity:", requestError);
-    } finally {
-      setActionLoading(null);
-    }
+    /*
+     * Quantity is local only while the customer is deciding.
+     *
+     * IMPORTANT:
+     * - Do NOT check authentication here.
+     * - Do NOT write to Supabase here.
+     * - Do NOT update Redux here.
+     *
+     * The cart is changed only after ADD TO CART is clicked.
+     * This also means a logged-out customer can freely choose
+     * a quantity without being redirected to the login page.
+     */
+    setQuantity((current) => Math.min(current + 1, maxStock));
   };
 
   const decreaseQuantity = async () => {
     if (!product || !selectedSize || quantity <= 0 || actionLoading) return;
 
     const nextQuantity = Math.max(quantity - 1, 0);
+
+    /*
+     * If this product/size is NOT in the cart yet, the counter is
+     * still only a local selection. Do not redirect a logged-out
+     * customer and do not touch Redux/Supabase.
+     *
+     * Once the item already exists in the cart, preserve the
+     * existing decrease behaviour and sync the cart immediately.
+     */
+    if (quantityInCart <= 0) {
+      setQuantity(nextQuantity);
+      return;
+    }
 
     setActionLoading("cart");
 
@@ -1015,17 +1079,6 @@ export default function ProductSlugPage() {
             <span>/</span>
             <span>{product.sku || product.id.slice(0, 8)}</span>
           </div>
-
-          <button
-            type="button"
-            onClick={() => router.push("/cart")}
-            className="group flex items-center gap-2 font-mono text-[8px] uppercase tracking-[0.2em] text-[#CBCAC8]/70 transition hover:text-white"
-          >
-            Cart
-            <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#DA0D12] px-1.5 text-[8px] font-bold text-white">
-              {cartCount}
-            </span>
-          </button>
         </div>
 
         {/* Main new layout */}

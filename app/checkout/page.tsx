@@ -34,6 +34,16 @@ type ReduxCartItem = {
   } | null;
 };
 
+type BuyNowItem = {
+  productId: string;
+  size: string;
+  quantity: number;
+  productType?: string;
+  productImage?: string;
+  productName?: string;
+  productPrice?: number;
+};
+
 type ProductImage = {
   image_url?: string | null;
   is_primary?: boolean | null;
@@ -385,6 +395,7 @@ export default function CheckoutPage() {
   const [products, setProducts] = useState<Record<string, Product>>({});
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [isCartHydrating, setIsCartHydrating] = useState(true);
+  const [buyNowItem, setBuyNowItem] = useState<BuyNowItem | null>(null);
 
   const [customer, setCustomer] = useState<CustomerForm>({
     name: "",
@@ -481,6 +492,59 @@ export default function CheckoutPage() {
   }, []);
 
   /* ==========================================================
+     RESTORE DIRECT BUY NOW ITEM
+
+     Buy Now is checkout-only. It must never be inserted into
+     Redux or the persistent cart_items table.
+  ========================================================== */
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isBuyNowCheckout = params.get("buyNow") === "true";
+
+    if (!isBuyNowCheckout) {
+      return;
+    }
+
+    try {
+      const raw = sessionStorage.getItem("backstore-buy-now-item");
+
+      if (!raw) {
+        setBuyNowItem(null);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<BuyNowItem>;
+
+      const productId = String(parsed.productId ?? "");
+      const size = String(parsed.size ?? "");
+      const quantity = Number(parsed.quantity ?? 0);
+
+      if (!productId || !size || quantity <= 0) {
+        sessionStorage.removeItem("backstore-buy-now-item");
+        setBuyNowItem(null);
+        return;
+      }
+
+      setBuyNowItem({
+        productId,
+        size,
+        quantity,
+        productType: parsed.productType || "normal",
+        productImage: parsed.productImage || "",
+        productName: parsed.productName || "",
+        productPrice: Number(parsed.productPrice ?? 0),
+      });
+    } catch (error) {
+      console.error("Failed to restore Buy Now checkout:", error);
+      sessionStorage.removeItem("backstore-buy-now-item");
+      setBuyNowItem(null);
+    } finally {
+      setIsCartHydrating(false);
+    }
+  }, []);
+
+  /* ==========================================================
      RESTORE CART FROM SUPABASE
 
      Redux state is in-memory, so it is empty after a full page
@@ -493,6 +557,12 @@ export default function CheckoutPage() {
 
     async function hydrateCart() {
       try {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get("buyNow") === "true") {
+          return;
+        }
+
         const {
           data: { user },
           error: userError,
@@ -652,6 +722,38 @@ export default function CheckoutPage() {
   ========================================================== */
 
   const resolvedItems = useMemo(() => {
+    /*
+     * Direct Buy Now checkout uses only the temporary item.
+     * The normal cart is intentionally ignored in this mode.
+     */
+    if (buyNowItem) {
+      const item: ReduxCartItem = {
+        productId: buyNowItem.productId,
+        size: buyNowItem.size,
+        quantity: buyNowItem.quantity,
+        productType: buyNowItem.productType || "normal",
+        productImage: buyNowItem.productImage,
+        productName: buyNowItem.productName,
+        productPrice: buyNowItem.productPrice,
+        customization: null,
+      };
+
+      const product = products[String(item.productId)];
+
+      return [
+        {
+          cartKey: `buy-now-${item.productId}-${item.size}`,
+          item,
+          product,
+          name: getProductName(item, product),
+          price: getProductPrice(item, product),
+          mrp: getProductMrp(product),
+          image: getProductImage(item, product),
+          stock: getSizeStock(product, item.size),
+        },
+      ];
+    }
+
     return Object.entries(cartItems)
       .filter(([, item]) => Number(item.quantity) > 0)
       .map(([cartKey, item]) => {
@@ -668,7 +770,7 @@ export default function CheckoutPage() {
           stock: getSizeStock(product, item.size),
         };
       });
-  }, [cartItems, products]);
+  }, [buyNowItem, cartItems, products]);
 
   /* ==========================================================
      TOTALS
@@ -1100,16 +1202,24 @@ export default function CheckoutPage() {
 
             setOrderNumber(order.order_number || order.orderNumber || "");
 
-            for (const entry of resolvedItems) {
-              dispatch(
-                deleteItemFromCart({
-                  productId: entry.item.productId,
-                  size: entry.item.size,
-                }),
-              );
-            }
+            if (buyNowItem) {
+              /*
+               * Buy Now was never added to Redux or Supabase cart,
+               * so there is nothing to remove from the cart.
+               */
+              sessionStorage.removeItem("backstore-buy-now-item");
+            } else {
+              for (const entry of resolvedItems) {
+                dispatch(
+                  deleteItemFromCart({
+                    productId: entry.item.productId,
+                    size: entry.item.size,
+                  }),
+                );
+              }
 
-            window.dispatchEvent(new Event("cart-updated"));
+              window.dispatchEvent(new Event("cart-updated"));
+            }
 
             setShowSuccess(true);
           } catch (error) {

@@ -124,13 +124,14 @@ export default function CustomizePage() {
                     </span>
                   </div>
 
+                  {/* Full-bleed product image */}
                   <div className="relative aspect-[1.15] overflow-hidden bg-[#0D0D0D]">
                     <Image
                       src={isActive ? product.whiteImage : product.image}
                       alt={product.title}
                       fill
                       sizes="(max-width: 1024px) 100vw, 50vw"
-                      className="object-contain p-10 transition-all duration-700 ease-out group-hover:scale-[1.04] sm:p-14"
+                      className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.04]"
                     />
 
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#111111] to-transparent" />

@@ -6,7 +6,6 @@ import StorefrontChrome from "@/components/layout/StorefrontChrome";
 import PageTransition from "@/components/PageTransition";
 import ReduxProvider from "@/components/ReduxProvider";
 import CookieBanner from "@/components/cookie/CookieBanner";
-import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -54,9 +53,6 @@ export default function RootLayout({
             <StorefrontChrome>{children}</StorefrontChrome>
           </PageTransition>
         </ReduxProvider>
-
-        {/* Floating WhatsApp */}
-        <FloatingWhatsApp />
 
         <CookieBanner />
 

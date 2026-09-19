@@ -140,14 +140,14 @@ function ArrowUpRightIcon() {
 ============================================================ */
 
 const paymentMethods = [
-  "BHIM",
-  "G Pay",
-  "Paytm",
-  "PhonePe",
-  "Razorpay",
-  "RuPay",
-  "UPI",
-  "VISA",
+  { name: "BHIM", src: "/images/footer/bhim.png" },
+  { name: "G Pay", src: "/images/footer/gpay.png" },
+  { name: "Paytm", src: "/images/footer/paytm.png" },
+  { name: "PhonePe", src: "/images/footer/phonepe.png" },
+  { name: "Razorpay", src: "/images/footer/razorpay.png" },
+  { name: "RuPay", src: "/images/footer/rupay.png" },
+  { name: "UPI", src: "/images/footer/upi.png" },
+  { name: "VISA", src: "/images/footer/visa.png" },
 ];
 
 /* ============================================================
@@ -228,7 +228,7 @@ export default function Footer() {
       ====================================================== */}
 
       <div className="relative z-10 mx-auto max-w-[1450px] px-5 py-9 sm:px-8 sm:py-10 lg:px-12">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_1.15fr] lg:gap-12">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_1.15fr] lg:gap-12">
           {/* ==================================================
               BRAND
           ================================================== */}
@@ -349,7 +349,7 @@ export default function Footer() {
               EXPLORE
           ================================================== */}
 
-          <div>
+          <div className="col-span-1 col-start-1 lg:col-span-1 lg:col-start-2">
             <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Explore
             </p>
@@ -396,7 +396,7 @@ export default function Footer() {
               SHOP / CUSTOMER CARE
           ================================================== */}
 
-          <div>
+          <div className="col-span-1 col-start-2 lg:col-span-1 lg:col-start-3">
             <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Shop
             </p>
@@ -456,7 +456,7 @@ export default function Footer() {
               CONTACT
           ================================================== */}
 
-          <div>
+          <div className="col-span-2 lg:col-span-1">
             <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Contact Us
             </p>
@@ -657,29 +657,29 @@ export default function Footer() {
               <div className="flex flex-wrap gap-1.5">
                 {paymentMethods.map((method) => (
                   <div
-                    key={method}
+                    key={method.name}
                     className="
                       flex
-                      h-8
-                      min-w-[55px]
+                      h-9
+                      min-w-[52px]
                       items-center
                       justify-center
-                      rounded-full
+                      rounded-lg
                       border
                       border-[#CBCAC8]/10
-                      bg-[#424141]/30
-                      px-3
-                      font-mono
-                      text-[6px]
-                      font-semibold
-                      tracking-wide
-                      text-[#CBCAC8]/45
-                      transition-colors
+                      bg-[#CBCAC8]/5
+                      px-2.5
+                      transition-all
+                      duration-300
                       hover:border-[#DA0D12]/30
-                      hover:text-[#CBCAC8]
+                      hover:bg-[#CBCAC8]/10
                     "
                   >
-                    {method}
+                    <img
+                      src={method.src}
+                      alt={method.name}
+                      className="h-6 w-auto max-w-[48px] object-contain"
+                    />
                   </div>
                 ))}
               </div>
@@ -710,10 +710,12 @@ export default function Footer() {
                 </p>
               </div>
 
-              <div className="flex h-9 min-w-[75px] items-center justify-center rounded-lg bg-[#CBCAC8] px-3">
-                <span className="font-black italic text-[11px] tracking-tight text-[#161616]">
-                  THE PACK
-                </span>
+              <div className="flex h-10 min-w-[92px] items-center justify-center rounded-lg border border-[#CBCAC8]/10 bg-[#CBCAC8]/5 px-3">
+                <img
+                  src="/images/footer/st-courier.png"
+                  alt="ST Courier"
+                  className="h-7 w-auto max-w-[76px] object-contain"
+                />
               </div>
             </div>
           </div>
@@ -723,12 +725,12 @@ export default function Footer() {
             BOTTOM BAR
         ====================================================== */}
 
-        <div className="mt-5 flex flex-col gap-3 border-t border-[#CBCAC8]/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[11px] font-medium text-[#8A8886]">
+        <div className="mt-5 flex flex-col items-center justify-center gap-3 border-t border-[#CBCAC8]/10 pt-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <p className="text-center text-[11px] font-medium text-[#8A8886] sm:text-left">
             © 2026 The Backstore. All Rights Reserved.
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2 text-center">
             <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
 
             <span className="text-[11px] font-medium text-[#8A8886]">

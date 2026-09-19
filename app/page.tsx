@@ -6,8 +6,6 @@ export default function Home() {
   return (
     <main>
       <NewDrop />
-      {/* Floating WhatsApp */}
-      <FloatingWhatsApp />
     </main>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 
@@ -10,6 +10,7 @@ import {
   removeFromWishlist,
 } from "@/lib/features/wishlist/wishlistSlice";
 import { supabase } from "@/lib/supabase";
+import LoginModal from "@/components/auth/LoginModal";
 
 type ProductImage = {
   id?: string;
@@ -211,15 +212,15 @@ function ProductCard({
   onWishlist: () => void;
   wishlistLoading?: boolean;
 }) {
-  const router = useRouter();
-
   const openProduct = () => {
-    router.push(`/shop/t-shirts/product/${slugify(product.name)}`);
+    const productUrl = `/shop/t-shirts/product/${slugify(product.name)}`;
+
+    // Use a real browser navigation here so the product opens reliably even
+    // when the carousel is handling pointer/touch gestures on iOS.
+    window.location.assign(productUrl);
   };
 
-  const handleCardKeyDown = (
-  event: React.KeyboardEvent<HTMLElement>,
-) => {
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       openProduct();
@@ -269,8 +270,6 @@ function ProductCard({
 
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#161616]/75 via-transparent to-[#161616]/5" />
 
-        <div className="pointer-events-none absolute -bottom-20 -right-16 h-40 w-40 rounded-full bg-[#DA0D12]/15 blur-[65px]" />
-
         <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between">
           <div
             className="
@@ -294,6 +293,7 @@ function ProductCard({
 
           <button
             type="button"
+            data-no-drag="true"
             aria-label={
               isWishlisted
                 ? `Remove ${product.name} from wishlist`
@@ -404,6 +404,7 @@ export default function NewDrop() {
   const [persistedWishlistIds, setPersistedWishlistIds] = useState<string[]>(
     [],
   );
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -515,9 +516,7 @@ export default function NewDrop() {
 
         if (!cancelled) {
           setPersistedWishlistIds(
-            (data ?? [])
-              .map((item) => String(item.product_id))
-              .filter(Boolean),
+            (data ?? []).map((item) => String(item.product_id)).filter(Boolean),
           );
         }
       } catch (wishlistError) {
@@ -574,9 +573,7 @@ export default function NewDrop() {
       } = await supabase.auth.getSession();
 
       if (sessionError || !session?.user) {
-        router.push(
-          `/login?redirect=${encodeURIComponent(window.location.pathname)}`,
-        );
+        setLoginModalOpen(true);
         return;
       }
 
@@ -632,9 +629,7 @@ export default function NewDrop() {
           : "Unable to update wishlist.",
       );
     } finally {
-      setWishlistLoadingIds((current) =>
-        current.filter((item) => item !== id),
-      );
+      setWishlistLoadingIds((current) => current.filter((item) => item !== id));
     }
   };
 
@@ -650,6 +645,14 @@ export default function NewDrop() {
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+
+    // Never start a carousel drag when the user is interacting with a
+    // wishlist button or another interactive element inside the card.
+    if (target?.closest('button, a, [data-no-drag="true"]')) {
+      return;
+    }
+
     if (event.pointerType === "mouse" && event.button !== 0) {
       return;
     }
@@ -667,10 +670,12 @@ export default function NewDrop() {
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
 
     const delta = event.clientX - dragStartXRef.current;
     dragDeltaXRef.current = delta;
+
+    // Keep the visual drag responsive without relying on stale React state.
     setDragOffset(delta);
 
     if (Math.abs(delta) > 8) {
@@ -679,7 +684,7 @@ export default function NewDrop() {
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
+    if (!isDraggingRef.current) return;
 
     const delta = dragDeltaXRef.current;
 
@@ -706,9 +711,7 @@ export default function NewDrop() {
     }
   };
 
-  const handlePointerCancel = (
-    event: React.PointerEvent<HTMLDivElement>,
-  ) => {
+  const handlePointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
     isDraggingRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
@@ -729,6 +732,7 @@ export default function NewDrop() {
     if (suppressClickRef.current) {
       event.preventDefault();
       event.stopPropagation();
+      suppressClickRef.current = false;
     }
   };
 
@@ -1052,9 +1056,11 @@ export default function NewDrop() {
                     <ProductCard
                       product={product}
                       index={index % Math.max(products.length, 1)}
-                      isWishlisted={wishlistItems.some(
-                        (item) => getWishlistProductId(item) === product.id,
-                      )}
+                      isWishlisted={
+                        wishlistItems.some(
+                          (item) => getWishlistProductId(item) === product.id,
+                        ) || persistedWishlistIds.includes(product.id)
+                      }
                       wishlistLoading={wishlistLoadingIds.includes(product.id)}
                       onWishlist={() => {
                         void toggleWishlist(product.id);
@@ -1073,6 +1079,14 @@ export default function NewDrop() {
           </div>
         )}
       </div>
+
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onRegister={() => {
+          setLoginModalOpen(false);
+        }}
+      />
     </section>
   );
 }

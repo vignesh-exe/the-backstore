@@ -457,8 +457,7 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const isShopActive =
-    pathname === "/shop" || pathname.startsWith("/shop/");
+  const isShopActive = pathname === "/shop" || pathname.startsWith("/shop/");
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -804,9 +803,7 @@ export default function Navbar() {
                         }
                       `}
                     >
-                      {active && (
-                        <PawIcon className="h-3 w-3 text-[#80060B]" />
-                      )}
+                      {active && <PawIcon className="h-3 w-3 text-[#80060B]" />}
 
                       {item.label}
                     </a>
@@ -932,9 +929,7 @@ export default function Navbar() {
                       <span className="flex h-4 w-4 items-center justify-center text-[12px]">
                         ↪
                       </span>
-                      <span>
-                        {isLoggingOut ? "Logging out..." : "Log Out"}
-                      </span>
+                      <span>{isLoggingOut ? "Logging out..." : "Log Out"}</span>
                     </button>
                   </div>
                 )}

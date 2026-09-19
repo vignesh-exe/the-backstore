@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TextType from "@/components/TextType";
 
 /*
@@ -97,22 +97,6 @@ function ArrowRightIcon() {
   );
 }
 
-function ArrowUpRightIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <path d="M7 17 17 7" />
-      <path d="M8 7h9v9" />
-    </svg>
-  );
-}
-
 function ArrowDownIcon() {
   return (
     <svg
@@ -125,36 +109,6 @@ function ArrowDownIcon() {
     >
       <path d="M12 5v14" />
       <path d="m6.5 13.5 5.5 5.5 5.5-5.5" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <path d="m14.5 6-6 6 6 6" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <path d="m9.5 6 6 6-6 6" />
     </svg>
   );
 }
@@ -182,17 +136,83 @@ function TagIcon() {
 function CollectionCard({
   activeMedia,
   setActiveMedia,
-  previousMedia,
-  nextMedia,
   mobile = false,
 }: {
   activeMedia: number;
   setActiveMedia: (index: number) => void;
-  previousMedia: () => void;
-  nextMedia: () => void;
   mobile?: boolean;
 }) {
   const activeItem = collectionMedia[activeMedia];
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isSwiping = useRef(false);
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLAnchorElement>) => {
+    const touch = event.touches[0];
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    isSwiping.current = false;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLAnchorElement>) => {
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+
+    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      isSwiping.current = true;
+      event.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLAnchorElement>) => {
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      event.preventDefault();
+      isSwiping.current = true;
+
+      if (deltaX < 0) {
+        setActiveMedia(
+          activeMedia === collectionMedia.length - 1 ? 0 : activeMedia + 1,
+        );
+      } else {
+        setActiveMedia(
+          activeMedia === 0 ? collectionMedia.length - 1 : activeMedia - 1,
+        );
+      }
+    }
+  };
+
+  const handleCardClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isSwiping.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      isSwiping.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    const videoIndex = collectionMedia.findIndex(
+      (media) => media.type === "video",
+    );
+
+    if (activeMedia === videoIndex) {
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+      video.currentTime = 0;
+    }
+  }, [activeMedia]);
 
   return (
     <div
@@ -209,12 +229,12 @@ function CollectionCard({
 
       <div
         className={`
+          pointer-events-none
           absolute
-          inset-x-[8%]
+          inset-x-[12%]
           rounded-full
-          bg-black/60
-          blur-[45px]
-          ${mobile ? "bottom-[-20px] h-[55px]" : "bottom-[-30px] h-[80px]"}
+          bg-black/20
+          ${mobile ? "bottom-[-8px] h-[18px]" : "bottom-[-12px] h-[24px]"}
         `}
       />
 
@@ -271,14 +291,27 @@ function CollectionCard({
           OUTER GLASS FRAME
       ====================================================== */}
 
-      <div
+      <a
+        href="/shop/t-shirts"
+        aria-label={`Shop ${activeItem.collection} collection`}
+        onTouchStart={mobile ? handleTouchStart : undefined}
+        onTouchMove={mobile ? handleTouchMove : undefined}
+        onTouchEnd={mobile ? handleTouchEnd : undefined}
+        onClick={mobile ? handleCardClick : undefined}
+        style={mobile ? { touchAction: "pan-y" } : undefined}
         className={`
+          group
+          block
+          cursor-pointer
           relative
           border
           border-[#CBCAC8]/10
           bg-[#CBCAC8]/[0.025]
           shadow-[0_30px_100px_rgba(0,0,0,0.35)]
           backdrop-blur-xl
+          transition-transform
+          duration-300
+          hover:-translate-y-0.5
           ${mobile ? "rounded-[28px] p-1.5" : "rounded-[42px] p-2.5"}
         `}
       >
@@ -287,65 +320,48 @@ function CollectionCard({
             relative
             overflow-hidden
             bg-[#424141]
-            ${mobile ? "aspect-[1.08/1] rounded-[22px]" : "aspect-[1.03/1] rounded-[34px]"}
+            ${mobile ? "aspect-[3/4] rounded-[22px]" : "aspect-[1.03/1] rounded-[34px]"}
           `}
         >
           {/* ==================================================
               MEDIA
           ================================================== */}
 
-          {collectionMedia.map((media, index) => {
-            const isActive = index === activeMedia;
-
-            if (media.type === "video") {
-              return (
+          <div className="absolute inset-0 flex">
+            {collectionMedia.map((media) =>
+              media.type === "video" ? (
                 <video
                   key={media.id}
                   src={media.src}
-                  autoPlay={isActive}
+                  ref={videoRef}
                   muted
                   loop
                   playsInline
-                  className={`
-                    absolute
-                    inset-0
-                    h-full
-                    w-full
-                    object-cover
-                    transition-all
-                    duration-1000
-                    ${
-                      isActive
-                        ? "z-10 scale-100 opacity-100"
-                        : "z-0 scale-[1.05] opacity-0"
-                    }
-                  `}
+                  preload="metadata"
+                  className="h-full w-full shrink-0 object-cover"
+                  style={{
+                    transform: `translateX(-${activeMedia * 100}%)`,
+                    transition: "transform 700ms ease",
+                  }}
                 />
-              );
-            }
-
-            return (
-              <img
-                key={media.id}
-                src={media.src}
-                alt={media.alt}
-                className={`
-                  absolute
-                  inset-0
-                  h-full
-                  w-full
-                  object-cover
-                  transition-all
-                  duration-1000
-                  ${
-                    isActive
-                      ? "z-10 scale-100 opacity-100"
-                      : "z-0 scale-[1.05] opacity-0"
+              ) : (
+                <img
+                  key={media.id}
+                  src={media.src}
+                  alt={media.alt}
+                  loading={
+                    media.id === collectionMedia[0].id ? "eager" : "lazy"
                   }
-                `}
-              />
-            );
-          })}
+                  decoding="async"
+                  className="h-full w-full shrink-0 object-cover"
+                  style={{
+                    transform: `translateX(-${activeMedia * 100}%)`,
+                    transition: "transform 700ms ease",
+                  }}
+                />
+              ),
+            )}
+          </div>
 
           {/* ==================================================
               IMAGE OVERLAY
@@ -553,101 +569,23 @@ function CollectionCard({
               {activeItem.collection}
             </h2>
           </div>
-
-          {/* ==================================================
-              OPEN COLLECTION
-          ================================================== */}
-
-          <a
-            href="/shop"
-            aria-label={`Explore ${activeItem.collection}`}
-            className={`
-              group
-              absolute
-              right-4
-              z-40
-              flex
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-[#CBCAC8]/20
-              bg-[#161616]/65
-              text-[#CBCAC8]
-              backdrop-blur-xl
-              transition-all
-              duration-300
-              hover:border-[#DA0D12]/50
-              hover:bg-[#DA0D12]
-              ${mobile ? "bottom-4 h-10 w-10" : "bottom-8 right-8 h-12 w-12"}
-            `}
-          >
-            <ArrowUpRightIcon />
-          </a>
         </div>
-      </div>
+      </a>
 
       {/* ======================================================
-          SLIDER CONTROLS
+          SWIPER INDICATORS
       ====================================================== */}
 
       <div
         className={`
           flex
           items-center
-          justify-between
+          justify-center
+          gap-4
           px-1
           ${mobile ? "mt-3" : "mt-4 px-3"}
         `}
       >
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            aria-label="Previous collection"
-            onClick={previousMedia}
-            className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-[#CBCAC8]/10
-              bg-[#CBCAC8]/[0.025]
-              text-[#666362]
-              transition-all
-              hover:border-[#CBCAC8]/20
-              hover:text-[#CBCAC8]
-            "
-          >
-            <ChevronLeftIcon />
-          </button>
-
-          <button
-            type="button"
-            aria-label="Next collection"
-            onClick={nextMedia}
-            className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-[#CBCAC8]/10
-              bg-[#CBCAC8]/[0.025]
-              text-[#666362]
-              transition-all
-              hover:border-[#CBCAC8]/20
-              hover:text-[#CBCAC8]
-            "
-          >
-            <ChevronRightIcon />
-          </button>
-        </div>
-
         <div className="flex items-center gap-1.5">
           {collectionMedia.map((media, index) => (
             <button
@@ -674,9 +612,7 @@ function CollectionCard({
           <span className="text-[#CBCAC8]">
             {String(activeMedia + 1).padStart(2, "0")}
           </span>
-
           <span className="mx-1">/</span>
-
           <span>04</span>
         </div>
       </div>
@@ -689,41 +625,17 @@ function CollectionCard({
    ============================================================ */
 
 export default function HeroSection() {
-  const [loaded, setLoaded] = useState(false);
   const [activeMedia, setActiveMedia] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoaded(true);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (isPaused) return;
-
     const timer = setInterval(() => {
       setActiveMedia((current) =>
         current === collectionMedia.length - 1 ? 0 : current + 1,
       );
-    }, 2200);
+    }, 2000);
 
     return () => clearInterval(timer);
-  }, [isPaused]);
-
-  const previousMedia = () => {
-    setActiveMedia((current) =>
-      current === 0 ? collectionMedia.length - 1 : current - 1,
-    );
-  };
-
-  const nextMedia = () => {
-    setActiveMedia((current) =>
-      current === collectionMedia.length - 1 ? 0 : current + 1,
-    );
-  };
+  }, []);
 
   return (
     <section
@@ -733,12 +645,7 @@ export default function HeroSection() {
         overflow-hidden
         bg-[#161616]
         text-[#CBCAC8]
-        transition-opacity
-        duration-700
-        ${loaded ? "opacity-100" : "opacity-0"}
-      `}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+              `}
     >
       {/* ======================================================
           BACKGROUND
@@ -920,14 +827,10 @@ export default function HeroSection() {
             w-full
             lg:hidden
           "
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
         >
           <CollectionCard
             activeMedia={activeMedia}
             setActiveMedia={setActiveMedia}
-            previousMedia={previousMedia}
-            nextMedia={nextMedia}
             mobile
           />
         </div>
@@ -1163,11 +1066,7 @@ export default function HeroSection() {
                 DESKTOP COLLECTION CARD
             ================================================= */}
 
-            <div
-              className="relative hidden lg:block"
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-            >
+            <div className="relative hidden lg:block">
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#CBCAC8]/[0.045]" />
 
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#DA0D12]/[0.05]" />
@@ -1175,8 +1074,6 @@ export default function HeroSection() {
               <CollectionCard
                 activeMedia={activeMedia}
                 setActiveMedia={setActiveMedia}
-                previousMedia={previousMedia}
-                nextMedia={nextMedia}
               />
 
               {/* =================================================

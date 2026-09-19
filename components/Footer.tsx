@@ -63,7 +63,7 @@ function WhatsappIcon() {
       aria-hidden="true"
     >
       <path d="M20.5 3.5A11.8 11.8 0 0 0 12.1 0C5.6 0 .4 5.2.4 11.7c0 2 .5 4 1.5 5.7L.3 23.7l6.5-1.6a11.7 11.7 0 0 0 5.3 1.3h.1c6.4 0 11.7-5.2 11.7-11.7 0-3.1-1.2-6-3.4-8.2Z" />
-      <path d="M8.1 6.6c-.3-.6-.6-.6-.9-.6h-.7c-.3 0-.7.1-1 .5-.3.4-1.3 1.2-1.3 3s1.3 3.5 1.5 3.7c.2.3 2.5 4 6.1 5.4 3 .? 3.6.3 4.2.2.6-.1 2-0.8 2.3-1.6.3-.8.3-1.5.2-1.6-.1-.1-.3-.2-.7-.4-.3-.2-2-1-2.3-1.1-.3-.1-.5-.2-.7.2-.2.3-.8 1.1-.9 1.3-.2.2-.3.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.7.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.6-1.7-.9-2.3Z" />
+      <path d="M8.1 6.6c-.3-.6-.6-.6-.9-.6h-.7c-.3 0-.7.1-1 .5-.3.4-1.3 1.2-1.3 3s1.3 3.5 1.5 3.7c.2.3 2.5 4 6.1 5.4 3.6 3.6.3 4.2.2.6-.1 2-0.8 2.3-1.6.3-.8.3-1.5.2-1.6-.1-.1-.3-.2-.7-.4-.3-.2-2-1-2.3-1.1-.3-.1-.5-.2-.7.2-.2.3-.8 1.1-.9 1.3-.2.2-.3.2-.7.1-.3-.2-1.4-.5-2.6-1.6-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.7.1-.1.3-.3.4-.5.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.6-1.7-.9-2.3Z" />
     </svg>
   );
 }
@@ -212,11 +212,11 @@ export default function Footer() {
           </span>
 
           <div>
-            <p className="font-mono text-[6px] uppercase tracking-[0.28em] text-[#DA0D12]">
+            <p className="font-mono text-[7px] uppercase tracking-[0.28em] text-[#DA0D12]">
               The Backstore Promise
             </p>
 
-            <p className="mt-0.5 text-[9px] text-[#CBCAC8]/65">
+            <p className="mt-0.5 text-[10px] text-[#CBCAC8]/65">
               Original designs. Relaxed fits. Made for the pack.
             </p>
           </div>
@@ -227,21 +227,23 @@ export default function Footer() {
           MAIN FOOTER CONTENT
       ====================================================== */}
 
-      <div className="relative z-10 mx-auto max-w-[1450px] px-5 py-9 sm:px-8 sm:py-10 lg:px-12">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_1.15fr] lg:gap-12">
+      <div className="relative z-10 mx-auto max-w-[1450px] px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-7">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-2 lg:grid-cols-[1.25fr_0.8fr_0.8fr_1.15fr] lg:gap-7">
           {/* ==================================================
               BRAND
           ================================================== */}
 
-          <div>
-            {/* Logo */}
+          <div className="col-span-2 lg:col-span-1">
+            {/* Logo + Description */}
+            <div className="flex w-full items-center gap-3 sm:gap-4 lg:block">
+              {/* Logo */}
 
-            <Link
-              href="/"
-              className="group relative inline-block h-[72px] w-[155px]"
-            >
-              <div
-                className="
+              <Link
+                href="/"
+                className="group relative inline-block h-[52px] w-[105px] shrink-0 sm:h-[58px] sm:w-[118px] lg:h-[72px] lg:w-[155px]"
+              >
+                <div
+                  className="
                   absolute
                   inset-0
                   bg-[#DA0D12]
@@ -249,35 +251,36 @@ export default function Footer() {
                   duration-300
                   group-hover:scale-[1.025]
                 "
-                style={{
-                  clipPath:
-                    "polygon(4% 10%, 17% 5%, 31% 9%, 46% 3%, 62% 8%, 78% 4%, 96% 9%, 92% 91%, 76% 87%, 60% 96%, 44% 90%, 28% 97%, 12% 90%, 3% 95%)",
-                }}
-              />
+                  style={{
+                    clipPath:
+                      "polygon(4% 10%, 17% 5%, 31% 9%, 46% 3%, 62% 8%, 78% 4%, 96% 9%, 92% 91%, 76% 87%, 60% 96%, 44% 90%, 28% 97%, 12% 90%, 3% 95%)",
+                  }}
+                />
 
-              <img
-                src="/logo/backstore-logo.png"
-                alt="The Backstore"
-                className="relative z-10 h-[82px] w-full object-contain"
-              />
-            </Link>
+                <img
+                  src="/logo/backstore-logo.png"
+                  alt="The Backstore"
+                  className="relative z-10 h-[58px] w-full object-contain sm:h-[64px] lg:h-[82px]"
+                />
+              </Link>
 
-            <p className="mt-4 max-w-[300px] text-[10px] leading-[1.7] text-[#666362]">
-              Original designs for people who move differently. Relaxed fits,
-              bold identity and a little attitude — made for the ones who have
-              their own way.
-            </p>
+              <p className="mt-0 min-w-0 flex-1 text-[11px] leading-[1.45] text-[#666362] sm:text-[11px] lg:mt-3 lg:max-w-[300px] lg:flex-none lg:text-[12px] lg:leading-[1.7]">
+                Original designs for people who move differently. Relaxed fits,
+                bold identity and a little attitude — made for the ones who have
+                their own way.
+              </p>
+            </div>
 
             {/* Social */}
 
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-2.5 flex items-center gap-2 lg:mt-3">
               <a
                 href="https://www.instagram.com/backstore.in?stkn=c2F4d3NmNHZtNDIz&utm_source=qr"
                 aria-label="Instagram"
                 className="
                   flex
-                  h-8
-                  w-8
+                  h-7
+                  w-7
                   items-center
                   justify-center
                   rounded-full
@@ -300,8 +303,8 @@ export default function Footer() {
                 aria-label="WhatsApp"
                 className="
                   flex
-                  h-8
-                  w-8
+                  h-7
+                  w-7
                   items-center
                   justify-center
                   rounded-full
@@ -324,8 +327,8 @@ export default function Footer() {
                 aria-label="YouTube"
                 className="
                   flex
-                  h-8
-                  w-8
+                  h-7
+                  w-7
                   items-center
                   justify-center
                   rounded-full
@@ -350,42 +353,42 @@ export default function Footer() {
           ================================================== */}
 
           <div className="col-span-1 col-start-1 lg:col-span-1 lg:col-start-2">
-            <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
+            <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Explore
             </p>
 
-            <nav className="mt-5 flex flex-col gap-3">
+            <nav className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               <Link
                 href="/"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Home
               </Link>
 
               <Link
                 href="/shop"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Shop
               </Link>
 
               <Link
                 href="/about"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 About
               </Link>
 
               <Link
                 href="/customize"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Customize
               </Link>
 
               <Link
                 href="/contact"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Contact
               </Link>
@@ -397,55 +400,55 @@ export default function Footer() {
           ================================================== */}
 
           <div className="col-span-1 col-start-2 lg:col-span-1 lg:col-start-3">
-            <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
+            <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Shop
             </p>
 
-            <nav className="mt-5 flex flex-col gap-3">
+            <nav className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               <Link
                 href="/shop"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 All Products
               </Link>
 
               <Link
                 href="/shop"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 New Arrivals
               </Link>
 
               <Link
                 href="/customize"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Custom Tees
               </Link>
             </nav>
 
-            <p className="mt-7 font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
+            <p className="mt-4 font-mono text-[8px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Customer Care
             </p>
 
-            <nav className="mt-4 flex flex-col gap-3">
+            <nav className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               <Link
                 href="#"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Privacy Policy
               </Link>
 
               <Link
                 href="#"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Terms & Conditions
               </Link>
 
               <Link
                 href="/contact"
-                className="text-[10px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 FAQs
               </Link>
@@ -457,24 +460,24 @@ export default function Footer() {
           ================================================== */}
 
           <div className="col-span-2 lg:col-span-1">
-            <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
+            <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.28em] text-[#DA0D12]">
               Contact Us
             </p>
 
-            <div className="mt-5 flex flex-col gap-3">
+            <div className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               {/* Phone */}
 
               <a href="tel:+917845721716" className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
                   <PhoneIcon />
                 </span>
 
                 <span>
-                  <span className="block font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+                  <span className="block font-mono text-[7px] uppercase tracking-[0.18em] text-[#666362]">
                     Phone
                   </span>
 
-                  <span className="mt-0.5 block text-[9px] text-[#CBCAC8]/70">
+                  <span className="mt-0.5 block text-[10px] text-[#CBCAC8]/70">
                     +91 78457 21716
                   </span>
                 </span>
@@ -486,16 +489,16 @@ export default function Footer() {
                 href="mailto:thebackstore@gmail.com"
                 className="flex items-center gap-3"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
                   <MailIcon />
                 </span>
 
                 <span>
-                  <span className="block font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+                  <span className="block font-mono text-[7px] uppercase tracking-[0.18em] text-[#666362]">
                     Email
                   </span>
 
-                  <span className="mt-0.5 block break-all text-[9px] text-[#CBCAC8]/70">
+                  <span className="mt-0.5 block break-all text-[10px] text-[#CBCAC8]/70">
                     thebackstore@gmail.com
                   </span>
                 </span>
@@ -504,16 +507,16 @@ export default function Footer() {
               {/* Location */}
 
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
                   <LocationIcon />
                 </span>
 
                 <span>
-                  <span className="block font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+                  <span className="block font-mono text-[7px] uppercase tracking-[0.18em] text-[#666362]">
                     Location
                   </span>
 
-                  <span className="mt-0.5 block text-[9px] text-[#CBCAC8]/70">
+                  <span className="mt-0.5 block text-[10px] text-[#CBCAC8]/70">
                     Thanjavur, Tamil Nadu, India
                   </span>
                 </span>
@@ -532,7 +535,7 @@ export default function Footer() {
                 items-center
                 gap-1
                 font-mono
-                text-[6px]
+                text-[7px]
                 uppercase
                 tracking-[0.18em]
                 text-[#DA0D12]
@@ -553,9 +556,9 @@ export default function Footer() {
               className="
                 group
                 relative
-                mt-4
+                mt-3
                 block
-                h-[105px]
+                h-[82px] sm:h-[90px]
                 overflow-hidden
                 rounded-[14px]
                 border
@@ -621,14 +624,14 @@ export default function Footer() {
                   <PawIcon className="h-4 w-4 text-[#CBCAC8]" />
                 </div>
 
-                <div className="mt-1 rounded-full bg-[#161616]/80 px-2 py-0.5 font-mono text-[5px] uppercase tracking-[0.15em] text-[#CBCAC8] backdrop-blur-sm">
+                <div className="mt-1 rounded-full bg-[#161616]/80 px-2 py-0.5 font-mono text-[6px] uppercase tracking-[0.15em] text-[#CBCAC8] backdrop-blur-sm">
                   The Backstore
                 </div>
               </div>
 
               {/* Map overlay */}
 
-              <div className="absolute bottom-2 left-2 rounded-md bg-[#161616]/75 px-2 py-1 font-mono text-[5px] uppercase tracking-[0.15em] text-[#CBCAC8]/60 backdrop-blur-sm">
+              <div className="absolute bottom-2 left-2 rounded-md bg-[#161616]/75 px-2 py-1 font-mono text-[6px] uppercase tracking-[0.15em] text-[#CBCAC8]/60 backdrop-blur-sm">
                 Thanjavur · India
               </div>
             </a>
@@ -639,22 +642,22 @@ export default function Footer() {
             PAYMENT / SHIPPING
         ====================================================== */}
 
-        <div className="mt-9 border-t border-[#CBCAC8]/10 pt-5">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mt-5 border-t border-[#CBCAC8]/10 pt-3">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
             {/* Payments */}
 
             <div>
-              <div className="mb-2">
-                <p className="font-mono text-[6px] font-semibold uppercase tracking-[0.25em] text-[#DA0D12]">
+              <div className="mb-1.5">
+                <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.25em] text-[#DA0D12]">
                   Secure Payments
                 </p>
 
-                <p className="mt-0.5 text-[7px] text-[#666362]">
+                <p className="mt-0.5 text-[8px] text-[#666362]">
                   Multiple payment options
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1">
                 {paymentMethods.map((method) => (
                   <div
                     key={method.name}
@@ -678,7 +681,7 @@ export default function Footer() {
                     <img
                       src={method.src}
                       alt={method.name}
-                      className="h-6 w-auto max-w-[48px] object-contain"
+                      className="h-5 w-auto max-w-[44px] object-contain"
                     />
                   </div>
                 ))}
@@ -701,11 +704,11 @@ export default function Footer() {
               "
             >
               <div>
-                <p className="font-mono text-[6px] font-semibold uppercase tracking-[0.2em] text-[#DA0D12]">
+                <p className="font-mono text-[7px] font-semibold uppercase tracking-[0.2em] text-[#DA0D12]">
                   Shipping Partner
                 </p>
 
-                <p className="mt-1 text-[7px] text-[#666362]">
+                <p className="mt-1 text-[8px] text-[#666362]">
                   Delivering across India
                 </p>
               </div>
@@ -714,7 +717,7 @@ export default function Footer() {
                 <img
                   src="/images/footer/st-courier.png"
                   alt="ST Courier"
-                  className="h-7 w-auto max-w-[76px] object-contain"
+                  className="h-6 w-auto max-w-[70px] object-contain"
                 />
               </div>
             </div>
@@ -725,15 +728,15 @@ export default function Footer() {
             BOTTOM BAR
         ====================================================== */}
 
-        <div className="mt-5 flex flex-col items-center justify-center gap-3 border-t border-[#CBCAC8]/10 pt-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <p className="text-center text-[11px] font-medium text-[#8A8886] sm:text-left">
+        <div className="mt-3 flex flex-col items-center justify-center gap-1.5 border-t border-[#CBCAC8]/10 pt-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+          <p className="text-center text-[12px] font-medium text-[#8A8886] sm:text-left">
             © 2026 The Backstore. All Rights Reserved.
           </p>
 
           <div className="flex items-center justify-center gap-2 text-center">
             <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
 
-            <span className="text-[11px] font-medium text-[#8A8886]">
+            <span className="text-[12px] font-medium text-[#8A8886]">
               Made with <span className="text-[#DA0D12]">♥</span> in Chennai —{" "}
               <a
                 href="https://vigneshashokan.site"

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
+import LoginModal from "@/components/auth/LoginModal";
 
 import {
   addToWishlist,
@@ -518,6 +519,7 @@ export default function TshirtsPage() {
 
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [wishlistLoadingIds, setWishlistLoadingIds] = useState<string[]>([]);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -660,9 +662,7 @@ export default function TshirtsPage() {
       } = await supabase.auth.getSession();
 
       if (sessionError || !session?.user) {
-        router.push(
-          `/login?redirect=${encodeURIComponent(window.location.pathname)}`,
-        );
+        setLoginModalOpen(true);
         return;
       }
 
@@ -1018,6 +1018,14 @@ export default function TshirtsPage() {
           </div>
         </div>
       </section>
+
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        onRegister={() => {
+          setLoginModalOpen(false);
+        }}
+      />
     </main>
   );
 }

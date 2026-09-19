@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
+import OrderConfirmationModal from "@/components/OrderConfirmationModal";
+
 import { supabase } from "@/lib/supabase";
 import {
   addToCart,
@@ -1254,7 +1256,12 @@ export default function CheckoutPage() {
      EMPTY CART
   ========================================================== */
 
-  if (!isProductsLoading && !isCartHydrating && resolvedItems.length === 0) {
+  if (
+    !showSuccess &&
+    !isProductsLoading &&
+    !isCartHydrating &&
+    resolvedItems.length === 0
+  ) {
     return (
       <main className="min-h-screen bg-[#080808] px-4 pb-20 pt-28 text-[#CBCAC8] sm:px-8">
         <section className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center">
@@ -2048,74 +2055,18 @@ export default function CheckoutPage() {
         </section>
       </main>
 
-      {/* ======================================================
-          SUCCESS
-      ====================================================== */}
-
-      {showSuccess && (
-        <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/75 px-4 backdrop-blur-md"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="relative w-full max-w-[500px] overflow-hidden rounded-[30px] border border-[#CBCAC8]/10 bg-[#111111] p-7 text-center shadow-[0_30px_120px_rgba(0,0,0,0.65)] sm:p-9">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[#DA0D12]/10 blur-[65px]" />
-
-            <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#DA0D12] text-white shadow-[0_15px_45px_rgba(218,13,18,0.25)]">
-              <Icon name="check" size={29} />
-            </div>
-
-            <p className="relative mt-6 font-mono text-[8px] uppercase tracking-[0.3em] text-[#DA0D12]">
-              Order confirmed
-            </p>
-
-            <h2
-              className="relative mt-2 text-5xl uppercase leading-none text-[#CBCAC8]"
-              style={{
-                fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
-              }}
-            >
-              You&apos;re in.
-            </h2>
-
-            <p className="relative mx-auto mt-4 max-w-sm text-sm leading-6 text-[#666362]">
-              Your Backstore order has been placed successfully. We&apos;ll use
-              your contact details for the next updates.
-            </p>
-
-            {orderNumber && (
-              <div className="relative mx-auto mt-6 w-fit rounded-2xl border border-[#DA0D12]/15 bg-[#DA0D12]/6 px-5 py-3">
-                <p className="font-mono text-[7px] uppercase tracking-[0.2em] text-[#555]">
-                  Order number
-                </p>
-                <p className="mt-1 font-mono text-sm font-semibold tracking-[0.12em] text-[#DA0D12]">
-                  {orderNumber}
-                </p>
-              </div>
-            )}
-
-            <div className="relative mt-7 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => router.push("/orders")}
-                className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-[#CBCAC8]/10 bg-[#161616] font-mono text-[8px] uppercase tracking-[0.16em] text-[#CBCAC8] transition hover:border-[#CBCAC8]/20"
-              >
-                My orders
-                <Icon name="arrow-right" size={14} />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => router.push("/")}
-                className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[#DA0D12] font-mono text-[8px] uppercase tracking-[0.16em] text-white transition hover:bg-[#b90b10]"
-              >
-                Continue shopping
-                <Icon name="arrow-right" size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <OrderConfirmationModal
+        open={showSuccess}
+        orderNumber={orderNumber}
+        onMyOrders={() => {
+          setShowSuccess(false);
+          router.push("/orders");
+        }}
+        onContinueShopping={() => {
+          setShowSuccess(false);
+          router.push("/");
+        }}
+      />
     </>
   );
 }

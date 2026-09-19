@@ -140,6 +140,7 @@
 html {
   scroll-behavior: smooth;
   background: var(--backstore-black);
+  font-size: 18px;
 }
 
 body {

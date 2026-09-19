@@ -55,7 +55,6 @@ export default function RootLayout({
           </PageTransition>
         </ReduxProvider>
 
-
         <CookieBanner />
 
         <Toaster

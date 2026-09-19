@@ -45,6 +45,11 @@ export default function PageTransition({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
   const [pageName, setPageName] = useState("The Backstore");
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    setIsIOS(isIOSDevice());
+  }, []);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -103,13 +108,6 @@ export default function PageTransition({
         return;
       }
 
-      // iOS Safari and iOS Chrome both use WebKit. Let native Next.js
-      // navigation handle those devices instead of creating a full-screen
-      // Framer Motion layer that can block touch input.
-      if (isIOSDevice()) {
-        return;
-      }
-
       // =========================================================
       // START TRANSITION
       // =========================================================
@@ -137,17 +135,20 @@ export default function PageTransition({
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      router.push(targetUrl);
+    const timer = window.setTimeout(
+      () => {
+        router.push(targetUrl);
 
-      setIsTransitioning(false);
-      setTargetUrl(null);
-    }, 1100);
+        setIsTransitioning(false);
+        setTargetUrl(null);
+      },
+      isIOS ? 700 : 1100,
+    );
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [isTransitioning, targetUrl, router]);
+  }, [isTransitioning, targetUrl, router, isIOS]);
 
   return (
     <>
@@ -188,24 +189,6 @@ export default function PageTransition({
               ease: [0.76, 0, 0.24, 1],
             }}
             className="absolute right-0 top-0 h-full w-[4px] origin-top bg-[#DA0D12]"
-          />
-
-          {/* =================================================== */}
-          {/* RED GLOW */}
-          {/* =================================================== */}
-
-          <motion.div
-            initial={{
-              opacity: 0,
-            }}
-            animate={{
-              opacity: 1,
-            }}
-            transition={{
-              duration: 0.6,
-              delay: 0.1,
-            }}
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#DA0D12]/10 blur-[130px]"
           />
 
           {/* =================================================== */}

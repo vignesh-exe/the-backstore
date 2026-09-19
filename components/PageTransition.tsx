@@ -36,6 +36,28 @@ export default function PageTransition({
   const [targetUrl, setTargetUrl] = useState<string | null>(null);
   const [pageName, setPageName] = useState("The Backstore");
 
+  /*
+   * iOS Safari and iOS Chrome both use WebKit. The full-screen
+   * Framer Motion transition can create a large composited layer
+   * and make the page unresponsive when combined with the site's
+   * blur/backdrop effects.
+   *
+   * Keep the transition on desktop/Android, but bypass the overlay
+   * completely on iOS. Navigation still happens normally.
+   */
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const userAgent = window.navigator.userAgent;
+    const platform = window.navigator.platform;
+
+    const isiOSDevice =
+      /iPad|iPhone|iPod/.test(userAgent) ||
+      (platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
+
+    setIsIOS(isiOSDevice);
+  }, []);
+
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
@@ -97,6 +119,16 @@ export default function PageTransition({
       // START TRANSITION
       // =========================================================
 
+      /*
+       * iOS-safe path:
+       * Do not create the full-screen Framer Motion overlay.
+       * Let Next.js navigate normally so Safari/WebKit does not
+       * have to composite another full-screen animated layer.
+       */
+      if (isIOS) {
+        return;
+      }
+
       event.preventDefault();
 
       setPageName(getPageName(href));
@@ -109,7 +141,7 @@ export default function PageTransition({
     return () => {
       document.removeEventListener("click", handleClick);
     };
-  }, []);
+  }, [isIOS]);
 
   // =============================================================
   // NAVIGATE AFTER TRANSITION
@@ -144,7 +176,7 @@ export default function PageTransition({
       {/* PAGE TRANSITION */}
       {/* ========================================================= */}
 
-      {isTransitioning && (
+      {isTransitioning && !isIOS && (
         <motion.div
           initial={{ x: "-100%" }}
           animate={{ x: "0%" }}

@@ -5,7 +5,7 @@ import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 export default function Home() {
   return (
     <main>
-      <HeroSection />
+      {/* <HeroSection /> */}
       {/* <NewDrop /> */}
       {/* Floating WhatsApp */}
       {/* <FloatingWhatsApp /> */}

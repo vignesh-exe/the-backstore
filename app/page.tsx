@@ -1,11 +1,9 @@
-import HeroSection from "@/components/home/HeroSection";
-import NewDrop from "@/components/home/NewDrop";
-import FloatingWhatsApp from "@/components/FloatingWhatsApp";
-
 export default function Home() {
   return (
     <main>
-      <NewDrop />
+      <section className="min-h-screen bg-[#080808] text-white">
+        <h1 className="p-10 text-4xl">NewDrop Test</h1>
+      </section>
     </main>
   );
 }

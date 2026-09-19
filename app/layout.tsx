@@ -4,6 +4,7 @@ import { Bebas_Neue, Outfit, Geist } from "next/font/google";
 import "./globals.css";
 import ReduxProvider from "@/components/ReduxProvider";
 import CookieBanner from "@/components/cookie/CookieBanner";
+import Navbar from "@/components/navbar/Navbar";
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,8 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-[#080808] font-sans antialiased">
         <ReduxProvider>
+          <Navbar />
+
           {children}
         </ReduxProvider>
 

@@ -1,39 +1,219 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import OrderActionDrawer, {
   Order,
   OrderStatus,
 } from "@/components/admin/OrderActionDrawer";
 
-const initialOrders: Order[] = [
-  {
-    id: "JA202609130005",
-    customer: "Shoby",
-    email: "shobykutty27@gmail.com",
-    phone: "8220081259",
-    date: "13 Sep 2026",
-    items: 1,
-    amount: 293.31,
-    payment: "Online Payment",
-    status: "Placed",
-    address:
-      "12, new test address, Landmark: near school, Bodhi, THENI, TAMIL NADU, PIN: 602213, India",
-    paymentDetails: "Online Payment",
-    orderItems: [
-      {
-        name: "Millet Idly Mix",
-        code: "JM-001",
-        image: "/products/millet-idly-mix.jpg",
-        weight: "200g",
-        quantity: 1,
-        unitPrice: 249,
-        mrp: 299,
-        details: "Millet idly mix was super dry and tasty.",
-      },
-    ],
+type OrderType = "Normal" | "Custom" | "Mixed";
+
+type AdminOrder = Order & {
+  orderType: OrderType;
+};
+
+type DatabaseOrder = {
+  id: string;
+  order_number: string | null;
+  customer_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  delivery_address: unknown;
+  subtotal: number | string | null;
+  shipping_amount: number | string | null;
+  total_amount: number | string | null;
+  payment_method: string | null;
+  payment_status: string | null;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+  tracking_id: string | null;
+};
+
+type DatabaseOrderItem = {
+  id: string;
+  product_name: string | null;
+  product_image_url: string | null;
+  sku: string | null;
+  quantity: number | null;
+  unit_price: number | string | null;
+  mrp: number | string | null;
+  variant_details?: unknown | null;
+};
+
+function getCustomization(details: unknown) {
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return null;
+  }
+
+  const value = details as Record<string, unknown>;
+  const customization = value.customization;
+
+  if (
+    !customization ||
+    typeof customization !== "object" ||
+    Array.isArray(customization)
+  ) {
+    return null;
+  }
+
+  return customization as import("@/components/admin/OrderActionDrawer").CustomizationData;
+}
+
+function getItemDetails(details: unknown) {
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return "";
+  }
+
+  const value = details as Record<string, unknown>;
+  const parts: string[] = [];
+
+  if (typeof value.size === "string") parts.push(`Size: ${value.size}`);
+  if (typeof value.color === "string") parts.push(`Color: ${value.color}`);
+
+  return parts.join(" • ");
+}
+
+function isCustomOrderItem(item: DatabaseOrderItem) {
+  const details = item.variant_details;
+
+  if (!details || typeof details !== "object" || Array.isArray(details)) {
+    return false;
+  }
+
+  const value = details as Record<string, unknown>;
+
+  return (
+    value.is_custom === true ||
+    value.isCustom === true ||
+    Boolean(value.custom_product_id)
+  );
+}
+
+function getOrderType(
+  items: DatabaseOrderItem[] | null | undefined,
+): OrderType {
+  const hasCustom = (items ?? []).some(isCustomOrderItem);
+  const hasNormal = (items ?? []).some((item) => !isCustomOrderItem(item));
+
+  if (hasCustom && hasNormal) return "Mixed";
+  if (hasCustom) return "Custom";
+  return "Normal";
+}
+
+function getOrderTypeClass(orderType: OrderType) {
+  switch (orderType) {
+    case "Custom":
+      return "bg-[#fff0f0] text-[#d81920] border-[#ffd2d4]";
+    case "Mixed":
+      return "bg-[#fff7e6] text-[#b56b00] border-[#ffe2ad]";
+    default:
+      return "bg-[#eef6f1] text-[#23643f] border-[#cce5d6]";
+  }
+}
+
+function formatDeliveryAddress(value: unknown): string {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return "";
+  }
+
+  const address = value as Record<string, unknown>;
+
+  const orderedKeys = [
+    "name",
+    "full_name",
+    "address",
+    "address_line_1",
+    "addressLine1",
+    "address_line_2",
+    "addressLine2",
+    "street",
+    "area",
+    "landmark",
+    "city",
+    "district",
+    "state",
+    "pincode",
+    "postal_code",
+    "postalCode",
+    "zip",
+    "country",
+  ];
+
+  const parts: string[] = [];
+
+  for (const key of orderedKeys) {
+    const current = address[key];
+
+    if (
+      typeof current === "string" &&
+      current.trim() &&
+      !parts.includes(current.trim())
+    ) {
+      parts.push(current.trim());
+    }
+  }
+
+  if (parts.length > 0) {
+    return parts.join(", ");
+  }
+
+  return Object.entries(address)
+    .filter(([, current]) => typeof current === "string" && current.trim())
+    .map(([, current]) => String(current).trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function mapDatabaseOrder(
+  row: DatabaseOrder & {
+    order_items?: DatabaseOrderItem[];
   },
-];
+): AdminOrder {
+  return {
+    id: row.order_number || row.id,
+    customer: row.customer_name || "Unknown Customer",
+    email: row.customer_email || "—",
+    phone: row.customer_phone || "",
+    date: new Date(row.created_at).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    items: row.order_items?.length ?? 0,
+    amount: Number(row.total_amount ?? 0),
+    payment: row.payment_method === "COD" ? "COD" : "Online Payment",
+    status: row.status,
+    address: formatDeliveryAddress(row.delivery_address),
+    paymentDetails: row.payment_method || "",
+    trackingId: row.tracking_id,
+    databaseId: row.id,
+    orderItems: (row.order_items ?? []).map((item) => {
+      const custom = isCustomOrderItem(item);
+      const customization = getCustomization(item.variant_details);
+
+      return {
+        name: item.product_name || (custom ? "Custom T-Shirt" : "Product"),
+        code: item.sku || "—",
+        image: item.product_image_url || "",
+        weight: "",
+        quantity: Number(item.quantity ?? 0),
+        unitPrice: Number(item.unit_price ?? 0),
+        mrp: Number(item.mrp ?? item.unit_price ?? 0),
+        details: getItemDetails(item.variant_details),
+        orderItemId: item.id,
+        isCustom: custom,
+        customization,
+      };
+    }),
+    orderType: getOrderType(row.order_items),
+  };
+}
 
 const statusTabs: Array<"All" | OrderStatus> = [
   "All",
@@ -156,7 +336,7 @@ function getStatusClass(status: OrderStatus) {
   }
 }
 
-function getStatusCount(orders: Order[], status: "All" | OrderStatus) {
+function getStatusCount(orders: AdminOrder[], status: "All" | OrderStatus) {
   if (status === "All") {
     return orders.length;
   }
@@ -165,7 +345,10 @@ function getStatusCount(orders: Order[], status: "All" | OrderStatus) {
 }
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [databaseOrders, setDatabaseOrders] = useState<DatabaseOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
 
@@ -174,6 +357,75 @@ export default function OrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState("All");
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadOrders = async () => {
+      setLoading(true);
+      setError("");
+
+      const { data, error: ordersError } = await supabase
+        .from("orders")
+        .select(
+          `
+          id,
+          order_number,
+          customer_name,
+          customer_email,
+          customer_phone,
+          delivery_address,
+          subtotal,
+          shipping_amount,
+          total_amount,
+          payment_method,
+          payment_status,
+          status,
+          created_at,
+          updated_at,
+          tracking_id,
+          order_items(
+            id,
+            product_name,
+            product_image_url,
+            sku,
+            quantity,
+            unit_price,
+            mrp,
+            variant_details
+          )
+        `,
+        )
+        .order("created_at", { ascending: false });
+
+      if (!mounted) return;
+
+      if (ordersError) {
+        console.error("Load orders error:", ordersError);
+        setError(ordersError.message || "Unable to load orders.");
+        setOrders([]);
+        setDatabaseOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      const rows = (data ?? []) as Array<
+        DatabaseOrder & {
+          order_items?: DatabaseOrderItem[];
+        }
+      >;
+
+      setDatabaseOrders(rows);
+      setOrders(rows.map(mapDatabaseOrder));
+      setLoading(false);
+    };
+
+    loadOrders();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filteredOrders = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
@@ -208,26 +460,143 @@ export default function OrdersPage() {
     setSelectedOrder(null);
   };
 
-  const handleStatusUpdate = (orderId: string, status: OrderStatus) => {
-    setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              status,
-            }
-          : order,
-      ),
+  const handleStatusUpdate = async (
+    orderId: string,
+    status: OrderStatus,
+    trackingId?: string,
+  ) => {
+    const databaseOrder = databaseOrders.find(
+      (item) => (item.order_number || item.id) === orderId,
     );
 
-    setSelectedOrder((currentOrder) =>
-      currentOrder && currentOrder.id === orderId
-        ? {
-            ...currentOrder,
-            status,
-          }
-        : currentOrder,
-    );
+    if (!databaseOrder) {
+      throw new Error(`Unable to find database order for ${orderId}.`);
+    }
+
+    const trackingStatuses: OrderStatus[] = [
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+    ];
+
+    const shouldSaveTrackingId = trackingStatuses.includes(status);
+    const trimmedTrackingId = trackingId?.trim() || "";
+
+    if (shouldSaveTrackingId && !trimmedTrackingId) {
+      throw new Error(
+        "Tracking ID is mandatory for Shipped, Out for Delivery and Delivered.",
+      );
+    }
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error(
+          "Your admin login session has expired. Please log in again.",
+        );
+      }
+
+      const response = await fetch("/api/admin/orders/status", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          order_id: databaseOrder.id,
+          status,
+          tracking_id: shouldSaveTrackingId
+            ? trimmedTrackingId
+            : (databaseOrder.tracking_id ?? null),
+        }),
+      });
+
+      const responseText = await response.text();
+
+      let result: {
+        success?: boolean;
+        error?: string;
+        data?: DatabaseOrder;
+      } = {};
+
+      try {
+        result = responseText
+          ? (JSON.parse(responseText) as typeof result)
+          : {};
+      } catch {
+        result = {};
+      }
+
+      if (!response.ok || result?.success === false) {
+        console.error("Update order status error:", {
+          status: response.status,
+          statusText: response.statusText,
+          result,
+          responseText: responseText.slice(0, 500),
+        });
+
+        throw new Error(
+          result?.error ||
+            `Unable to update order status (${response.status}).`,
+        );
+      }
+
+      const updatedRow: Partial<DatabaseOrder> = result?.data ?? {};
+
+      const updatedDatabaseOrder: DatabaseOrder = {
+        ...databaseOrder,
+        ...updatedRow,
+        status,
+        tracking_id:
+          updatedRow?.tracking_id ??
+          (shouldSaveTrackingId
+            ? trimmedTrackingId
+            : (databaseOrder.tracking_id ?? null)),
+      };
+
+      setDatabaseOrders((current) =>
+        current.map((item) =>
+          item.id === databaseOrder.id ? updatedDatabaseOrder : item,
+        ),
+      );
+
+      setOrders((current) =>
+        current.map((item) =>
+          item.id === orderId
+            ? {
+                ...item,
+                status,
+                trackingId: updatedDatabaseOrder.tracking_id ?? null,
+              }
+            : item,
+        ),
+      );
+
+      setSelectedOrder((current) =>
+        current && current.id === orderId
+          ? {
+              ...current,
+              status,
+              trackingId: updatedDatabaseOrder.tracking_id ?? null,
+            }
+          : current,
+      );
+
+      setError("");
+    } catch (error) {
+      console.error("Update order status API error:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to update order status.";
+
+      setError(message);
+      throw new Error(message);
+    }
   };
 
   return (
@@ -275,6 +644,17 @@ export default function OrdersPage() {
 
                 <p className="mt-1 text-[20px] font-bold leading-none text-[#d99700]">
                   {placedOrders}
+                </p>
+              </div>
+
+              <div className="hidden min-w-[76px] rounded-[13px] border border-[#e1e6ed] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(15,23,42,0.05)] sm:block">
+                <p className="text-[10px] text-[#71809a]">Custom</p>
+
+                <p className="mt-1 text-[20px] font-bold leading-none text-[#d81920]">
+                  {
+                    orders.filter((order) => order.orderType === "Custom")
+                      .length
+                  }
                 </p>
               </div>
             </div>
@@ -353,99 +733,246 @@ export default function OrdersPage() {
 
           {/* TABLE */}
           <section className="overflow-hidden rounded-[14px] border border-[#e1e6ed] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
-            <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full min-w-[1050px] border-collapse">
-                <thead>
-                  <tr className="border-b border-[#dfe5ec] bg-[#f3f6f9]">
-                    <th className="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Order
-                    </th>
+            {error && (
+              <div className="border-b border-[#ffd5d7] bg-[#fff5f5] px-5 py-3 text-[12px] text-[#c62828]">
+                {error}
+              </div>
+            )}
 
-                    <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Customer
-                    </th>
+            {loading && (
+              <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#dce3eb] border-t-[#23643f]" />
+                <p className="mt-4 text-[12px] text-[#7b8799]">
+                  Loading orders from database...
+                </p>
+              </div>
+            )}
 
-                    <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Date
-                    </th>
+            {!loading && (
+              <>
+                <div className="hidden overflow-x-auto lg:block">
+                  <table className="w-full min-w-[1160px] border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#dfe5ec] bg-[#f3f6f9]">
+                        <th className="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Order
+                        </th>
 
-                    <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Items
-                    </th>
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Customer
+                        </th>
 
-                    <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Amount
-                    </th>
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Order Type
+                        </th>
 
-                    <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Payment
-                    </th>
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Date
+                        </th>
 
-                    <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Status
-                    </th>
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Items
+                        </th>
 
-                    <th className="px-5 py-4 text-right text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Amount
+                        </th>
 
-                <tbody>
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Payment
+                        </th>
+
+                        <th className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Status
+                        </th>
+
+                        <th className="px-5 py-4 text-right text-[10px] font-bold uppercase tracking-[0.06em] text-[#53627a]">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filteredOrders.map((order) => (
+                        <tr
+                          key={order.id}
+                          className="border-b border-[#e7ebf0] last:border-b-0 hover:bg-[#fafbfc]"
+                        >
+                          <td className="px-5 py-4">
+                            <p className="text-[12px] font-bold text-[#23643f]">
+                              ##{order.id}
+                            </p>
+                          </td>
+
+                          <td className="px-4 py-4">
+                            <p className="text-[12px] font-semibold text-[#17233b]">
+                              {order.customer}
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-[#8795a9]">
+                              {order.email}
+                            </p>
+                          </td>
+
+                          <td className="px-4 py-4">
+                            <span
+                              className={[
+                                "inline-flex items-center rounded-full border px-2.5 py-1",
+                                "text-[9px] font-bold uppercase tracking-[0.06em]",
+                                getOrderTypeClass(order.orderType),
+                              ].join(" ")}
+                            >
+                              {order.orderType === "Custom"
+                                ? "Custom Product"
+                                : order.orderType === "Normal"
+                                  ? "Normal Product"
+                                  : "Mixed Order"}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-4 text-[11px] text-[#52627a]">
+                            {order.date}
+                          </td>
+
+                          <td className="px-4 py-4 text-[11px] text-[#52627a]">
+                            {order.items} {order.items === 1 ? "Item" : "Items"}
+                          </td>
+
+                          <td className="px-4 py-4 text-[12px] font-bold text-[#17233b]">
+                            {formatCurrency(order.amount)}
+                          </td>
+
+                          <td className="px-4 py-4">
+                            <span className="inline-flex rounded-full bg-[#f1eaff] px-2.5 py-1 text-[9px] font-semibold text-[#7c3aed]">
+                              {order.payment === "Online Payment"
+                                ? "Online"
+                                : "COD"}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-4">
+                            <span
+                              className={[
+                                "inline-flex rounded-full px-2.5 py-1",
+                                "text-[9px] font-semibold",
+                                getStatusClass(order.status),
+                              ].join(" ")}
+                            >
+                              {order.status}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => openOrderDrawer(order)}
+                              className="inline-flex h-[34px] items-center gap-1.5 rounded-[9px] border border-[#dce3eb] bg-white px-3 text-[11px] font-semibold text-[#52627a] transition-all duration-200 hover:border-[#23643f] hover:text-[#23643f]"
+                            >
+                              View
+                              <ArrowRightIcon />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* MOBILE */}
+                <div className="divide-y divide-[#e7ebf0] lg:hidden">
                   {filteredOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="border-b border-[#e7ebf0] last:border-b-0 hover:bg-[#fafbfc]"
-                    >
-                      <td className="px-5 py-4">
-                        <p className="text-[12px] font-bold text-[#23643f]">
-                          ##{order.id}
-                        </p>
-                      </td>
+                    <article key={order.id} className="p-4 sm:p-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[12px] font-bold text-[#23643f]">
+                            ##{order.id}
+                          </p>
 
-                      <td className="px-4 py-4">
-                        <p className="text-[12px] font-semibold text-[#17233b]">
-                          {order.customer}
-                        </p>
+                          <p className="mt-1 text-[13px] font-semibold text-[#17233b]">
+                            {order.customer}
+                          </p>
 
-                        <p className="mt-1 text-[10px] text-[#8795a9]">
-                          {order.email}
-                        </p>
-                      </td>
+                          <p className="mt-1 text-[10px] text-[#8795a9]">
+                            {order.email}
+                          </p>
+                        </div>
 
-                      <td className="px-4 py-4 text-[11px] text-[#52627a]">
-                        {order.date}
-                      </td>
-
-                      <td className="px-4 py-4 text-[11px] text-[#52627a]">
-                        {order.items} {order.items === 1 ? "Item" : "Items"}
-                      </td>
-
-                      <td className="px-4 py-4 text-[12px] font-bold text-[#17233b]">
-                        {formatCurrency(order.amount)}
-                      </td>
-
-                      <td className="px-4 py-4">
-                        <span className="inline-flex rounded-full bg-[#f1eaff] px-2.5 py-1 text-[9px] font-semibold text-[#7c3aed]">
-                          {order.payment === "Online Payment"
-                            ? "Online"
-                            : "COD"}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-4">
                         <span
                           className={[
-                            "inline-flex rounded-full px-2.5 py-1",
+                            "shrink-0 rounded-full px-2.5 py-1",
                             "text-[9px] font-semibold",
                             getStatusClass(order.status),
                           ].join(" ")}
                         >
                           {order.status}
                         </span>
-                      </td>
+                      </div>
 
-                      <td className="px-5 py-4 text-right">
+                      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[#edf0f3] pt-4 sm:grid-cols-4">
+                        <div>
+                          <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
+                            Date
+                          </p>
+
+                          <p className="mt-1 text-[11px] font-medium text-[#52627a]">
+                            {order.date}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
+                            Items
+                          </p>
+
+                          <p className="mt-1 text-[11px] font-medium text-[#52627a]">
+                            {order.items}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
+                            Type
+                          </p>
+
+                          <span
+                            className={[
+                              "mt-1 inline-flex rounded-full border px-2 py-1",
+                              "text-[8px] font-bold uppercase tracking-[0.05em]",
+                              getOrderTypeClass(order.orderType),
+                            ].join(" ")}
+                          >
+                            {order.orderType === "Custom"
+                              ? "Custom Product"
+                              : order.orderType === "Normal"
+                                ? "Normal Product"
+                                : "Mixed Order"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
+                            Amount
+                          </p>
+
+                          <p className="mt-1 text-[11px] font-bold text-[#17233b]">
+                            {formatCurrency(order.amount)}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
+                            Payment
+                          </p>
+
+                          <p className="mt-1 text-[11px] font-medium text-[#52627a]">
+                            {order.payment === "Online Payment"
+                              ? "Online"
+                              : "COD"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex justify-end border-t border-[#edf0f3] pt-4">
                         <button
                           type="button"
                           onClick={() => openOrderDrawer(order)}
@@ -454,134 +981,48 @@ export default function OrdersPage() {
                           View
                           <ArrowRightIcon />
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                    </article>
                   ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* MOBILE */}
-            <div className="divide-y divide-[#e7ebf0] lg:hidden">
-              {filteredOrders.map((order) => (
-                <article key={order.id} className="p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-[12px] font-bold text-[#23643f]">
-                        ##{order.id}
-                      </p>
-
-                      <p className="mt-1 text-[13px] font-semibold text-[#17233b]">
-                        {order.customer}
-                      </p>
-
-                      <p className="mt-1 text-[10px] text-[#8795a9]">
-                        {order.email}
-                      </p>
-                    </div>
-
-                    <span
-                      className={[
-                        "shrink-0 rounded-full px-2.5 py-1",
-                        "text-[9px] font-semibold",
-                        getStatusClass(order.status),
-                      ].join(" ")}
-                    >
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[#edf0f3] pt-4 sm:grid-cols-4">
-                    <div>
-                      <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
-                        Date
-                      </p>
-
-                      <p className="mt-1 text-[11px] font-medium text-[#52627a]">
-                        {order.date}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
-                        Items
-                      </p>
-
-                      <p className="mt-1 text-[11px] font-medium text-[#52627a]">
-                        {order.items}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
-                        Amount
-                      </p>
-
-                      <p className="mt-1 text-[11px] font-bold text-[#17233b]">
-                        {formatCurrency(order.amount)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[9px] uppercase tracking-wide text-[#8b98ab]">
-                        Payment
-                      </p>
-
-                      <p className="mt-1 text-[11px] font-medium text-[#52627a]">
-                        {order.payment === "Online Payment" ? "Online" : "COD"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex justify-end border-t border-[#edf0f3] pt-4">
-                    <button
-                      type="button"
-                      onClick={() => openOrderDrawer(order)}
-                      className="inline-flex h-[34px] items-center gap-1.5 rounded-[9px] border border-[#dce3eb] bg-white px-3 text-[11px] font-semibold text-[#52627a] transition-all duration-200 hover:border-[#23643f] hover:text-[#23643f]"
-                    >
-                      View
-                      <ArrowRightIcon />
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            {/* EMPTY */}
-            {filteredOrders.length === 0 && (
-              <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f1f4f7] text-[#7b8799]">
-                  <OrderIcon />
                 </div>
 
-                <h3 className="mt-4 text-[15px] font-semibold text-[#17233b]">
-                  No orders found
-                </h3>
+                {/* EMPTY */}
+                {filteredOrders.length === 0 && (
+                  <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f1f4f7] text-[#7b8799]">
+                      <OrderIcon />
+                    </div>
 
-                <p className="mt-1 max-w-[320px] text-[12px] text-[#7b8799]">
-                  Try changing your search or filter options.
-                </p>
-              </div>
+                    <h3 className="mt-4 text-[15px] font-semibold text-[#17233b]">
+                      No orders found
+                    </h3>
+
+                    <p className="mt-1 max-w-[320px] text-[12px] text-[#7b8799]">
+                      Try changing your search or filter options.
+                    </p>
+                  </div>
+                )}
+
+                {/* FOOTER */}
+                <div className="flex flex-col gap-2 border-t border-[#e1e5ea] bg-[#fafbfc] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-[11px] text-[#7b8799]">
+                    Showing{" "}
+                    <span className="font-semibold text-[#53627a]">
+                      {filteredOrders.length}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-semibold text-[#53627a]">
+                      {orders.length}
+                    </span>{" "}
+                    orders
+                  </p>
+
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-[#a0a9b6]">
+                    The Backstore Admin
+                  </p>
+                </div>
+              </>
             )}
-
-            {/* FOOTER */}
-            <div className="flex flex-col gap-2 border-t border-[#e1e5ea] bg-[#fafbfc] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-[11px] text-[#7b8799]">
-                Showing{" "}
-                <span className="font-semibold text-[#53627a]">
-                  {filteredOrders.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-semibold text-[#53627a]">
-                  {orders.length}
-                </span>{" "}
-                orders
-              </p>
-
-              <p className="text-[10px] uppercase tracking-[0.12em] text-[#a0a9b6]">
-                The Backstore Admin
-              </p>
-            </div>
           </section>
         </div>
       </main>

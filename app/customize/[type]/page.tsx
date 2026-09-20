@@ -2,9 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+import { useDispatch } from "react-redux";
+
+import { addToCart } from "@/lib/features/cart/cartSlice";
+import { supabase } from "@/lib/supabase";
 
 const PRODUCTS = {
   oversized: {
@@ -161,12 +165,103 @@ export default function CustomProductPage() {
     "Black",
   );
   const [selectedSize, setSelectedSize] = useState<(typeof SIZES)[number]>("M");
-  const [quantity, setQuantity] = useState(1);
+  const dispatch = useDispatch();
+
+  const customProductType = params.type;
+  const [customProductId, setCustomProductId] = useState<string | null>(null);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+
+  const [quantity, setQuantity] = useState(0);
 
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
   const [leftFile, setLeftFile] = useState<File | null>(null);
   const [rightFile, setRightFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    const fetchCustomProduct = async () => {
+      const { data, error } = await supabase
+        .from("custom_products")
+        .select("id")
+        .eq("type", customProductType)
+        .single();
+
+      if (error || !data) {
+        console.error("Failed to fetch custom product:", error);
+        toast.error("Custom product not found");
+        return;
+      }
+
+      setCustomProductId(data.id);
+    };
+
+    if (customProductType) {
+      fetchCustomProduct();
+    }
+  }, [customProductType]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncCartStatus = async () => {
+      if (!customProductId) return;
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        if (!cancelled) setIsAddedToCart(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("custom_cart_items")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("custom_product_id", customProductId)
+        .eq("size", selectedSize)
+        .eq("color", selectedColor)
+        .limit(1);
+
+      if (error) {
+        console.error("Failed to sync custom cart status:", error);
+        return;
+      }
+
+      if (!cancelled) {
+        setIsAddedToCart((data ?? []).length > 0);
+      }
+    };
+
+    const handleCartUpdated = () => {
+      void syncCartStatus();
+    };
+
+    const handlePageVisible = () => {
+      if (document.visibilityState === "visible") {
+        void syncCartStatus();
+      }
+    };
+
+    void syncCartStatus();
+
+    window.addEventListener("backstore:cart-updated", handleCartUpdated);
+    window.addEventListener("focus", handleCartUpdated);
+    window.addEventListener("pageshow", handleCartUpdated);
+    document.addEventListener("visibilitychange", handlePageVisible);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("backstore:cart-updated", handleCartUpdated);
+      window.removeEventListener("focus", handleCartUpdated);
+      window.removeEventListener("pageshow", handleCartUpdated);
+      document.removeEventListener("visibilitychange", handlePageVisible);
+    };
+  }, [customProductId, selectedSize, selectedColor]);
 
   const image = selectedColor === "Black" ? product.black : product.white;
   const total = useMemo(
@@ -175,10 +270,16 @@ export default function CustomProductPage() {
   );
 
   const changeQuantity = (next: number) => {
-    setQuantity(Math.min(10, Math.max(1, next)));
+    setQuantity(Math.min(10, Math.max(0, next)));
   };
 
-  const goToCustomize = () => {
+  const handleSizeChange = (size: (typeof SIZES)[number]) => {
+    setSelectedSize(size);
+    setQuantity(0);
+    setIsAddedToCart(false);
+  };
+
+  const goToCustomize = async () => {
     const uploaded = [frontFile, backFile, leftFile, rightFile].filter(Boolean);
 
     if (uploaded.length === 0) {
@@ -186,9 +287,143 @@ export default function CustomProductPage() {
       return;
     }
 
-    toast.success(
-      "Your customization is ready. Cart integration can be connected to the existing custom-product API next.",
-    );
+    if (quantity <= 0) {
+      toast.error("Please select a valid quantity.");
+      return;
+    }
+
+    if (!customProductId) {
+      toast.error("Custom product is still loading. Please try again.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      toast.loading("Uploading your custom designs...", {
+        id: "custom-upload",
+      });
+
+      const userResult = await supabase.auth.getUser();
+
+      if (userResult.error) {
+        throw userResult.error;
+      }
+
+      if (!userResult.data.user) {
+        throw new Error(
+          "Please log in before adding a custom product to cart.",
+        );
+      }
+
+      const userId = userResult.data.user.id;
+      const customizationId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+      const uploadImage = async (file: File | null, position: string) => {
+        if (!file) return null;
+
+        if (!file.type.startsWith("image/")) {
+          throw new Error(`${position} design must be an image file.`);
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`${position} design must be smaller than 5MB.`);
+        }
+
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+        const path = [
+          "cart-customizations",
+          userId,
+          customizationId,
+          position,
+          `${Date.now()}-${safeName}`,
+        ].join("/");
+
+        const { error: uploadError } = await supabase.storage
+          .from("custom-designs")
+          .upload(path, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data } = supabase.storage
+          .from("custom-designs")
+          .getPublicUrl(path);
+
+        if (!data?.publicUrl) {
+          throw new Error(`Unable to create ${position} design URL.`);
+        }
+
+        return data.publicUrl;
+      };
+
+      const [frontUrl, backUrl, leftUrl, rightUrl] = await Promise.all([
+        uploadImage(frontFile, "front"),
+        uploadImage(backFile, "back"),
+        uploadImage(leftFile, "left-sleeve"),
+        uploadImage(rightFile, "right-sleeve"),
+      ]);
+
+      const uploadedCustomization = {
+        color: selectedColor,
+        size: selectedSize,
+        frontImages: frontUrl ? [frontUrl] : [],
+        backImages: backUrl ? [backUrl] : [],
+        leftSleeveImages: leftUrl ? [leftUrl] : [],
+        rightSleeveImages: rightUrl ? [rightUrl] : [],
+      };
+
+      toast.loading("Saving your customization...", {
+        id: "custom-upload",
+      });
+
+      const { error: customCartError } = await supabase
+        .from("custom_cart_items")
+        .insert({
+          custom_product_id: customProductId,
+          size: selectedSize,
+          color: selectedColor,
+          quantity,
+          customization: uploadedCustomization,
+        });
+
+      if (customCartError) {
+        throw customCartError;
+      }
+
+      dispatch(
+        addToCart({
+          productId: customProductId,
+          size: selectedSize,
+          quantity,
+          productType: "custom",
+          productImage: image,
+          customization: uploadedCustomization,
+        }),
+      );
+
+      toast.dismiss("custom-upload");
+      toast.success("Custom product added to cart successfully!");
+      setIsAddedToCart(true);
+    } catch (error) {
+      toast.dismiss("custom-upload");
+      console.error("Failed to save custom product:", error);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save your custom product.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -382,7 +617,7 @@ export default function CustomProductPage() {
                       <button
                         key={size}
                         type="button"
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => handleSizeChange(size)}
                         className={`h-11 rounded-xl border font-mono text-[8px] uppercase transition-all ${
                           selectedSize === size
                             ? "border-[#DA0D12] bg-[#DA0D12] text-white"
@@ -450,10 +685,18 @@ export default function CustomProductPage() {
 
                 <button
                   type="button"
-                  onClick={goToCustomize}
-                  className="group mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.2em] text-white transition-all hover:bg-[#b90b10]"
+                  onClick={() => {
+                    if (isAddedToCart) {
+                      window.dispatchEvent(new Event("backstore:open-cart"));
+                      return;
+                    }
+
+                    goToCustomize();
+                  }}
+                  disabled={isSaving}
+                  className="group mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.2em] text-white transition-all hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Customize & Continue
+                  {isAddedToCart ? "View Cart" : "Add to Cart"}
                   <Icon name="arrow-right" size={15} />
                 </button>
 

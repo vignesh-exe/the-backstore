@@ -69,6 +69,49 @@ type Product = {
   } | null;
 };
 
+type CustomProduct = {
+  id: string;
+  type: string;
+  name: string;
+  description?: string | null;
+  price?: number | null;
+  gsm?: number | null;
+  black_image?: string | null;
+  white_image?: string | null;
+};
+
+type CustomCartItem = {
+  id: string;
+  custom_product_id: string;
+  size: string;
+  color: string;
+  quantity: number;
+  customization?: {
+    color?: string;
+    colour?: string;
+    frontImages?: string[];
+    backImages?: string[];
+    leftSleeveImages?: string[];
+    rightSleeveImages?: string[];
+    [key: string]: unknown;
+  } | null;
+};
+
+type ResolvedCartItem = {
+  cartKey: string;
+  item: ReduxCartItem;
+  product?: Product;
+  customProduct?: CustomProduct;
+  isCustom: boolean;
+  name: string;
+  price: number;
+  mrp: number;
+  image: string;
+  stock: number;
+  customization?: CustomCartItem["customization"] | null;
+  customColor: string;
+};
+
 type CustomerForm = {
   name: string;
   email: string;
@@ -395,6 +438,10 @@ export default function CheckoutPage() {
   );
 
   const [products, setProducts] = useState<Record<string, Product>>({});
+  const [customProducts, setCustomProducts] = useState<
+    Record<string, CustomProduct>
+  >({});
+  const [customCartItems, setCustomCartItems] = useState<CustomCartItem[]>([]);
   const [isProductsLoading, setIsProductsLoading] = useState(true);
   const [isCartHydrating, setIsCartHydrating] = useState(true);
   const [buyNowItem, setBuyNowItem] = useState<BuyNowItem | null>(null);
@@ -438,6 +485,8 @@ export default function CheckoutPage() {
 
   /* ==========================================================
      LOAD PRODUCT DATA
+
+     Normal products and custom products are kept separate.
   ========================================================== */
 
   useEffect(() => {
@@ -447,16 +496,21 @@ export default function CheckoutPage() {
       try {
         setIsProductsLoading(true);
 
-        const response = await fetch("/api/admin/products", {
-          cache: "no-store",
-        });
+        const [normalResponse, customResponse] = await Promise.all([
+          fetch("/api/admin/products", { cache: "no-store" }),
+          supabase
+            .from("custom_products")
+            .select(
+              "id,type,name,description,price,gsm,black_image,white_image",
+            )
+            .order("created_at", { ascending: true }),
+        ]);
 
-        if (!response.ok) {
+        if (!normalResponse.ok) {
           throw new Error("Unable to load product details.");
         }
 
-        const payload = await response.json();
-
+        const payload = await normalResponse.json();
         const list = Array.isArray(payload)
           ? payload
           : Array.isArray(payload?.products)
@@ -465,17 +519,28 @@ export default function CheckoutPage() {
               ? payload.data
               : [];
 
+        if (customResponse.error) {
+          throw customResponse.error;
+        }
+
         if (cancelled) return;
 
         const nextProducts: Record<string, Product> = {};
-
         for (const product of list) {
           if (product?.id) {
             nextProducts[String(product.id)] = product;
           }
         }
 
+        const nextCustomProducts: Record<string, CustomProduct> = {};
+        for (const product of customResponse.data ?? []) {
+          if (product?.id) {
+            nextCustomProducts[String(product.id)] = product as CustomProduct;
+          }
+        }
+
         setProducts(nextProducts);
+        setCustomProducts(nextCustomProducts);
       } catch (error) {
         console.error("Checkout product lookup failed:", error);
         toast.error("Unable to load some product details.");
@@ -549,9 +614,9 @@ export default function CheckoutPage() {
   /* ==========================================================
      RESTORE CART FROM SUPABASE
 
-     Redux state is in-memory, so it is empty after a full page
-     reload. Restore the authenticated user's cart from the
-     cart_items table before deciding that the cart is empty.
+     Normal items come from cart_items. Custom items come from
+     custom_cart_items so their design JSON and uploaded image URLs
+     remain available after a refresh.
   ========================================================== */
 
   useEffect(() => {
@@ -574,40 +639,73 @@ export default function CheckoutPage() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from("cart_items")
-          .select("product_id,size,quantity")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: true });
+        const [normalResult, customResult] = await Promise.all([
+          supabase
+            .from("cart_items")
+            .select("product_id,size,quantity")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: true }),
+          supabase
+            .from("custom_cart_items")
+            .select("id,custom_product_id,size,color,quantity,customization")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: true }),
+        ]);
 
-        if (error) {
-          throw error;
-        }
-
+        if (normalResult.error) throw normalResult.error;
+        if (customResult.error) throw customResult.error;
         if (cancelled) return;
 
-        // Do not duplicate an already-populated Redux cart.
-        if (Object.keys(cartItems).length > 0) {
-          return;
-        }
+        setCustomCartItems((customResult.data ?? []) as CustomCartItem[]);
 
-        for (const item of data ?? []) {
-          const productId = String(item.product_id ?? "");
-          const size = String(item.size ?? "");
-          const quantity = Number(item.quantity ?? 0);
+        const hasReduxCart = Object.keys(cartItems).length > 0;
 
-          if (!productId || !size || quantity <= 0) {
-            continue;
+        if (!hasReduxCart) {
+          for (const item of normalResult.data ?? []) {
+            const productId = String(item.product_id ?? "");
+            const size = String(item.size ?? "");
+            const quantity = Number(item.quantity ?? 0);
+
+            if (!productId || !size || quantity <= 0) continue;
+
+            dispatch(
+              addToCart({
+                productId,
+                size,
+                quantity,
+                productType: "normal",
+              }),
+            );
           }
 
-          dispatch(
-            addToCart({
-              productId,
-              size,
-              quantity,
-              productType: "normal",
-            }),
-          );
+          for (const item of customResult.data ?? []) {
+            const productId = String(item.custom_product_id ?? "");
+            const size = String(item.size ?? "");
+            const quantity = Number(item.quantity ?? 0);
+
+            if (!productId || !size || quantity <= 0) continue;
+
+            const customProduct = customProducts[productId];
+            const customization = item.customization ?? {
+              color: item.color,
+            };
+
+            dispatch(
+              addToCart({
+                productId,
+                size,
+                quantity,
+                productType: "custom",
+                productImage:
+                  item.color === "White"
+                    ? customProduct?.white_image || undefined
+                    : customProduct?.black_image || undefined,
+                productName: customProduct?.name || undefined,
+                productPrice: Number(customProduct?.price ?? 0),
+                customization,
+              }),
+            );
+          }
         }
       } catch (error) {
         console.error("Failed to restore checkout cart:", error);
@@ -623,7 +721,7 @@ export default function CheckoutPage() {
     return () => {
       cancelled = true;
     };
-  }, [dispatch, cartItems]);
+  }, [dispatch, cartItems, customProducts]);
 
   /* ==========================================================
      LOAD STATES
@@ -723,7 +821,7 @@ export default function CheckoutPage() {
      RESOLVED CART
   ========================================================== */
 
-  const resolvedItems = useMemo(() => {
+  const resolvedItems = useMemo<ResolvedCartItem[]>(() => {
     /*
      * Direct Buy Now checkout uses only the temporary item.
      * The normal cart is intentionally ignored in this mode.
@@ -742,16 +840,42 @@ export default function CheckoutPage() {
 
       const product = products[String(item.productId)];
 
+      const isCustom = item.productType === "custom";
+      const customProduct = customProducts[String(item.productId)];
+      const customColor = String(
+        item.customization?.color ?? item.customization?.colour ?? "",
+      );
+      const customImage =
+        item.productImage ||
+        (customColor.toLowerCase() === "white"
+          ? customProduct?.white_image
+          : customProduct?.black_image) ||
+        "";
+
       return [
         {
           cartKey: `buy-now-${item.productId}-${item.size}`,
           item,
           product,
-          name: getProductName(item, product),
-          price: getProductPrice(item, product),
-          mrp: getProductMrp(product),
-          image: getProductImage(item, product),
-          stock: getSizeStock(product, item.size),
+          customProduct,
+          isCustom,
+          name: isCustom
+            ? item.productName || customProduct?.name || "Custom Product"
+            : getProductName(item, product),
+          price: isCustom
+            ? typeof item.productPrice === "number"
+              ? item.productPrice
+              : Number(customProduct?.price ?? 0)
+            : getProductPrice(item, product),
+          mrp: isCustom
+            ? typeof item.productPrice === "number"
+              ? item.productPrice
+              : Number(customProduct?.price ?? 0)
+            : getProductMrp(product),
+          image: isCustom ? customImage : getProductImage(item, product),
+          stock: isCustom ? 0 : getSizeStock(product, item.size),
+          customization: item.customization ?? null,
+          customColor,
         },
       ];
     }
@@ -759,20 +883,64 @@ export default function CheckoutPage() {
     return Object.entries(cartItems)
       .filter(([, item]) => Number(item.quantity) > 0)
       .map(([cartKey, item]) => {
+        const isCustom = item.productType === "custom";
         const product = products[String(item.productId)];
+        const customProduct = customProducts[String(item.productId)];
+        const customization = item.customization ?? null;
+
+        const matchingCustomCartItem = isCustom
+          ? customCartItems.find(
+              (customItem) =>
+                customItem.custom_product_id === String(item.productId) &&
+                customItem.size === String(item.size) &&
+                customItem.color ===
+                  String(customization?.color ?? customization?.colour ?? ""),
+            )
+          : undefined;
+
+        const resolvedCustomization =
+          customization ?? matchingCustomCartItem?.customization ?? null;
+
+        const resolvedCustomColor = String(
+          resolvedCustomization?.color ??
+            resolvedCustomization?.colour ??
+            matchingCustomCartItem?.color ??
+            "",
+        );
+
+        const customImage =
+          item.productImage ||
+          (resolvedCustomColor.toLowerCase() === "white"
+            ? customProduct?.white_image
+            : customProduct?.black_image) ||
+          "";
 
         return {
           cartKey,
-          item,
+          item: { ...item, customization: resolvedCustomization },
           product,
-          name: getProductName(item, product),
-          price: getProductPrice(item, product),
-          mrp: getProductMrp(product),
-          image: getProductImage(item, product),
-          stock: getSizeStock(product, item.size),
+          customProduct,
+          isCustom,
+          name: isCustom
+            ? item.productName || customProduct?.name || "Custom Product"
+            : getProductName(item, product),
+          price: isCustom
+            ? typeof item.productPrice === "number"
+              ? item.productPrice
+              : Number(customProduct?.price ?? 0)
+            : getProductPrice(item, product),
+          mrp: isCustom
+            ? typeof item.productPrice === "number"
+              ? item.productPrice
+              : Number(customProduct?.price ?? 0)
+            : getProductMrp(product),
+          image: isCustom ? customImage : getProductImage(item, product),
+          stock: isCustom ? 0 : getSizeStock(product, item.size),
+          customization: resolvedCustomization,
+          customColor: resolvedCustomColor,
         };
       });
-  }, [buyNowItem, cartItems, products]);
+  }, [buyNowItem, cartItems, products, customProducts, customCartItems]);
 
   /* ==========================================================
      TOTALS
@@ -931,11 +1099,11 @@ export default function CheckoutPage() {
     const size = String(item.size || "");
 
     if (!productId || !size) return;
-
     if (updatingKey) return;
 
+    const isCustom = item.productType === "custom";
     const product = products[productId];
-    const stock = getSizeStock(product, size);
+    const stock = isCustom ? 0 : getSizeStock(product, size);
 
     if (nextQuantity > 0 && stock > 0 && nextQuantity > stock) {
       toast.error(`Only ${stock} available in size ${size}.`);
@@ -955,6 +1123,81 @@ export default function CheckoutPage() {
         return;
       }
 
+      if (isCustom) {
+        const customization = item.customization ?? null;
+        const color = String(
+          customization?.color ?? customization?.colour ?? "",
+        );
+
+        let query = supabase
+          .from("custom_cart_items")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .eq("custom_product_id", productId)
+          .eq("size", size);
+
+        if (color) query = query.eq("color", color);
+
+        const { data: customItem, error: lookupError } =
+          await query.maybeSingle();
+
+        if (lookupError) throw lookupError;
+
+        if (!customItem?.id) {
+          throw new Error("Custom cart item could not be found.");
+        }
+
+        if (nextQuantity <= 0) {
+          const { error } = await supabase
+            .from("custom_cart_items")
+            .delete()
+            .eq("id", customItem.id)
+            .eq("user_id", session.user.id);
+
+          if (error) throw error;
+
+          setCustomCartItems((current) =>
+            current.filter((entry) => entry.id !== customItem.id),
+          );
+
+          dispatch(
+            deleteItemFromCart({
+              productId,
+              size,
+            }),
+          );
+          return;
+        }
+
+        const { error } = await supabase
+          .from("custom_cart_items")
+          .update({
+            quantity: nextQuantity,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", customItem.id)
+          .eq("user_id", session.user.id);
+
+        if (error) throw error;
+
+        setCustomCartItems((current) =>
+          current.map((entry) =>
+            entry.id === customItem.id
+              ? { ...entry, quantity: nextQuantity }
+              : entry,
+          ),
+        );
+
+        dispatch(
+          updateCartItemQuantity({
+            productId,
+            size,
+            quantity: nextQuantity,
+          }),
+        );
+        return;
+      }
+
       if (nextQuantity <= 0) {
         const { error } = await supabase
           .from("cart_items")
@@ -965,13 +1208,7 @@ export default function CheckoutPage() {
 
         if (error) throw error;
 
-        dispatch(
-          deleteItemFromCart({
-            productId,
-            size,
-          }),
-        );
-
+        dispatch(deleteItemFromCart({ productId, size }));
         return;
       }
 
@@ -1016,7 +1253,6 @@ export default function CheckoutPage() {
       );
     } catch (error) {
       console.error("Checkout cart update failed:", error);
-
       toast.error(
         error instanceof Error ? error.message : "Unable to update cart.",
       );
@@ -1099,6 +1335,9 @@ export default function CheckoutPage() {
         price: entry.price,
         mrp: entry.mrp,
         image: entry.image || null,
+        product_type: entry.item.productType || "normal",
+        is_custom: entry.item.productType === "custom",
+        customization: entry.customization ?? entry.item.customization ?? null,
       }));
 
       const createOrderResponse = await fetch("/api/razorpay/create-order", {
@@ -1218,6 +1457,22 @@ export default function CheckoutPage() {
                     size: entry.item.size,
                   }),
                 );
+              }
+
+              try {
+                await supabase
+                  .from("cart_items")
+                  .delete()
+                  .eq("user_id", session.user.id);
+
+                await supabase
+                  .from("custom_cart_items")
+                  .delete()
+                  .eq("user_id", session.user.id);
+
+                setCustomCartItems([]);
+              } catch (cleanupError) {
+                console.error("Checkout cart cleanup failed:", cleanupError);
               }
 
               window.dispatchEvent(new Event("cart-updated"));
@@ -1858,7 +2113,49 @@ export default function CheckoutPage() {
 
                                 <p className="mt-1 font-mono text-[7px] uppercase tracking-[0.18em] text-[#555]">
                                   Size / {entry.item.size}
+                                  {entry.isCustom && entry.customColor
+                                    ? ` / ${entry.customColor}`
+                                    : ""}
                                 </p>
+
+                                {entry.isCustom && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {(
+                                      [
+                                        [
+                                          "Front",
+                                          entry.customization?.frontImages,
+                                        ],
+                                        [
+                                          "Back",
+                                          entry.customization?.backImages,
+                                        ],
+                                        [
+                                          "Left sleeve",
+                                          entry.customization?.leftSleeveImages,
+                                        ],
+                                        [
+                                          "Right sleeve",
+                                          entry.customization
+                                            ?.rightSleeveImages,
+                                        ],
+                                      ] as Array<[string, unknown]>
+                                    ).map(([label, images]) => {
+                                      const count = Array.isArray(images)
+                                        ? images.length
+                                        : 0;
+                                      if (!count) return null;
+                                      return (
+                                        <span
+                                          key={label}
+                                          className="rounded-full border border-[#DA0D12]/15 bg-[#DA0D12]/[0.05] px-2 py-1 font-mono text-[6px] uppercase tracking-[0.12em] text-[#DA0D12]"
+                                        >
+                                          {label} / {count}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
 
                               <button

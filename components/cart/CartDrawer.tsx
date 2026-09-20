@@ -9,6 +9,7 @@ import {
   deleteItemFromCart,
   incrementQuantity,
 } from "@/lib/features/cart/cartSlice";
+import { supabase } from "@/lib/supabase";
 
 type ReduxCartItem = {
   productId: string;
@@ -68,9 +69,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           cache: "no-store",
         });
 
-        if (!response.ok) return;
-
-        const payload = await response.json();
+        const payload = response.ok ? await response.json() : null;
 
         const list = Array.isArray(payload)
           ? payload
@@ -80,8 +79,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               ? payload.data
               : [];
 
-        if (cancelled) return;
-
         const nextProducts: Record<string, Product> = {};
 
         for (const product of list) {
@@ -89,6 +86,40 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             nextProducts[String(product.id)] = product;
           }
         }
+
+        const customProductIds = Object.values(cartItems)
+          .filter((item) => item.productType === "custom")
+          .map((item) => item.productId)
+          .filter(Boolean);
+
+        if (customProductIds.length > 0) {
+          const uniqueCustomProductIds = [...new Set(customProductIds)];
+
+          const { data: customProducts, error: customProductsError } =
+            await supabase
+              .from("custom_products")
+              .select("id, name, price, black_image, white_image")
+              .in("id", uniqueCustomProductIds);
+
+          if (customProductsError) {
+            console.error(
+              "Custom cart product lookup error:",
+              customProductsError,
+            );
+          }
+
+          for (const customProduct of customProducts ?? []) {
+            nextProducts[String(customProduct.id)] = {
+              id: String(customProduct.id),
+              name: customProduct.name,
+              price: Number(customProduct.price ?? 0),
+              image_url:
+                customProduct.black_image || customProduct.white_image || null,
+            };
+          }
+        }
+
+        if (cancelled) return;
 
         setProducts(nextProducts);
       } catch (error) {
@@ -508,14 +539,14 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
               </div>
 
-              <Link
+              <a
                 href="/checkout"
                 onClick={onClose}
                 className="mt-5 flex w-full items-center justify-center gap-3 rounded-full bg-[#DA0D12] px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-white transition hover:bg-[#80060B]"
               >
                 Proceed To Checkout
                 <span aria-hidden="true">→</span>
-              </Link>
+              </a>
 
               <p className="mt-4 text-center text-[8px] uppercase tracking-[0.16em] text-[#666362]">
                 Secure checkout · Built for the pack

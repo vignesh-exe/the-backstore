@@ -40,6 +40,11 @@ type CartItem = {
   variantDetails?: unknown;
 
   customization?: unknown;
+
+  product_type?: string | null;
+  productType?: string | null;
+  is_custom?: boolean | null;
+  isCustom?: boolean | null;
 };
 
 type OrderAddress = {
@@ -553,21 +558,82 @@ export async function POST(request: Request) {
     }
 
     /* ========================================================
+       DETECT CUSTOM PRODUCTS
+
+       Custom products live in custom_products, while normal
+       products live in products.
+
+       order_items.product_id has a foreign key to products.id,
+       so a custom_products.id must NEVER be written into
+       order_items.product_id.
+
+       The checkout sends product_type/is_custom for custom items.
+       We also verify against custom_products so this API remains
+       safe if an older checkout payload does not include those
+       fields.
+    ======================================================== */
+
+    const productIds = Array.from(
+      new Set(
+        cart
+          .map((item) => getProductId(item))
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+
+    const customProductIds = new Set<string>();
+
+    if (productIds.length > 0) {
+      const { data: customProducts, error: customProductsError } =
+        await supabaseAdmin
+          .from("custom_products")
+          .select("id")
+          .in("id", productIds);
+
+      if (customProductsError) {
+        console.error("Custom product lookup error:", customProductsError);
+
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              customProductsError.message ||
+              "Unable to validate custom products.",
+          },
+          { status: 500 },
+        );
+      }
+
+      for (const customProduct of customProducts ?? []) {
+        if (customProduct?.id) {
+          customProductIds.add(String(customProduct.id));
+        }
+      }
+    }
+
+    const isCustomCartItem = (item: CartItem) => {
+      const explicitType = String(
+        item.product_type ?? item.productType ?? "",
+      ).toLowerCase();
+
+      return (
+        item.is_custom === true ||
+        item.isCustom === true ||
+        explicitType === "custom" ||
+        customProductIds.has(String(getProductId(item) ?? ""))
+      );
+    };
+
+    /* ========================================================
        CREATE ORDER ITEMS
 
-       Actual order_items columns:
+       IMPORTANT:
+       - Normal product -> product_id = products.id
+       - Custom product -> product_id = null
 
-       order_id
-       product_id
-       variant_id
-       product_name
-       variant_details
-       product_image_url
-       sku
-       quantity
-       unit_price
-       mrp
-       total_price
+       Custom product information is preserved inside
+       variant_details so it remains available to the order
+       history without violating order_items_product_id_fkey.
     ======================================================== */
 
     const orderItems = cart.map((item) => {
@@ -579,16 +645,35 @@ export async function POST(request: Request) {
 
       const totalPrice = Number((unitPrice * quantity).toFixed(2));
 
+      const isCustom = isCustomCartItem(item);
+
+      const baseVariantDetails = getVariantDetails(item);
+
+      const variantDetails = isCustom
+        ? {
+            ...(baseVariantDetails &&
+            typeof baseVariantDetails === "object" &&
+            !Array.isArray(baseVariantDetails)
+              ? baseVariantDetails
+              : {}),
+            is_custom: true,
+            custom_product_id: getProductId(item),
+            customization: item.customization ?? null,
+          }
+        : baseVariantDetails;
+
       return {
         order_id: order.id,
 
-        product_id: getProductId(item),
+        // Custom product IDs belong to custom_products, not products.
+        // Keep product_id NULL for custom items because of the FK.
+        product_id: isCustom ? null : getProductId(item),
 
-        variant_id: getVariantId(item),
+        variant_id: isCustom ? null : getVariantId(item),
 
         product_name: getProductName(item),
 
-        variant_details: getVariantDetails(item),
+        variant_details: variantDetails,
 
         product_image_url: getProductImage(item),
 
@@ -641,6 +726,11 @@ export async function POST(request: Request) {
       const productId = getProductId(item);
 
       const purchasedQuantity = getQuantity(item);
+
+      // Custom products do not use the normal products.stock column.
+      if (isCustomCartItem(item)) {
+        continue;
+      }
 
       if (!productId || purchasedQuantity <= 0) {
         continue;
@@ -703,7 +793,21 @@ export async function POST(request: Request) {
       .eq("user_id", user.id);
 
     if (cartError) {
-      console.error("Cart cleanup error:", cartError);
+      console.error("Normal cart cleanup error:", cartError);
+
+      /*
+       * Do not fail the order because the
+       * cart cleanup failed.
+       */
+    }
+
+    const { error: customCartError } = await supabaseAdmin
+      .from("custom_cart_items")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (customCartError) {
+      console.error("Custom cart cleanup error:", customCartError);
 
       /*
        * Do not fail the order because the

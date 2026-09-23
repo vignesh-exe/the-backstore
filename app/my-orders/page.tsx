@@ -219,7 +219,7 @@ function OrderStatusTracker({ status }: { status: string }) {
               <div className="flex min-w-[60px] flex-col items-center">
                 <div
                   className={[
-                    "flex h-7 w-7 items-center justify-center rounded-full border text-[8px] font-bold",
+                    "flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold",
                     completed
                       ? "border-[#DA0D12] bg-[#DA0D12] text-white"
                       : "border-[#2A2A2A] bg-[#111] text-[#555]",
@@ -231,7 +231,7 @@ function OrderStatusTracker({ status }: { status: string }) {
 
                 <span
                   className={[
-                    "mt-2 whitespace-nowrap text-center font-mono text-[6px] uppercase tracking-[0.06em]",
+                    "mt-2 whitespace-nowrap text-center font-mono text-[9px] uppercase tracking-[0.06em]",
                     completed ? "text-[#AAA]" : "text-[#4D4D4D]",
                   ].join(" ")}
                 >
@@ -277,10 +277,10 @@ function SectionHeader({
       </div>
 
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-[#E7E7E5]">{title}</h3>
+        <h3 className="text-[17px] font-semibold text-[#E7E7E5]">{title}</h3>
 
         {subtitle && (
-          <p className="mt-0.5 text-[9px] text-[#555]">{subtitle}</p>
+          <p className="mt-0.5 text-[12px] text-[#555]">{subtitle}</p>
         )}
       </div>
     </div>
@@ -455,22 +455,22 @@ export default function MyOrdersPage() {
               <Package size={19} className="text-[#DA0D12]" />
             </div>
 
-            <p className="mt-4 font-mono text-[7px] uppercase tracking-[0.25em] text-[#DA0D12]">
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.25em] text-[#DA0D12]">
               Orders / Error
             </p>
 
-            <h1 className="mt-2 font-[var(--font-bebas-neue)] text-4xl uppercase text-[#F2F2F0]">
+            <h1 className="mt-2 font-[var(--font-bebas-neue)] text-[39px] uppercase text-[#F2F2F0]">
               Unable To Load Orders
             </h1>
 
-            <p className="mx-auto mt-3 max-w-lg text-xs leading-5 text-[#666]">
+            <p className="mx-auto mt-3 max-w-lg text-[15px] leading-5 text-[#666]">
               {error}
             </p>
 
             <button
               type="button"
               onClick={() => loadOrders(true)}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#DA0D12] px-5 py-3 font-mono text-[8px] uppercase tracking-[0.18em] text-white transition hover:bg-[#B90B10]"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#DA0D12] px-5 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-white transition hover:bg-[#B90B10]"
             >
               <RefreshCw size={12} />
               Try Again
@@ -489,15 +489,15 @@ export default function MyOrdersPage() {
     return (
       <main className="min-h-screen bg-[#080808] px-4 pb-12 pt-28 sm:px-6">
         <div className="mx-auto max-w-[1000px]">
-          <p className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#DA0D12]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#DA0D12]">
             The Backstore / Account
           </p>
 
-          <h1 className="mt-3 font-[var(--font-bebas-neue)] text-5xl uppercase leading-none tracking-tight text-[#F2F2F0] sm:text-6xl">
+          <h1 className="mt-3 font-[var(--font-bebas-neue)] text-[51px] uppercase leading-none tracking-tight text-[#F2F2F0] sm:text-[63px]">
             My Orders
           </h1>
 
-          <p className="mt-3 text-xs text-[#666]">
+          <p className="mt-3 text-[15px] text-[#666]">
             Track your Backstore orders, view order details and manage your
             purchases.
           </p>
@@ -510,22 +510,22 @@ export default function MyOrdersPage() {
                 <ShoppingBag size={19} className="text-[#DA0D12]" />
               </div>
 
-              <p className="mt-4 font-mono text-[7px] uppercase tracking-[0.25em] text-[#DA0D12]">
+              <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.25em] text-[#DA0D12]">
                 Orders / 00
               </p>
 
-              <h2 className="mt-2 font-[var(--font-bebas-neue)] text-4xl uppercase text-[#F2F2F0]">
+              <h2 className="mt-2 font-[var(--font-bebas-neue)] text-[39px] uppercase text-[#F2F2F0]">
                 No Orders Yet
               </h2>
 
-              <p className="mx-auto mt-3 max-w-md text-xs leading-5 text-[#555]">
+              <p className="mx-auto mt-3 max-w-md text-[15px] leading-5 text-[#555]">
                 Your completed orders will appear here once you make your first
                 purchase from The Backstore.
               </p>
 
               <Link
                 href="/"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#DA0D12] px-6 py-3 font-mono text-[8px] uppercase tracking-[0.2em] text-white transition hover:bg-[#B90B10]"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#DA0D12] px-6 py-3 font-mono text-[11px] uppercase tracking-[0.2em] text-white transition hover:bg-[#B90B10]"
               >
                 Start Shopping
                 <span>→</span>
@@ -551,15 +551,15 @@ export default function MyOrdersPage() {
         <section>
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#DA0D12]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#DA0D12]">
                 The Backstore / Account
               </p>
 
-              <h1 className="mt-3 font-[var(--font-bebas-neue)] text-5xl uppercase leading-[0.85] tracking-tight text-[#F2F2F0] sm:text-6xl">
+              <h1 className="mt-3 font-[var(--font-bebas-neue)] text-[51px] uppercase leading-[0.85] tracking-tight text-[#F2F2F0] sm:text-[63px]">
                 My Orders
               </h1>
 
-              <p className="mt-3 max-w-xl text-xs leading-5 text-[#666]">
+              <p className="mt-3 max-w-xl text-[15px] leading-5 text-[#666]">
                 Track your Backstore orders, view order details and manage your
                 purchases.
               </p>
@@ -570,7 +570,7 @@ export default function MyOrdersPage() {
                 type="button"
                 onClick={() => loadOrders(true)}
                 disabled={refreshing}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111] px-3.5 py-2.5 font-mono text-[7px] uppercase tracking-[0.16em] text-[#777] transition hover:border-[#DA0D12]/30 hover:text-[#CBCAC8] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#111] px-3.5 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[#777] transition hover:border-[#DA0D12]/30 hover:text-[#CBCAC8] disabled:opacity-50"
               >
                 <RefreshCw
                   size={11}
@@ -581,7 +581,7 @@ export default function MyOrdersPage() {
 
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#DA0D12] px-3.5 py-2.5 font-mono text-[7px] uppercase tracking-[0.16em] text-white transition hover:bg-[#B90B10]"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#DA0D12] px-3.5 py-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white transition hover:bg-[#B90B10]"
               >
                 <ShoppingBag size={11} />
                 Continue Shopping
@@ -590,11 +590,11 @@ export default function MyOrdersPage() {
           </div>
 
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#101010] px-3 py-1.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#DA0D12] font-mono text-[8px] font-bold text-white">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#DA0D12] font-mono text-[11px] font-bold text-white">
               {orders.length}
             </span>
 
-            <span className="font-mono text-[7px] uppercase tracking-[0.16em] text-[#777]">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#777]">
               {orders.length === 1 ? "Order placed" : "Orders placed"}
             </span>
           </div>
@@ -637,17 +637,17 @@ export default function MyOrdersPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-[#DA0D12]/20 bg-[#DA0D12]/10 px-2 py-1 font-mono text-[6px] font-bold uppercase tracking-[0.15em] text-[#DA0D12]">
+                          <span className="rounded-full border border-[#DA0D12]/20 bg-[#DA0D12]/10 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-[0.15em] text-[#DA0D12]">
                             Order
                           </span>
 
-                          <span className="font-mono text-[7px] uppercase tracking-[0.08em] text-[#666]">
+                          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#666]">
                             {formatDate(order.created_at)}
                           </span>
                         </div>
 
                         <div className="mt-2 flex items-center gap-2">
-                          <h2 className="break-all font-mono text-sm font-bold tracking-[0.03em] text-[#F2F2F0] sm:text-base">
+                          <h2 className="break-all font-mono text-[17px] font-bold tracking-[0.03em] text-[#F2F2F0] sm:text-[19px]">
                             {order.order_number}
                           </h2>
 
@@ -665,7 +665,7 @@ export default function MyOrdersPage() {
                           </button>
                         </div>
 
-                        <p className="mt-1.5 text-[9px] text-[#555]">
+                        <p className="mt-1.5 text-[12px] text-[#555]">
                           Order placed on{" "}
                           <span className="text-[#777]">
                             {formatDateTime(order.created_at)}
@@ -677,7 +677,7 @@ export default function MyOrdersPage() {
 
                       <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
                         <span
-                          className={`rounded-full border px-2.5 py-1.5 font-mono text-[6px] font-bold uppercase tracking-[0.1em] ${getStatusClass(
+                          className={`rounded-full border px-2.5 py-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] ${getStatusClass(
                             order.status,
                           )}`}
                         >
@@ -686,7 +686,7 @@ export default function MyOrdersPage() {
                         </span>
 
                         <span
-                          className={`rounded-full border px-2.5 py-1.5 font-mono text-[6px] font-bold uppercase tracking-[0.1em] ${
+                          className={`rounded-full border px-2.5 py-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] ${
                             order.payment_status === "Paid"
                               ? "border-green-500/20 bg-green-500/10 text-green-500"
                               : "border-yellow-500/20 bg-yellow-500/10 text-yellow-400"
@@ -713,11 +713,11 @@ export default function MyOrdersPage() {
                           />
 
                           <div>
-                            <p className="text-[10px] font-semibold text-[#F2F2F0]">
+                            <p className="text-[13px] font-semibold text-[#F2F2F0]">
                               Order Cancelled
                             </p>
 
-                            <p className="mt-0.5 text-[9px] leading-4 text-[#666]">
+                            <p className="mt-0.5 text-[12px] leading-4 text-[#666]">
                               This order has been cancelled.
                             </p>
                           </div>
@@ -733,11 +733,11 @@ export default function MyOrdersPage() {
                       </div>
 
                       <div className="min-w-0">
-                        <p className="font-mono text-[6px] font-bold uppercase tracking-[0.18em] text-[#DA0D12]">
+                        <p className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-[#DA0D12]">
                           Tracking ID
                         </p>
 
-                        <p className="mt-0.5 text-[9px] leading-4 text-[#666]">
+                        <p className="mt-0.5 text-[12px] leading-4 text-[#666]">
                           Tracking ID will be available after your order reaches{" "}
                           <span className="font-semibold text-[#AAA]">
                             Shipped
@@ -749,7 +749,7 @@ export default function MyOrdersPage() {
 
                     {/* SUMMARY */}
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                       {/* ITEMS */}
 
                       <div className="rounded-xl border border-white/[0.05] bg-[#141414] p-3">
@@ -757,18 +757,18 @@ export default function MyOrdersPage() {
                           <Package size={13} className="text-[#DA0D12]" />
 
                           <div>
-                            <p className="font-mono text-[6px] uppercase tracking-[0.16em] text-[#555]">
+                            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#555]">
                               Items
                             </p>
 
-                            <p className="mt-0.5 text-xs font-semibold text-[#E5E5E3]">
+                            <p className="mt-0.5 text-[15px] font-semibold text-[#E5E5E3]">
                               {itemCount}
                             </p>
                           </div>
                         </div>
 
                         {firstItem && (
-                          <p className="mt-2 truncate text-[8px] text-[#555]">
+                          <p className="mt-2 line-clamp-2 break-words text-[11px] text-[#555]">
                             {firstItem.product_name}
                             {items.length > 1 && ` + ${items.length - 1} more`}
                           </p>
@@ -782,17 +782,17 @@ export default function MyOrdersPage() {
                           <CreditCard size={13} className="text-[#DA0D12]" />
 
                           <div className="min-w-0">
-                            <p className="font-mono text-[6px] uppercase tracking-[0.16em] text-[#555]">
+                            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#555]">
                               Payment
                             </p>
 
-                            <p className="mt-0.5 truncate text-[10px] font-semibold text-[#E5E5E3]">
+                            <p className="mt-0.5 break-words text-[13px] font-semibold text-[#E5E5E3]">
                               {order.payment_method}
                             </p>
                           </div>
                         </div>
 
-                        <p className="mt-2 text-[8px] text-[#555]">
+                        <p className="mt-2 text-[11px] text-[#555]">
                           Status:{" "}
                           <span className="text-green-500">
                             {order.payment_status}
@@ -807,11 +807,11 @@ export default function MyOrdersPage() {
                           <ShoppingBag size={13} className="text-white" />
 
                           <div>
-                            <p className="font-mono text-[6px] uppercase tracking-[0.16em] text-white/60">
+                            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/60">
                               Total
                             </p>
 
-                            <p className="mt-0.5 text-sm font-bold text-white">
+                            <p className="mt-0.5 text-[17px] font-bold text-white">
                               {formatPrice(order.total_amount)}
                             </p>
                           </div>
@@ -821,13 +821,13 @@ export default function MyOrdersPage() {
 
                     {/* ACTIONS */}
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                       <button
                         type="button"
                         onClick={() =>
                           setExpandedOrder(isExpanded ? null : order.id)
                         }
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#151515] px-3 py-2.5 font-mono text-[7px] uppercase tracking-[0.12em] text-[#AAA] transition hover:border-[#DA0D12]/30 hover:text-white"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#151515] px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] whitespace-nowrap text-[#AAA] transition hover:border-[#DA0D12]/30 hover:text-white"
                       >
                         {isExpanded ? (
                           <ChevronUp size={11} />
@@ -841,7 +841,7 @@ export default function MyOrdersPage() {
                       <button
                         type="button"
                         disabled={order.status === "Cancelled"}
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-red-500/15 bg-red-500/[0.03] px-3 py-2.5 font-mono text-[7px] uppercase tracking-[0.12em] text-[#DA0D12] transition hover:bg-red-500/[0.07] disabled:cursor-not-allowed disabled:opacity-30"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-red-500/15 bg-red-500/[0.03] px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] whitespace-nowrap text-[#DA0D12] transition hover:bg-red-500/[0.07] disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <CircleX size={11} />
                         Cancel
@@ -850,7 +850,7 @@ export default function MyOrdersPage() {
                       <button
                         type="button"
                         disabled={currentIndex < 3}
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#151515] px-3 py-2.5 font-mono text-[7px] uppercase tracking-[0.12em] text-[#666] transition hover:text-[#AAA] disabled:cursor-not-allowed disabled:opacity-30"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#151515] px-3 py-2.5 font-mono text-[10px] uppercase tracking-[0.12em] whitespace-nowrap text-[#666] transition hover:text-[#AAA] disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Download size={11} />
                         Invoice
@@ -895,7 +895,7 @@ export default function MyOrdersPage() {
                                   key={item.id}
                                   className="rounded-xl border border-white/[0.05] bg-[#151515] p-3"
                                 >
-                                  <div className="flex gap-3">
+                                  <div className="flex gap-3 sm:gap-4">
                                     {/* IMAGE */}
 
                                     <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-white/[0.05] bg-[#1B1B1B]">
@@ -918,20 +918,20 @@ export default function MyOrdersPage() {
                                     {/* INFO */}
 
                                     <div className="min-w-0 flex-1">
-                                      <div className="flex items-start justify-between gap-2">
+                                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                         <div className="min-w-0">
-                                          <h4 className="truncate text-xs font-semibold text-[#E5E5E3]">
+                                          <h4 className="truncate text-[15px] font-semibold text-[#E5E5E3]">
                                             {item.product_name}
                                           </h4>
 
                                           {item.sku && (
-                                            <p className="mt-0.5 font-mono text-[6px] uppercase tracking-[0.12em] text-[#555]">
+                                            <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#555]">
                                               SKU: {item.sku}
                                             </p>
                                           )}
                                         </div>
 
-                                        <p className="shrink-0 text-xs font-bold text-[#F2F2F0]">
+                                        <p className="shrink-0 text-[15px] font-bold text-[#F2F2F0]">
                                           {formatPrice(item.total_price)}
                                         </p>
                                       </div>
@@ -943,7 +943,7 @@ export default function MyOrdersPage() {
                                           {variants.map(([key, value]) => (
                                             <span
                                               key={`${item.id}-${key}`}
-                                              className="rounded-full border border-white/10 bg-[#1A1A1A] px-2 py-1 text-[7px] text-[#777]"
+                                              className="rounded-full border border-white/10 bg-[#1A1A1A] px-2 py-1 text-[10px] text-[#777]"
                                             >
                                               <span className="text-[#555]">
                                                 {key}:
@@ -957,14 +957,14 @@ export default function MyOrdersPage() {
                                       {/* PRICE META */}
 
                                       <div className="mt-2 flex flex-wrap gap-1">
-                                        <span className="rounded-full bg-[#1A1A1A] px-2 py-1 text-[7px] text-[#777]">
+                                        <span className="rounded-full bg-[#1A1A1A] px-2 py-1 text-[10px] text-[#777]">
                                           Qty:{" "}
                                           <span className="text-[#AAA]">
                                             {item.quantity}
                                           </span>
                                         </span>
 
-                                        <span className="rounded-full bg-[#1A1A1A] px-2 py-1 text-[7px] text-[#777]">
+                                        <span className="rounded-full bg-[#1A1A1A] px-2 py-1 text-[10px] text-[#777]">
                                           Unit:{" "}
                                           <span className="text-[#AAA]">
                                             {formatPrice(item.unit_price)}
@@ -973,7 +973,7 @@ export default function MyOrdersPage() {
 
                                         {Number(item.mrp) >
                                           Number(item.unit_price) && (
-                                          <span className="rounded-full bg-[#1A1A1A] px-2 py-1 text-[7px] text-[#555]">
+                                          <span className="rounded-full bg-[#1A1A1A] px-2 py-1 text-[10px] text-[#555]">
                                             MRP:{" "}
                                             <span className="line-through">
                                               {formatPrice(item.mrp)}
@@ -986,11 +986,11 @@ export default function MyOrdersPage() {
 
                                       {variants.length > 0 && (
                                         <div className="mt-2 rounded-lg border border-white/[0.05] bg-[#111] px-2.5 py-2">
-                                          <p className="font-mono text-[6px] uppercase tracking-[0.15em] text-[#555]">
+                                          <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#555]">
                                             Product Details
                                           </p>
 
-                                          <p className="mt-1 text-[8px] text-[#777]">
+                                          <p className="mt-1 text-[11px] text-[#777]">
                                             {getVariantText(
                                               item.variant_details,
                                             )}
@@ -1017,7 +1017,7 @@ export default function MyOrdersPage() {
                           />
 
                           <div className="rounded-lg bg-[#151515] p-3">
-                            <p className="text-[10px] font-semibold text-[#CBCAC8]">
+                            <p className="text-[13px] font-semibold text-[#CBCAC8]">
                               {order.customer_name}
                             </p>
 
@@ -1026,25 +1026,25 @@ export default function MyOrdersPage() {
                                 {addressLines.map((line, index) => (
                                   <p
                                     key={`${line}-${index}`}
-                                    className="text-[9px] leading-4 text-[#777]"
+                                    className="text-[12px] leading-4 text-[#777]"
                                   >
                                     {line}
                                   </p>
                                 ))}
                               </div>
                             ) : (
-                              <p className="mt-2 text-[9px] text-[#555]">
+                              <p className="mt-2 text-[12px] text-[#555]">
                                 Delivery address unavailable.
                               </p>
                             )}
 
                             {order.customer_phone && (
                               <div className="mt-3 border-t border-white/[0.05] pt-2.5">
-                                <p className="font-mono text-[6px] uppercase tracking-[0.15em] text-[#555]">
+                                <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#555]">
                                   Phone
                                 </p>
 
-                                <p className="mt-0.5 text-[9px] text-[#888]">
+                                <p className="mt-0.5 text-[12px] text-[#888]">
                                   {order.customer_phone}
                                 </p>
                               </div>
@@ -1065,31 +1065,31 @@ export default function MyOrdersPage() {
 
                           <div className="grid gap-2 md:grid-cols-3">
                             <div className="rounded-lg bg-[#151515] p-3">
-                              <p className="font-mono text-[6px] uppercase tracking-[0.14em] text-[#555]">
+                              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#555]">
                                 Name
                               </p>
 
-                              <p className="mt-1 text-[9px] font-semibold text-[#CBCAC8]">
+                              <p className="mt-1 text-[12px] font-semibold text-[#CBCAC8]">
                                 {order.customer_name}
                               </p>
                             </div>
 
                             <div className="rounded-lg bg-[#151515] p-3">
-                              <p className="font-mono text-[6px] uppercase tracking-[0.14em] text-[#555]">
+                              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#555]">
                                 Email
                               </p>
 
-                              <p className="mt-1 break-all text-[9px] font-semibold text-[#CBCAC8]">
+                              <p className="mt-1 break-all text-[12px] font-semibold text-[#CBCAC8]">
                                 {order.customer_email}
                               </p>
                             </div>
 
                             <div className="rounded-lg bg-[#151515] p-3">
-                              <p className="font-mono text-[6px] uppercase tracking-[0.14em] text-[#555]">
+                              <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#555]">
                                 Phone
                               </p>
 
-                              <p className="mt-1 text-[9px] font-semibold text-[#CBCAC8]">
+                              <p className="mt-1 text-[12px] font-semibold text-[#CBCAC8]">
                                 {order.customer_phone ?? "—"}
                               </p>
                             </div>
@@ -1118,21 +1118,21 @@ export default function MyOrdersPage() {
 
                           <div className="space-y-2">
                             <div className="flex items-center justify-between rounded-lg bg-[#151515] p-3">
-                              <span className="text-[9px] text-[#666]">
+                              <span className="text-[12px] text-[#666]">
                                 Method
                               </span>
 
-                              <span className="text-[9px] font-semibold text-[#CBCAC8]">
+                              <span className="text-[12px] font-semibold text-[#CBCAC8]">
                                 {order.payment_method}
                               </span>
                             </div>
 
                             <div className="flex items-center justify-between rounded-lg bg-[#151515] p-3">
-                              <span className="text-[9px] text-[#666]">
+                              <span className="text-[12px] text-[#666]">
                                 Status
                               </span>
 
-                              <span className="rounded-full bg-green-500/10 px-2 py-1 text-[8px] font-semibold text-green-500">
+                              <span className="rounded-full bg-green-500/10 px-2 py-1 text-[11px] font-semibold text-green-500">
                                 {order.payment_status}
                               </span>
                             </div>
@@ -1152,32 +1152,32 @@ export default function MyOrdersPage() {
 
                           <div className="space-y-2.5">
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] text-[#666]">
+                              <span className="text-[12px] text-[#666]">
                                 Subtotal
                               </span>
 
-                              <span className="text-[9px] font-semibold text-[#CBCAC8]">
+                              <span className="text-[12px] font-semibold text-[#CBCAC8]">
                                 {formatPrice(order.subtotal)}
                               </span>
                             </div>
 
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] text-[#666]">
+                              <span className="text-[12px] text-[#666]">
                                 Delivery
                               </span>
 
-                              <span className="text-[9px] font-semibold text-[#CBCAC8]">
+                              <span className="text-[12px] font-semibold text-[#CBCAC8]">
                                 {formatPrice(order.shipping_amount)}
                               </span>
                             </div>
 
                             {Number(order.discount_amount ?? 0) > 0 && (
                               <div className="flex items-center justify-between">
-                                <span className="text-[9px] text-[#666]">
+                                <span className="text-[12px] text-[#666]">
                                   Discount
                                 </span>
 
-                                <span className="text-[9px] font-semibold text-green-500">
+                                <span className="text-[12px] font-semibold text-green-500">
                                   -{formatPrice(order.discount_amount)}
                                 </span>
                               </div>
@@ -1185,11 +1185,11 @@ export default function MyOrdersPage() {
 
                             <div className="border-t border-white/[0.06] pt-3">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-semibold text-[#CBCAC8]">
+                                <span className="text-[13px] font-semibold text-[#CBCAC8]">
                                   Total Paid
                                 </span>
 
-                                <span className="text-base font-bold text-[#DA0D12]">
+                                <span className="text-[19px] font-bold text-[#DA0D12]">
                                   {formatPrice(order.total_amount)}
                                 </span>
                               </div>
@@ -1206,17 +1206,17 @@ export default function MyOrdersPage() {
                             </div>
 
                             <div>
-                              <p className="font-mono text-[6px] uppercase tracking-[0.16em] text-white/60">
+                              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/60">
                                 Current Status
                               </p>
 
-                              <p className="mt-0.5 text-sm font-bold text-white">
+                              <p className="mt-0.5 text-[17px] font-bold text-white">
                                 {order.status}
                               </p>
                             </div>
                           </div>
 
-                          <p className="mt-3 text-[9px] leading-4 text-white/70">
+                          <p className="mt-3 text-[12px] leading-4 text-white/70">
                             We'll keep your order updated as it moves through
                             the delivery process.
                           </p>
@@ -1235,13 +1235,13 @@ export default function MyOrdersPage() {
         ================================================== */}
 
         <div className="mt-8 flex items-center justify-between border-t border-white/[0.05] pt-4">
-          <p className="font-mono text-[6px] uppercase tracking-[0.16em] text-[#3F3F3F]">
+          <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#3F3F3F]">
             The Backstore / Made in India / Wear it different.
           </p>
 
           <Link
             href="/privacy-policy"
-            className="font-mono text-[6px] uppercase tracking-[0.16em] text-[#444] transition hover:text-[#DA0D12]"
+            className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#444] transition hover:text-[#DA0D12]"
           >
             Privacy
           </Link>

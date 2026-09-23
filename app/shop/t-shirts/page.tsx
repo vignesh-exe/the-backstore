@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
@@ -34,6 +35,7 @@ type Product = {
   status: string;
   featured: boolean;
   tags: string[];
+  sizes: string[];
   product_images: ProductImage[];
 };
 
@@ -57,6 +59,15 @@ const categories = [
   "Footwear",
 ];
 
+const priceRanges = [
+  { label: "Under ₹500", min: 0, max: 499 },
+  { label: "₹500 – ₹999", min: 500, max: 999 },
+  { label: "₹1,000 – ₹1,499", min: 1000, max: 1499 },
+  { label: "₹1,500+", min: 1500, max: Infinity },
+];
+
+const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
 function getDiscount(price: number, mrp: number) {
   if (!mrp || mrp <= price) return 0;
   return Math.round(((mrp - price) / mrp) * 100);
@@ -70,6 +81,79 @@ function getProductImage(product: Product) {
   });
 
   return images[0]?.image_url || "";
+}
+
+function normalizeSizes(raw: any): string[] {
+  const source =
+    raw?.sizes ??
+    raw?.available_sizes ??
+    raw?.size ??
+    raw?.variant_sizes ??
+    raw?.variants ??
+    raw?.product_variants ??
+    raw?.variant_details;
+
+  if (!source) return [];
+
+  const values: string[] = [];
+
+  const addValue = (value: any) => {
+    if (value === null || value === undefined) return;
+
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+
+      if (
+        (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+        (trimmed.startsWith("{") && trimmed.endsWith("}"))
+      ) {
+        try {
+          addValue(JSON.parse(trimmed));
+          return;
+        } catch {
+          // Fall through and treat it as a literal size.
+        }
+      }
+
+      if (trimmed) values.push(trimmed.toUpperCase());
+      return;
+    }
+
+    if (typeof value === "number") {
+      const normalized = String(value).trim().toUpperCase();
+      if (normalized) values.push(normalized);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach(addValue);
+      return;
+    }
+
+    if (typeof value === "object") {
+      const candidate =
+        value.size ??
+        value.name ??
+        value.label ??
+        value.variant_size ??
+        value.value;
+
+      if (candidate !== undefined) {
+        addValue(candidate);
+        return;
+      }
+
+      Object.keys(value).forEach((key) => {
+        if (/^(XS|S|M|L|XL|XXL|XXXL)$/i.test(key.trim())) {
+          addValue(key);
+        }
+      });
+    }
+  };
+
+  addValue(source);
+
+  return Array.from(new Set(values));
 }
 
 function normalizeProduct(raw: any): Product {
@@ -90,6 +174,7 @@ function normalizeProduct(raw: any): Product {
     status: String(raw?.status ?? "Active"),
     featured: Boolean(raw?.featured ?? raw?.is_featured),
     tags,
+    sizes: normalizeSizes(raw),
     product_images: Array.isArray(raw?.product_images)
       ? raw.product_images
       : [],
@@ -205,7 +290,7 @@ function ProductArtwork({
             <PawIcon className="mx-auto h-12 w-12 text-[#DA0D12]" />
 
             <div
-              className="mt-2 text-[27px] leading-none text-white"
+              className="mt-2 text-[29px] leading-none text-white"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -213,13 +298,13 @@ function ProductArtwork({
               BACKSTORE
             </div>
 
-            <div className="mt-1 text-[6px] font-bold uppercase tracking-[0.3em] text-white/40">
+            <div className="mt-1 text-[8px] font-bold uppercase tracking-[0.3em] text-white/40">
               Made For The Pack
             </div>
           </div>
         </div>
 
-        <span className="absolute bottom-5 left-5 font-mono text-[7px] uppercase tracking-[0.2em] text-white/20">
+        <span className="absolute bottom-5 left-5 font-mono text-[9px] uppercase tracking-[0.2em] text-white/20">
           BS / 001
         </span>
       </div>
@@ -242,7 +327,7 @@ function ProductArtwork({
 
           <div className="relative z-10 rotate-[-5deg] px-4 text-center">
             <div
-              className="text-[42px] leading-[0.75] text-white"
+              className="text-[44px] leading-[0.75] text-white"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -251,7 +336,7 @@ function ProductArtwork({
             </div>
 
             <div
-              className="text-[42px] leading-[0.75] text-[#DA0D12]"
+              className="text-[44px] leading-[0.75] text-[#DA0D12]"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -259,13 +344,13 @@ function ProductArtwork({
               RULES
             </div>
 
-            <div className="mt-3 inline-block bg-white px-2 py-1 text-[6px] font-black uppercase tracking-[0.2em] text-black">
+            <div className="mt-3 inline-block bg-white px-2 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-black">
               EST. 2026
             </div>
           </div>
         </div>
 
-        <span className="absolute bottom-5 right-5 font-mono text-[7px] text-black/30">
+        <span className="absolute bottom-5 right-5 font-mono text-[9px] text-black/30">
           DROP / 002
         </span>
       </div>
@@ -291,12 +376,12 @@ function ProductArtwork({
           />
 
           <div className="relative z-10 text-center">
-            <div className="mb-2 text-[7px] font-bold uppercase tracking-[0.35em] text-[#DA0D12]">
+            <div className="mb-2 text-[9px] font-bold uppercase tracking-[0.35em] text-[#DA0D12]">
               Anime Division
             </div>
 
             <div
-              className="text-[48px] leading-[0.75] text-white"
+              className="text-[50px] leading-[0.75] text-white"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -305,7 +390,7 @@ function ProductArtwork({
             </div>
 
             <div
-              className="text-[28px] leading-none text-[#DA0D12]"
+              className="text-[30px] leading-none text-[#DA0D12]"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -315,7 +400,7 @@ function ProductArtwork({
           </div>
         </div>
 
-        <span className="absolute bottom-5 left-5 font-mono text-[7px] text-white/20">
+        <span className="absolute bottom-5 left-5 font-mono text-[9px] text-white/20">
           ANIME / 003
         </span>
       </div>
@@ -336,12 +421,12 @@ function ProductArtwork({
         />
 
         <div className="relative z-10 text-center">
-          <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/40">
+          <div className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/40">
             The Backstore
           </div>
 
           <div
-            className="mt-3 text-[45px] leading-[0.72] text-white"
+            className="mt-3 text-[47px] leading-[0.72] text-white"
             style={{
               fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
             }}
@@ -350,7 +435,7 @@ function ProductArtwork({
           </div>
 
           <div
-            className="text-[45px] leading-[0.72] text-[#DA0D12]"
+            className="text-[47px] leading-[0.72] text-[#DA0D12]"
             style={{
               fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
             }}
@@ -360,7 +445,7 @@ function ProductArtwork({
         </div>
       </div>
 
-      <span className="absolute bottom-5 right-5 font-mono text-[7px] text-black/30">
+      <span className="absolute bottom-5 right-5 font-mono text-[9px] text-black/30">
         STREET / 004
       </span>
     </div>
@@ -427,7 +512,7 @@ function ProductCard({
         {/* Tiny discount marker */}
         {discount > 0 && (
           <div className="absolute bottom-3 left-3 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border border-white/[0.10] bg-[#DA0D12]/95 px-1.5 backdrop-blur-md shadow-[0_8px_20px_rgba(218,13,18,0.18)]">
-            <span className="font-[var(--font-outfit)] text-[7px] font-bold leading-none tracking-[-0.02em] text-white">
+            <span className="font-[var(--font-outfit)] text-[9px] font-bold leading-none tracking-[-0.02em] text-white">
               -{discount}%
             </span>
           </div>
@@ -464,7 +549,7 @@ function ProductCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2
-              className="line-clamp-2 text-[24px] leading-[0.82] text-[#CBCAC8] sm:text-[29px]"
+              className="line-clamp-2 text-[26px] leading-[0.82] text-[#CBCAC8] sm:text-[31px]"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -472,7 +557,7 @@ function ProductCard({
               {product.name}
             </h2>
 
-            <p className="mt-3 line-clamp-1 text-[8px] uppercase tracking-[0.22em] text-[#666362] sm:text-[9px]">
+            <p className="mt-3 line-clamp-1 text-[10px] uppercase tracking-[0.22em] text-[#666362] sm:text-[11px]">
               {product.category}
               {product.collection ? ` / ${product.collection}` : ""}
             </p>
@@ -480,12 +565,12 @@ function ProductCard({
 
           {/* Price stays visually aligned with the product title block */}
           <div className="shrink-0 pt-1 text-right">
-            <span className="font-mono text-[12px] font-medium tracking-[-0.02em] text-[#CBCAC8]/80 sm:text-[14px]">
+            <span className="font-mono text-[14px] font-medium tracking-[-0.02em] text-[#CBCAC8]/80 sm:text-[16px]">
               {formatPrice(product.price)}
             </span>
 
             {product.mrp > product.price && (
-              <span className="mt-1 block font-mono text-[8px] text-[#666362] line-through sm:text-[9px]">
+              <span className="mt-1 block font-mono text-[10px] text-[#666362] line-through sm:text-[11px]">
                 {formatPrice(product.mrp)}
               </span>
             )}
@@ -508,6 +593,8 @@ export default function TshirtsPage() {
     useState("All Collections");
 
   const [selectedCategory, setSelectedCategory] = useState("All Products");
+  const [selectedPrice, setSelectedPrice] = useState("All Prices");
+  const [selectedSize, setSelectedSize] = useState("All Sizes");
 
   const [sort, setSort] = useState("featured");
 
@@ -737,6 +824,10 @@ export default function TshirtsPage() {
   };
 
   const filteredProducts = useMemo(() => {
+    const activePriceRange = priceRanges.find(
+      (range) => range.label === selectedPrice,
+    );
+
     return products
       .filter((product) => {
         if (selectedCollection === "All Collections") {
@@ -751,6 +842,23 @@ export default function TshirtsPage() {
         }
 
         return product.category === selectedCategory;
+      })
+      .filter((product) => {
+        if (selectedPrice === "All Prices" || !activePriceRange) {
+          return true;
+        }
+
+        return (
+          product.price >= activePriceRange.min &&
+          product.price <= activePriceRange.max
+        );
+      })
+      .filter((product) => {
+        if (selectedSize === "All Sizes") {
+          return true;
+        }
+
+        return product.sizes.includes(selectedSize);
       })
       .sort((a, b) => {
         if (sort === "price-low") {
@@ -767,7 +875,27 @@ export default function TshirtsPage() {
 
         return a.name.localeCompare(b.name);
       });
-  }, [products, selectedCollection, selectedCategory, sort]);
+  }, [
+    products,
+    selectedCollection,
+    selectedCategory,
+    selectedPrice,
+    selectedSize,
+    sort,
+  ]);
+
+  const activeFilterCount =
+    (selectedCollection !== "All Collections" ? 1 : 0) +
+    (selectedCategory !== "All Products" ? 1 : 0) +
+    (selectedPrice !== "All Prices" ? 1 : 0) +
+    (selectedSize !== "All Sizes" ? 1 : 0);
+
+  const clearFilters = () => {
+    setSelectedCollection("All Collections");
+    setSelectedCategory("All Products");
+    setSelectedPrice("All Prices");
+    setSelectedSize("All Sizes");
+  };
 
   return (
     <main className="min-h-screen bg-[#080808] px-4 pb-24 pt-32 text-[#CBCAC8]">
@@ -782,13 +910,13 @@ export default function TshirtsPage() {
               <div className="mb-3 flex items-center gap-2">
                 <PawIcon className="h-3 w-3 text-[#DA0D12]" />
 
-                <p className="font-[var(--font-outfit)] text-[8px] font-semibold uppercase tracking-[0.3em] text-[#DA0D12]">
+                <p className="font-[var(--font-outfit)] text-[10px] font-semibold uppercase tracking-[0.3em] text-[#DA0D12]">
                   The Backstore / Collection 01
                 </p>
               </div>
 
               <h1
-                className="text-[clamp(4.5rem,10vw,8.5rem)] leading-[0.78] tracking-[0.01em] text-[#CBCAC8]"
+                className="text-[calc(clamp(4.5rem,10vw,8.5rem)+2px)] leading-[0.78] tracking-[0.01em] text-[#CBCAC8]"
                 style={{
                   fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                 }}
@@ -799,7 +927,7 @@ export default function TshirtsPage() {
               <div className="mt-5 flex items-center gap-3">
                 <span className="h-px w-10 bg-[#DA0D12]" />
 
-                <span className="font-[var(--font-outfit)] text-[8px] uppercase tracking-[0.2em] text-[#666362]">
+                <span className="font-[var(--font-outfit)] text-[10px] uppercase tracking-[0.2em] text-[#666362]">
                   {products.length} pieces / limited collection
                 </span>
               </div>
@@ -807,16 +935,15 @@ export default function TshirtsPage() {
 
             {/* Desktop sort */}
             <div className="hidden md:block">
-              <label className="mb-2 block text-[7px] font-semibold uppercase tracking-[0.2em] text-[#666362]">
+              <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#666362]">
                 Sort Collection
               </label>
 
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value)}
-                className="h-10 min-w-[180px] rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[9px] text-[#CBCAC8] outline-none transition-colors focus:border-[#DA0D12]/50"
+                className="h-10 min-w-[180px] rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[11px] text-[#CBCAC8] outline-none transition-colors focus:border-[#DA0D12]/50"
               >
-                <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
               </select>
@@ -833,53 +960,132 @@ export default function TshirtsPage() {
         <div className="mb-5 flex items-center justify-between md:hidden">
           <button
             type="button"
-            onClick={() => setMobileFiltersOpen((current) => !current)}
-            className="flex h-10 items-center gap-2 rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[8px] font-semibold uppercase tracking-[0.15em] text-[#CBCAC8]"
+            onClick={() => setMobileFiltersOpen(true)}
+            className="flex h-10 items-center gap-2 rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#CBCAC8]"
           >
             <FilterIcon />
             Filters
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#DA0D12] px-1 text-[9px] text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
 
           <select
             value={sort}
             onChange={(event) => setSort(event.target.value)}
-            className="h-10 rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[8px] text-[#CBCAC8] outline-none"
+            className="h-10 rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[10px] text-[#CBCAC8] outline-none"
           >
-            <option value="featured">Featured</option>
             <option value="price-low">Price: Low</option>
             <option value="price-high">Price: High</option>
           </select>
         </div>
 
         {/* ========================================================
-            MOBILE FILTERS
+            MOBILE FILTER BOTTOM SHEET
         ======================================================== */}
 
-        {mobileFiltersOpen && (
-          <div className="mb-5 rounded-[20px] border border-[#CBCAC8]/10 bg-[#111111] p-5 md:hidden">
-            <FilterSection
-              title="Collections"
-              items={collections}
-              selected={selectedCollection}
-              onSelect={(value) => {
-                setSelectedCollection(value);
-                setMobileFiltersOpen(false);
-              }}
-            />
+        {mobileFiltersOpen && typeof document !== "undefined"
+          ? createPortal(
+              <div
+                className="fixed inset-0 z-[100] md:hidden"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Product filters"
+              >
+                <button
+                  type="button"
+                  aria-label="Close filters"
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="absolute inset-0 h-full w-full bg-black/70 backdrop-blur-[2px]"
+                />
 
-            <div className="mt-6">
-              <FilterSection
-                title="Categories"
-                items={categories}
-                selected={selectedCategory}
-                onSelect={(value) => {
-                  setSelectedCategory(value);
-                  setMobileFiltersOpen(false);
-                }}
-              />
-            </div>
-          </div>
-        )}
+                <div className="fixed inset-x-0 bottom-0 z-[101] flex h-[min(90dvh,760px)] max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-t border-[#CBCAC8]/10 bg-[#111111] shadow-[0_-24px_80px_rgba(0,0,0,0.55)]">
+                  <div className="flex shrink-0 justify-center pt-3">
+                    <span className="h-1 w-10 rounded-full bg-[#CBCAC8]/20" />
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between border-b border-[#CBCAC8]/10 px-5 pb-4 pt-3">
+                    <div>
+                      <h2
+                        className="text-[26px] leading-none text-[#CBCAC8]"
+                        style={{
+                          fontFamily:
+                            "var(--font-bebas-neue), Impact, sans-serif",
+                        }}
+                      >
+                        FILTERS
+                      </h2>
+                      <p className="mt-1 text-[9px] uppercase tracking-[0.16em] text-[#666362]">
+                        {activeFilterCount > 0
+                          ? `${activeFilterCount} active`
+                          : "Refine the collection"}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
+                    <FilterSection
+                      title="Collections"
+                      items={collections}
+                      selected={selectedCollection}
+                      onSelect={setSelectedCollection}
+                    />
+
+                    <div className="my-6 h-px bg-[#CBCAC8]/8" />
+
+                    <FilterSection
+                      title="Categories"
+                      items={categories}
+                      selected={selectedCategory}
+                      onSelect={setSelectedCategory}
+                    />
+
+                    <div className="my-6 h-px bg-[#CBCAC8]/8" />
+
+                    <FilterSection
+                      title="Price"
+                      items={[
+                        "All Prices",
+                        ...priceRanges.map((range) => range.label),
+                      ]}
+                      selected={selectedPrice}
+                      onSelect={setSelectedPrice}
+                    />
+
+                    <div className="my-6 h-px bg-[#CBCAC8]/8" />
+
+                    <FilterSection
+                      title="Size"
+                      items={["All Sizes", ...sizes]}
+                      selected={selectedSize}
+                      onSelect={setSelectedSize}
+                    />
+                  </div>
+
+                  <div className="shrink-0 border-t border-[#CBCAC8]/10 bg-[#111111] px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                    <button
+                      type="button"
+                      onClick={() => setMobileFiltersOpen(false)}
+                      className="flex h-12 w-full items-center justify-center rounded-full bg-[#DA0D12] text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
+                    >
+                      Show {filteredProducts.length} Products
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
 
         {/* ========================================================
             CONTENT
@@ -908,17 +1114,46 @@ export default function TshirtsPage() {
                 onSelect={setSelectedCategory}
               />
 
+              <div className="my-6 h-px bg-[#CBCAC8]/8" />
+
+              <FilterSection
+                title="Price"
+                items={[
+                  "All Prices",
+                  ...priceRanges.map((range) => range.label),
+                ]}
+                selected={selectedPrice}
+                onSelect={setSelectedPrice}
+              />
+
+              <div className="my-6 h-px bg-[#CBCAC8]/8" />
+
+              <FilterSection
+                title="Size"
+                items={["All Sizes", ...sizes]}
+                selected={selectedSize}
+                onSelect={setSelectedSize}
+              />
+
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 w-full text-left text-[9px] font-semibold uppercase tracking-[0.16em] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+              >
+                Clear all filters
+              </button>
+
               {/* Sidebar footer */}
               <div className="mt-7 rounded-[14px] bg-[#DA0D12]/8 p-3">
                 <div className="flex items-center gap-2">
                   <PawIcon className="h-3 w-3 text-[#DA0D12]" />
 
-                  <span className="text-[7px] font-semibold uppercase tracking-[0.15em] text-[#DA0D12]">
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-[#DA0D12]">
                     Backstore
                   </span>
                 </div>
 
-                <p className="mt-2 text-[7px] leading-relaxed text-[#666362]">
+                <p className="mt-2 text-[9px] leading-relaxed text-[#666362]">
                   Designs made from obsession, creativity and everyday culture.
                 </p>
               </div>
@@ -931,7 +1166,7 @@ export default function TshirtsPage() {
 
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-[8px] uppercase tracking-[0.2em] text-[#666362]">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#666362]">
                 Showing{" "}
                 <span className="text-[#CBCAC8]">
                   {filteredProducts.length}
@@ -941,7 +1176,7 @@ export default function TshirtsPage() {
 
               <div className="hidden items-center gap-2 sm:flex">
                 <span className="h-1 w-1 rounded-full bg-[#DA0D12]" />
-                <span className="text-[7px] uppercase tracking-[0.18em] text-[#666362]">
+                <span className="text-[9px] uppercase tracking-[0.18em] text-[#666362]">
                   Fresh Drop
                 </span>
               </div>
@@ -969,14 +1204,14 @@ export default function TshirtsPage() {
                 <div className="text-center">
                   <PawIcon className="mx-auto h-7 w-7 text-[#DA0D12]" />
                   <h2
-                    className="mt-4 text-4xl text-[#CBCAC8]"
+                    className="mt-4 text-[38px] text-[#CBCAC8]"
                     style={{
                       fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                     }}
                   >
                     PRODUCTS OFFLINE
                   </h2>
-                  <p className="mx-auto mt-2 max-w-md text-[9px] leading-relaxed text-[#666362]">
+                  <p className="mx-auto mt-2 max-w-md text-[11px] leading-relaxed text-[#666362]">
                     {loadError}
                   </p>
                 </div>
@@ -1001,7 +1236,7 @@ export default function TshirtsPage() {
                   <PawIcon className="mx-auto h-7 w-7 text-[#DA0D12]" />
 
                   <h2
-                    className="mt-4 text-4xl text-[#CBCAC8]"
+                    className="mt-4 text-[38px] text-[#CBCAC8]"
                     style={{
                       fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                     }}
@@ -1009,7 +1244,7 @@ export default function TshirtsPage() {
                     NO DROPS FOUND
                   </h2>
 
-                  <p className="mt-2 text-[8px] uppercase tracking-[0.18em] text-[#666362]">
+                  <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-[#666362]">
                     Try another collection
                   </p>
                 </div>
@@ -1049,7 +1284,7 @@ function FilterSection({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h3
-          className="text-[22px] leading-none text-[#CBCAC8]"
+          className="text-[24px] leading-none text-[#CBCAC8]"
           style={{
             fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
           }}
@@ -1057,7 +1292,7 @@ function FilterSection({
           {title}
         </h3>
 
-        <span className="font-mono text-[7px] text-[#666362]">
+        <span className="font-mono text-[9px] text-[#666362]">
           {String(items.length).padStart(2, "0")}
         </span>
       </div>
@@ -1087,7 +1322,7 @@ function FilterSection({
                 {active && <CheckIcon />}
               </span>
 
-              <span className="text-[8px]">{item}</span>
+              <span className="text-[10px]">{item}</span>
             </button>
           );
         })}

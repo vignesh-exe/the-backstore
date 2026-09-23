@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import TextType from "@/components/TextType";
+import StrokeText from "@/components/StrokeText";
 
 /*
  * ============================================================
@@ -37,9 +37,9 @@ const collectionMedia = [
   {
     id: 2,
     type: "image",
-    src: "/images/hero/midnight-poster.png",
-    alt: "Midnight Collection",
-    collection: "Midnight",
+    src: "/images/hero/couple-poster.png",
+    alt: "Couple Collection",
+    collection: "Couple Tees",
     code: "TB / 002",
   },
   {
@@ -466,7 +466,7 @@ function CollectionCard({
                 uppercase
                 tracking-[0.2em]
                 text-[#CBCAC8]/70
-                ${mobile ? "text-[5.5px]" : "text-[6px]"}
+                ${mobile ? "text-[7.5px]" : "text-[8px]"}
               `}
             >
               Pack collection
@@ -493,8 +493,8 @@ function CollectionCard({
               backdrop-blur-xl
               ${
                 mobile
-                  ? "px-2.5 py-1.5 text-[5.5px]"
-                  : "right-7 top-7 px-3 py-1.5 text-[6px]"
+                  ? "px-2.5 py-1.5 text-[7.5px]"
+                  : "right-7 top-7 px-3 py-1.5 text-[8px]"
               }
             `}
           >
@@ -548,7 +548,7 @@ function CollectionCard({
                   uppercase
                   tracking-[0.24em]
                   text-[#CBCAC8]/60
-                  ${mobile ? "text-[5.5px]" : "text-[6px]"}
+                  ${mobile ? "text-[7.5px]" : "text-[8px]"}
                 `}
               >
                 Current member
@@ -560,7 +560,7 @@ function CollectionCard({
                 leading-[0.78]
                 text-[#CBCAC8]
                 drop-shadow-[0_5px_20px_rgba(0,0,0,0.4)]
-                ${mobile ? "text-[42px]" : "text-[70px]"}
+                ${mobile ? "text-[44px]" : "text-[72px]"}
               `}
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
@@ -608,7 +608,7 @@ function CollectionCard({
           ))}
         </div>
 
-        <div className="font-mono text-[6px] tracking-[0.18em] text-[#666362]">
+        <div className="font-mono text-[8px] tracking-[0.18em] text-[#666362]">
           <span className="text-[#CBCAC8]">
             {String(activeMedia + 1).padStart(2, "0")}
           </span>
@@ -783,11 +783,11 @@ export default function HeroSection() {
             </div>
 
             <div>
-              <p className="font-mono text-[7px] uppercase tracking-[0.25em] text-[#666362]">
+              <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#666362]">
                 The Backstore
               </p>
 
-              <p className="mt-0.5 text-[9px] text-[#CBCAC8]/70">
+              <p className="mt-0.5 text-[11px] text-[#CBCAC8]/70">
                 Find your pack
               </p>
             </div>
@@ -796,7 +796,7 @@ export default function HeroSection() {
           <div className="hidden items-center gap-3 md:flex">
             <span className="h-px w-10 bg-[#CBCAC8]/10" />
 
-            <span className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#666362]">
+            <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#666362]">
               Chennai / India
             </span>
 
@@ -804,7 +804,7 @@ export default function HeroSection() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="hidden font-mono text-[7px] uppercase tracking-[0.2em] text-[#666362] sm:block">
+            <span className="hidden font-mono text-[9px] uppercase tracking-[0.2em] text-[#666362] sm:block">
               EST. 2026
             </span>
 
@@ -874,11 +874,11 @@ export default function HeroSection() {
                 </div>
 
                 <div className="text-left">
-                  <p className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#DA0D12]">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#DA0D12]">
                     Pack member / 001
                   </p>
 
-                  <p className="mt-0.5 font-mono text-[6px] uppercase tracking-[0.22em] text-[#666362]">
+                  <p className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.22em] text-[#666362]">
                     New collection
                   </p>
                 </div>
@@ -904,29 +904,43 @@ export default function HeroSection() {
               >
                 {/* LINE 1 */}
 
-                <span className="block whitespace-nowrap text-[#CBCAC8]">
-                  <TextType
-                    text={["WEAR IT."]}
-                    typingSpeed={75}
-                    pauseDuration={1500}
-                    showCursor
-                    cursorCharacter="_"
-                    deletingSpeed={50}
-                    cursorBlinkDuration={0.5}
+                <span className="flex w-fit justify-center whitespace-nowrap text-center text-[#CBCAC8] sm:justify-start sm:text-left">
+                  <StrokeText
+                    text="WEAR IT."
+                    strokeColor="#CBCAC8"
+                    fillColor="#CBCAC8"
+                    strokeWidth={0.6}
+                    drawDuration={1.6}
+                    fillDelay={0.2}
+                    stagger={0.05}
+                    ease="power2.out"
+                    trigger="loop"
+                    fillMode="wipe"
+                    fontSize={158}
+                    fontWeight={1800}
+                    letterSpacing={-4}
+                    reverse={false}
                   />
                 </span>
 
                 {/* LINE 2 */}
 
-                <span className="block whitespace-nowrap text-[#DA0D12]">
-                  <TextType
-                    text={["YOUR WAY."]}
-                    typingSpeed={75}
-                    pauseDuration={1500}
-                    showCursor
-                    cursorCharacter="_"
-                    deletingSpeed={50}
-                    cursorBlinkDuration={0.5}
+                <span className="-mt-[85px] flex w-fit justify-center whitespace-nowrap text-center text-[#DA0D12] sm:justify-start sm:text-left">
+                  <StrokeText
+                    text="YOUR WAY."
+                    strokeColor="#DA0D12"
+                    fillColor="#DA0D12"
+                    strokeWidth={0.6}
+                    drawDuration={1.6}
+                    fillDelay={0.2}
+                    stagger={0.05}
+                    ease="power2.out"
+                    trigger="loop"
+                    fillMode="wipe"
+                    fontSize={158}
+                    fontWeight={1800}
+                    letterSpacing={-4}
+                    reverse={false}
                   />
                 </span>
               </h1>
@@ -953,7 +967,7 @@ export default function HeroSection() {
                   DESCRIPTION
               ================================================= */}
 
-              <p className="mx-auto mt-5 max-w-[500px] text-[10px] leading-[1.85] text-[#666362] sm:text-[11px] lg:mx-0 lg:mt-7 lg:text-xs">
+              <p className="mx-auto mt-5 max-w-[500px] text-[12px] leading-[1.85] text-[#666362] sm:text-[13px] lg:mx-0 lg:mt-7 lg:text-sm">
                 Original designs. Relaxed fits. A little attitude. Built for the
                 ones who move together, stand apart and wear their identity
                 without asking permission.
@@ -976,7 +990,7 @@ export default function HeroSection() {
                     rounded-full
                     bg-[#DA0D12]
                     px-7
-                    text-[9px]
+                    text-[11px]
                     font-semibold
                     uppercase
                     tracking-[0.16em]
@@ -1007,7 +1021,7 @@ export default function HeroSection() {
                     border-[#CBCAC8]/10
                     bg-[#CBCAC8]/[0.025]
                     px-7
-                    text-[9px]
+                    text-[11px]
                     font-medium
                     uppercase
                     tracking-[0.16em]
@@ -1034,12 +1048,12 @@ export default function HeroSection() {
                 </div>
 
                 <div className="text-left">
-                  <p className="font-mono text-[6px] uppercase tracking-[0.25em] text-[#666362]">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#666362]">
                     Identity tag
                   </p>
 
                   <p
-                    className="mt-1 text-[18px] leading-none text-[#CBCAC8]"
+                    className="mt-1 text-[20px] leading-none text-[#CBCAC8]"
                     style={{
                       fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                     }}
@@ -1051,11 +1065,11 @@ export default function HeroSection() {
                 <div className="ml-2 hidden h-8 w-px bg-[#CBCAC8]/10 sm:block" />
 
                 <div className="hidden sm:block">
-                  <p className="font-mono text-[6px] uppercase tracking-[0.25em] text-[#666362]">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#666362]">
                     Origin
                   </p>
 
-                  <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.15em] text-[#CBCAC8]/65">
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-[#CBCAC8]/65">
                     Made in India
                   </p>
                 </div>
@@ -1087,12 +1101,12 @@ export default function HeroSection() {
                   <div className="text-center">
                     <PawIcon className="mx-auto h-4 w-4 text-[#DA0D12]" />
 
-                    <p className="mt-1 font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+                    <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.18em] text-[#666362]">
                       Member
                     </p>
 
                     <p
-                      className="mt-0.5 text-[14px] leading-none text-[#CBCAC8]"
+                      className="mt-0.5 text-[16px] leading-none text-[#CBCAC8]"
                       style={{
                         fontFamily:
                           "var(--font-bebas-neue), Impact, sans-serif",
@@ -1120,7 +1134,7 @@ export default function HeroSection() {
                 <PawIcon className="h-3 w-3 text-[#DA0D12]" />
               </span>
 
-              <span className="font-mono text-[7px] uppercase tracking-[0.2em] text-[#666362]">
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#666362]">
                 Good clothes. Good energy. Same pack.
               </span>
             </div>
@@ -1128,7 +1142,7 @@ export default function HeroSection() {
             <div className="hidden items-center gap-3 md:flex">
               <span className="h-px w-10 bg-[#CBCAC8]/10" />
 
-              <span className="font-mono text-[6px] uppercase tracking-[0.25em] text-[#424141]">
+              <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#424141]">
                 Designed for the pack
               </span>
 
@@ -1144,7 +1158,7 @@ export default function HeroSection() {
                 justify-center
                 gap-2
                 font-mono
-                text-[7px]
+                text-[9px]
                 uppercase
                 tracking-[0.2em]
                 text-[#666362]
@@ -1170,13 +1184,13 @@ export default function HeroSection() {
       <div className="pointer-events-none absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 -rotate-90 items-center gap-3 xl:flex">
         <span className="h-px w-8 bg-[#CBCAC8]/10" />
 
-        <span className="font-mono text-[6px] uppercase tracking-[0.3em] text-[#424141]">
+        <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-[#424141]">
           One pack / One identity
         </span>
       </div>
 
       <div className="pointer-events-none absolute right-4 top-1/2 z-20 hidden translate-y-1/2 rotate-90 items-center gap-3 xl:flex">
-        <span className="font-mono text-[6px] uppercase tracking-[0.3em] text-[#424141]">
+        <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-[#424141]">
           Wear your identity
         </span>
 

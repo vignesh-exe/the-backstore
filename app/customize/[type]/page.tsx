@@ -7,7 +7,10 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
 
-import { addToCart } from "@/lib/features/cart/cartSlice";
+import {
+  addToCart,
+  updateCartItemQuantity,
+} from "@/lib/features/cart/cartSlice";
 import { supabase } from "@/lib/supabase";
 
 const PRODUCTS = {
@@ -171,7 +174,8 @@ export default function CustomProductPage() {
   const [customProductId, setCustomProductId] = useState<string | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [cartItemId, setCartItemId] = useState<string | null>(null);
+  const [quantityInCart, setQuantityInCart] = useState(0);
 
   const [quantity, setQuantity] = useState(0);
 
@@ -206,7 +210,14 @@ export default function CustomProductPage() {
     let cancelled = false;
 
     const syncCartStatus = async () => {
-      if (!customProductId) return;
+      if (!customProductId) {
+        if (!cancelled) {
+          setCartItemId(null);
+          setQuantityInCart(0);
+          setQuantity(0);
+        }
+        return;
+      }
 
       const {
         data: { user },
@@ -214,13 +225,17 @@ export default function CustomProductPage() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        if (!cancelled) setIsAddedToCart(false);
+        if (!cancelled) {
+          setCartItemId(null);
+          setQuantityInCart(0);
+          setQuantity(0);
+        }
         return;
       }
 
       const { data, error } = await supabase
         .from("custom_cart_items")
-        .select("id")
+        .select("id, quantity")
         .eq("user_id", user.id)
         .eq("custom_product_id", customProductId)
         .eq("size", selectedSize)
@@ -228,12 +243,20 @@ export default function CustomProductPage() {
         .limit(1);
 
       if (error) {
-        console.error("Failed to sync custom cart status:", error);
+        console.error("Failed to sync custom cart quantity:", error);
         return;
       }
 
+      const existingItem = data?.[0];
+      const storedQuantity = Math.max(
+        0,
+        Math.min(10, Number(existingItem?.quantity) || 0),
+      );
+
       if (!cancelled) {
-        setIsAddedToCart((data ?? []).length > 0);
+        setCartItemId(existingItem?.id ?? null);
+        setQuantityInCart(storedQuantity);
+        setQuantity(storedQuantity);
       }
     };
 
@@ -276,7 +299,124 @@ export default function CustomProductPage() {
   const handleSizeChange = (size: (typeof SIZES)[number]) => {
     setSelectedSize(size);
     setQuantity(0);
-    setIsAddedToCart(false);
+    setCartItemId(null);
+    setQuantityInCart(0);
+  };
+
+  const openCartDrawer = () => {
+    window.dispatchEvent(new Event("backstore:open-cart"));
+  };
+
+  const updateExistingCartQuantity = async (nextQuantity: number) => {
+    if (!customProductId || !selectedSize || !selectedColor) return false;
+
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.user) {
+      window.location.href = `/login?redirect=${encodeURIComponent(
+        window.location.pathname,
+      )}`;
+      return false;
+    }
+
+    if (nextQuantity <= 0) {
+      const query = supabase
+        .from("custom_cart_items")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("custom_product_id", customProductId)
+        .eq("size", selectedSize)
+        .eq("color", selectedColor);
+
+      if (cartItemId) {
+        query.eq("id", cartItemId);
+      }
+
+      const { error: deleteError } = await query;
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      dispatch(
+        updateCartItemQuantity({
+          productId: customProductId,
+          size: selectedSize,
+          quantity: 0,
+        }),
+      );
+
+      setCartItemId(null);
+      setQuantityInCart(0);
+      setQuantity(0);
+      window.dispatchEvent(new Event("backstore:cart-updated"));
+      return true;
+    }
+
+    if (cartItemId) {
+      const { error: updateError } = await supabase
+        .from("custom_cart_items")
+        .update({
+          quantity: nextQuantity,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", cartItemId)
+        .eq("user_id", session.user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+    } else {
+      return false;
+    }
+
+    dispatch(
+      updateCartItemQuantity({
+        productId: customProductId,
+        size: selectedSize,
+        quantity: nextQuantity,
+      }),
+    );
+
+    setQuantityInCart(nextQuantity);
+    setQuantity(nextQuantity);
+    window.dispatchEvent(new Event("backstore:cart-updated"));
+    return true;
+  };
+
+  const increaseQuantity = () => {
+    if (isSaving || quantity >= 10) return;
+
+    setQuantity((current) => Math.min(current + 1, 10));
+  };
+
+  const decreaseQuantity = async () => {
+    if (quantity <= 0 || isSaving) return;
+
+    const nextQuantity = Math.max(quantity - 1, 0);
+
+    if (quantityInCart <= 0) {
+      setQuantity(nextQuantity);
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await updateExistingCartQuantity(nextQuantity);
+    } catch (error) {
+      console.error("Failed to decrease custom cart quantity:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to update cart quantity.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const goToCustomize = async () => {
@@ -300,6 +440,22 @@ export default function CustomProductPage() {
     setIsSaving(true);
 
     try {
+      if (quantityInCart > 0 && cartItemId) {
+        if (quantity === quantityInCart) {
+          openCartDrawer();
+          return;
+        }
+
+        const updated = await updateExistingCartQuantity(quantity);
+
+        if (!updated) {
+          throw new Error("Unable to update the existing cart item.");
+        }
+
+        toast.success("Cart quantity updated successfully!");
+        return;
+      }
+
       toast.loading("Uploading your custom designs...", {
         id: "custom-upload",
       });
@@ -384,7 +540,7 @@ export default function CustomProductPage() {
         id: "custom-upload",
       });
 
-      const { error: customCartError } = await supabase
+      const { data: customCartData, error: customCartError } = await supabase
         .from("custom_cart_items")
         .insert({
           custom_product_id: customProductId,
@@ -392,7 +548,9 @@ export default function CustomProductPage() {
           color: selectedColor,
           quantity,
           customization: uploadedCustomization,
-        });
+        })
+        .select("id")
+        .single();
 
       if (customCartError) {
         throw customCartError;
@@ -411,7 +569,10 @@ export default function CustomProductPage() {
 
       toast.dismiss("custom-upload");
       toast.success("Custom product added to cart successfully!");
-      setIsAddedToCart(true);
+      setCartItemId(customCartData?.id ?? null);
+      setQuantityInCart(quantity);
+      setQuantity(quantity);
+      window.dispatchEvent(new Event("backstore:cart-updated"));
     } catch (error) {
       toast.dismiss("custom-upload");
       console.error("Failed to save custom product:", error);
@@ -638,7 +799,7 @@ export default function CustomProductPage() {
                   <div className="mt-3 inline-flex overflow-hidden rounded-xl border border-[#CBCAC8]/10 bg-[#0D0D0D]">
                     <button
                       type="button"
-                      onClick={() => changeQuantity(quantity - 1)}
+                      onClick={decreaseQuantity}
                       className="flex h-11 w-11 items-center justify-center text-[#666362] hover:bg-white/5 hover:text-[#CBCAC8]"
                       aria-label="Decrease quantity"
                     >
@@ -651,7 +812,7 @@ export default function CustomProductPage() {
 
                     <button
                       type="button"
-                      onClick={() => changeQuantity(quantity + 1)}
+                      onClick={increaseQuantity}
                       className="flex h-11 w-11 items-center justify-center text-[#666362] hover:bg-white/5 hover:text-[#CBCAC8]"
                       aria-label="Increase quantity"
                     >
@@ -686,17 +847,25 @@ export default function CustomProductPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (isAddedToCart) {
-                      window.dispatchEvent(new Event("backstore:open-cart"));
+                    if (
+                      quantity > 0 &&
+                      quantityInCart > 0 &&
+                      quantity === quantityInCart
+                    ) {
+                      openCartDrawer();
                       return;
                     }
 
                     goToCustomize();
                   }}
-                  disabled={isSaving}
+                  disabled={isSaving || quantity <= 0}
                   className="group mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.2em] text-white transition-all hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isAddedToCart ? "View Cart" : "Add to Cart"}
+                  {quantity > 0 &&
+                  quantityInCart > 0 &&
+                  quantity === quantityInCart
+                    ? "View Cart"
+                    : "Add to Cart"}
                   <Icon name="arrow-right" size={15} />
                 </button>
 

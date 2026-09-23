@@ -286,7 +286,7 @@ function ProductCard({
           >
             <PawIcon className="h-2.5 w-2.5 text-[#DA0D12]" />
 
-            <span className="font-mono text-[6px] uppercase tracking-[0.2em] text-[#CBCAC8]/75">
+            <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#CBCAC8]/75">
               {product.tag}
             </span>
           </div>
@@ -335,7 +335,7 @@ function ProductCard({
         </div>
 
         <div className="absolute bottom-4 left-4 z-20">
-          <span className="font-mono text-[6px] tracking-[0.2em] text-[#CBCAC8]/45">
+          <span className="font-mono text-[8px] tracking-[0.2em] text-[#CBCAC8]/45">
             PACK / {String(index + 1).padStart(2, "0")}
           </span>
         </div>
@@ -349,7 +349,7 @@ function ProductCard({
             <h3
               className="
                 truncate
-                text-[18px]
+                text-[20px]
                 leading-none
                 tracking-[0.01em]
                 text-[#CBCAC8]
@@ -361,12 +361,12 @@ function ProductCard({
               {product.name}
             </h3>
 
-            <p className="mt-1.5 truncate font-mono text-[6px] uppercase tracking-[0.18em] text-[#666362]">
+            <p className="mt-1.5 truncate font-mono text-[8px] uppercase tracking-[0.18em] text-[#666362]">
               {product.categoryLabel}
             </p>
           </div>
 
-          <span className="shrink-0 font-mono text-[8px] tracking-[0.08em] text-[#CBCAC8]/80">
+          <span className="shrink-0 font-mono text-[10px] tracking-[0.08em] text-[#CBCAC8]/80">
             {product.priceLabel}
           </span>
         </div>
@@ -842,11 +842,11 @@ export default function NewDrop() {
               </span>
 
               <div>
-                <p className="font-mono text-[7px] uppercase tracking-[0.3em] text-[#DA0D12]">
+                <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#DA0D12]">
                   The pack collection
                 </p>
 
-                <p className="mt-0.5 font-mono text-[6px] uppercase tracking-[0.22em] text-[#666362]">
+                <p className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.22em] text-[#666362]">
                   Fresh members / 2026
                 </p>
               </div>
@@ -854,7 +854,7 @@ export default function NewDrop() {
 
             <h2
               className="
-                text-[clamp(4.5rem,10vw,8rem)]
+                text-[calc(clamp(4.5rem,10vw,8rem)+2px)]
                 leading-[0.72]
                 tracking-[-0.035em]
                 text-[#CBCAC8]
@@ -870,7 +870,7 @@ export default function NewDrop() {
           {/* Right */}
 
           <div className="max-w-[390px] lg:pb-1">
-            <p className="text-[11px] leading-[1.8] text-[#666362] sm:text-xs">
+            <p className="text-[13px] leading-[1.8] text-[#666362] sm:text-sm">
               Meet the latest members of The Backstore. Original graphics,
               relaxed fits and pieces made for people who move with their own
               pack.
@@ -891,7 +891,7 @@ export default function NewDrop() {
                   px-5
                   py-2.5
                   font-mono
-                  text-[7px]
+                  text-[9px]
                   uppercase
                   tracking-[0.2em]
                   text-[#CBCAC8]/75
@@ -908,7 +908,7 @@ export default function NewDrop() {
                 </span>
               </a>
 
-              <span className="hidden font-mono text-[6px] uppercase tracking-[0.2em] text-[#424141] sm:block">
+              <span className="hidden font-mono text-[8px] uppercase tracking-[0.2em] text-[#424141] sm:block">
                 Scroll the pack
               </span>
             </div>
@@ -935,13 +935,13 @@ export default function NewDrop() {
         )}
 
         {!isLoading && error && (
-          <div className="rounded-[18px] border border-[#DA0D12]/20 bg-[#DA0D12]/[0.04] px-5 py-4 font-mono text-[7px] uppercase tracking-[0.16em] text-[#CBCAC8]/60">
+          <div className="rounded-[18px] border border-[#DA0D12]/20 bg-[#DA0D12]/[0.04] px-5 py-4 font-mono text-[9px] uppercase tracking-[0.16em] text-[#CBCAC8]/60">
             {error}
           </div>
         )}
 
         {!isLoading && !error && products.length === 0 && (
-          <div className="rounded-[18px] border border-[#CBCAC8]/8 bg-[#CBCAC8]/[0.025] px-5 py-8 text-center font-mono text-[7px] uppercase tracking-[0.16em] text-[#666362]">
+          <div className="rounded-[18px] border border-[#CBCAC8]/8 bg-[#CBCAC8]/[0.025] px-5 py-8 text-center font-mono text-[9px] uppercase tracking-[0.16em] text-[#666362]">
             No products available right now.
           </div>
         )}
@@ -1072,7 +1072,7 @@ export default function NewDrop() {
             </div>
 
             {products.length > 1 && (
-              <p className="mt-3 text-center font-mono text-[6px] uppercase tracking-[0.2em] text-[#666362] sm:hidden">
+              <p className="mt-3 text-center font-mono text-[8px] uppercase tracking-[0.2em] text-[#666362] sm:hidden">
                 Swipe to explore
               </p>
             )}

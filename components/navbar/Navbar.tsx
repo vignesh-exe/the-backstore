@@ -595,7 +595,7 @@ export default function Navbar() {
                             rounded-full
                             px-4
                             border-0
-                            text-[11px]
+                            text-[13px]
                             font-medium
                             transition-all
                             duration-200
@@ -656,13 +656,13 @@ export default function Navbar() {
                                 <div className="mb-1.5 flex items-center gap-2">
                                   <PawIcon className="h-3 w-3 text-[#80060B]" />
 
-                                  <span className="text-[7px] uppercase tracking-[0.2em] text-[#666362]">
+                                  <span className="text-[9px] uppercase tracking-[0.2em] text-[#666362]">
                                     Explore collection
                                   </span>
                                 </div>
 
                                 <h3
-                                  className="text-[27px] leading-none text-[#CBCAC8]"
+                                  className="text-[29px] leading-none text-[#CBCAC8]"
                                   style={{
                                     fontFamily:
                                       "var(--font-bebas-neue), Impact, sans-serif",
@@ -672,7 +672,7 @@ export default function Navbar() {
                                 </h3>
                               </div>
 
-                              <span className="font-mono text-[7px] text-[#666362]">
+                              <span className="font-mono text-[9px] text-[#666362]">
                                 03 / 03
                               </span>
                             </div>
@@ -704,7 +704,7 @@ export default function Navbar() {
                                       }
                                     `}
                                   >
-                                    <span className="absolute right-4 top-4 font-mono text-[8px] text-[#666362]">
+                                    <span className="absolute right-4 top-4 font-mono text-[10px] text-[#666362]">
                                       {shopItem.number}
                                     </span>
 
@@ -736,7 +736,7 @@ export default function Navbar() {
                                       <div className="flex items-end justify-between">
                                         <div>
                                           <h4
-                                            className="text-[26px] leading-none"
+                                            className="text-[28px] leading-none"
                                             style={{
                                               fontFamily:
                                                 "var(--font-bebas-neue), Impact, sans-serif",
@@ -745,7 +745,7 @@ export default function Navbar() {
                                             {shopItem.label}
                                           </h4>
 
-                                          <p className="mt-2 max-w-[175px] text-[8px] leading-relaxed text-[#666362]">
+                                          <p className="mt-2 max-w-[175px] text-[10px] leading-relaxed text-[#666362]">
                                             {shopItem.description}
                                           </p>
                                         </div>
@@ -767,7 +767,7 @@ export default function Navbar() {
                             {/* bottom */}
 
                             <div className="mt-1 flex items-center justify-between rounded-[16px] bg-[#CBCAC8]/[0.035] px-4 py-2.5">
-                              <span className="text-[7px] uppercase tracking-[0.18em] text-[#666362]">
+                              <span className="text-[9px] uppercase tracking-[0.18em] text-[#666362]">
                                 Made for the everyday pack
                               </span>
 
@@ -792,7 +792,7 @@ export default function Navbar() {
                         gap-1.5
                         rounded-full
                         px-4
-                        text-[11px]
+                        text-[13px]
                         font-medium
                         transition-all
                         duration-200
@@ -835,7 +835,7 @@ export default function Navbar() {
               >
                 <HeartIcon />
 
-                <span className="absolute right-[5px] top-[4px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[5px] text-[#CBCAC8]">
+                <span className="absolute right-[5px] top-[4px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[7px] text-[#CBCAC8]">
                   {wishlistCount}
                 </span>
               </button>
@@ -848,7 +848,7 @@ export default function Navbar() {
               >
                 <BagIcon />
 
-                <span className="absolute right-[5px] top-[4px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[5px] text-[#CBCAC8]">
+                <span className="absolute right-[5px] top-[4px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[7px] text-[#CBCAC8]">
                   {cartCount}
                 </span>
               </button>
@@ -871,7 +871,7 @@ export default function Navbar() {
                     gap-1.5
                     rounded-full
                     px-2.5
-                    text-[8px]
+                    text-[10px]
                     font-semibold
                     uppercase
                     tracking-[0.08em]
@@ -892,10 +892,10 @@ export default function Navbar() {
                 {loggedInFirstName && profileMenuOpen && (
                   <div className="absolute right-0 top-[43px] z-[700] w-[210px] overflow-hidden rounded-[18px] border border-[#CBCAC8]/12 bg-[#161616]/95 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
                     <div className="border-b border-[#CBCAC8]/8 px-3 py-2.5">
-                      <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-[#CBCAC8]">
+                      <p className="truncate text-[12px] font-semibold uppercase tracking-[0.12em] text-[#CBCAC8]">
                         {loggedInFirstName}
                       </p>
-                      <p className="mt-1 text-[7px] uppercase tracking-[0.14em] text-[#666362]">
+                      <p className="mt-1 text-[9px] uppercase tracking-[0.14em] text-[#666362]">
                         My account
                       </p>
                     </div>
@@ -903,7 +903,7 @@ export default function Navbar() {
                     <button
                       type="button"
                       onClick={openMyAccount}
-                      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left text-[9px] font-medium text-[#CBCAC8] transition-colors hover:bg-[#CBCAC8]/6"
+                      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left text-[11px] font-medium text-[#CBCAC8] transition-colors hover:bg-[#CBCAC8]/6"
                     >
                       <UserIcon />
                       <span>My Account</span>
@@ -912,7 +912,7 @@ export default function Navbar() {
                     <a
                       href="/my-orders"
                       onClick={openMyOrders}
-                      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left text-[9px] font-medium text-[#CBCAC8] transition-colors hover:bg-[#CBCAC8]/6"
+                      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left text-[11px] font-medium text-[#CBCAC8] transition-colors hover:bg-[#CBCAC8]/6"
                     >
                       <BagIcon />
                       <span>My Orders</span>
@@ -924,9 +924,9 @@ export default function Navbar() {
                       type="button"
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left text-[9px] font-medium text-[#DA0D12] transition-colors hover:bg-[#DA0D12]/8 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left text-[11px] font-medium text-[#DA0D12] transition-colors hover:bg-[#DA0D12]/8 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <span className="flex h-4 w-4 items-center justify-center text-[12px]">
+                      <span className="flex h-4 w-4 items-center justify-center text-[14px]">
                         ↪
                       </span>
                       <span>{isLoggingOut ? "Logging out..." : "Log Out"}</span>
@@ -1021,7 +1021,7 @@ export default function Navbar() {
             >
               <BagIcon />
 
-              <span className="absolute right-[3px] top-[2px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[5px] text-[#CBCAC8]">
+              <span className="absolute right-[3px] top-[2px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[7px] text-[#CBCAC8]">
                 {cartCount}
               </span>
             </button>
@@ -1063,12 +1063,12 @@ export default function Navbar() {
                 <div className="flex items-center gap-2">
                   <PawIcon className="h-3 w-3 text-[#80060B]" />
 
-                  <span className="text-[7px] uppercase tracking-[0.2em] text-[#666362]">
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-[#666362]">
                     The Backstore
                   </span>
                 </div>
 
-                <span className="font-mono text-[7px] text-[#666362]">
+                <span className="font-mono text-[9px] text-[#666362]">
                   EST. 2026
                 </span>
               </div>
@@ -1109,7 +1109,7 @@ export default function Navbar() {
                               <span className="h-1 w-1 rounded-full bg-[#424141]" />
                             )}
 
-                            <span className="text-[10px] font-medium">
+                            <span className="text-[12px] font-medium">
                               Shop
                             </span>
                           </span>
@@ -1152,7 +1152,7 @@ export default function Navbar() {
                                     <ToyIcon />
                                   )}
 
-                                  <span className="text-[9px]">
+                                  <span className="text-[11px]">
                                     {shopItem.label}
                                   </span>
                                 </span>
@@ -1193,7 +1193,7 @@ export default function Navbar() {
                           <span className="h-1 w-1 rounded-full bg-[#424141]" />
                         )}
 
-                        <span className="text-[10px]">{item.label}</span>
+                        <span className="text-[12px]">{item.label}</span>
                       </span>
 
                       <ArrowRightIcon />
@@ -1229,7 +1229,7 @@ export default function Navbar() {
                         <BagIcon />
                       )}
 
-                      <span className="text-[10px]">My Orders</span>
+                      <span className="text-[12px]">My Orders</span>
                     </span>
 
                     <ArrowRightIcon />
@@ -1242,7 +1242,7 @@ export default function Navbar() {
               <div className="mt-1 grid grid-cols-3 gap-1">
                 <button
                   type="button"
-                  className="flex h-[40px] items-center justify-center gap-2 rounded-[13px] bg-[#CBCAC8]/[0.035] text-[7px] uppercase tracking-[0.1em] text-[#666362]"
+                  className="flex h-[40px] items-center justify-center gap-2 rounded-[13px] bg-[#CBCAC8]/[0.035] text-[9px] uppercase tracking-[0.1em] text-[#666362]"
                 >
                   <SearchIcon />
                   Search
@@ -1252,7 +1252,7 @@ export default function Navbar() {
                   type="button"
                   aria-label="Open wishlist"
                   onClick={openWishlist}
-                  className="flex h-[40px] items-center justify-center gap-2 rounded-[13px] bg-[#CBCAC8]/[0.035] text-[7px] uppercase tracking-[0.1em] text-[#666362] transition-colors hover:bg-[#DA0D12]/10 hover:text-[#CBCAC8]"
+                  className="flex h-[40px] items-center justify-center gap-2 rounded-[13px] bg-[#CBCAC8]/[0.035] text-[9px] uppercase tracking-[0.1em] text-[#666362] transition-colors hover:bg-[#DA0D12]/10 hover:text-[#CBCAC8]"
                 >
                   <HeartIcon />
                   Wishlist
@@ -1274,7 +1274,7 @@ export default function Navbar() {
                     gap-2
                     rounded-[13px]
                     px-2
-                    text-[7px]
+                    text-[9px]
                     uppercase
                     tracking-[0.1em]
                     transition-colors
@@ -1295,7 +1295,7 @@ export default function Navbar() {
               {loggedInFirstName && profileMenuOpen && (
                 <div className="mt-1 overflow-hidden rounded-[16px] border border-[#CBCAC8]/10 bg-[#080808]/70 p-1.5">
                   <div className="border-b border-[#CBCAC8]/8 px-3 py-2">
-                    <p className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-[#CBCAC8]">
+                    <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-[#CBCAC8]">
                       {loggedInFirstName}
                     </p>
                   </div>
@@ -1303,7 +1303,7 @@ export default function Navbar() {
                   <button
                     type="button"
                     onClick={openMyAccount}
-                    className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 text-left text-[8px] uppercase tracking-[0.12em] text-[#CBCAC8] transition-colors hover:bg-[#CBCAC8]/6"
+                    className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 text-left text-[10px] uppercase tracking-[0.12em] text-[#CBCAC8] transition-colors hover:bg-[#CBCAC8]/6"
                   >
                     <UserIcon />
                     My Account
@@ -1315,9 +1315,9 @@ export default function Navbar() {
                     type="button"
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 text-left text-[8px] uppercase tracking-[0.12em] text-[#DA0D12] transition-colors hover:bg-[#DA0D12]/8 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 text-left text-[10px] uppercase tracking-[0.12em] text-[#DA0D12] transition-colors hover:bg-[#DA0D12]/8 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <span className="flex h-4 w-4 items-center justify-center text-[12px]">
+                    <span className="flex h-4 w-4 items-center justify-center text-[14px]">
                       ↪
                     </span>
                     {isLoggingOut ? "Logging out..." : "Log Out"}
@@ -1332,7 +1332,7 @@ export default function Navbar() {
 
                 <PawIcon className="h-2.5 w-2.5 text-[#80060B]" />
 
-                <span className="text-[6px] uppercase tracking-[0.2em] text-[#666362]">
+                <span className="text-[8px] uppercase tracking-[0.2em] text-[#666362]">
                   Made for the pack
                 </span>
 

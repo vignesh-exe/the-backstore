@@ -124,10 +124,10 @@ function UploadBox({
     <label className="group block cursor-pointer rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4 transition-colors hover:border-[#DA0D12]/30">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-mono text-[7px] uppercase tracking-[0.22em] text-[#CBCAC8]">
+          <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-[#CBCAC8]">
             {title}
           </p>
-          <p className="mt-1 text-[10px] text-[#555]">
+          <p className="mt-1 text-[12px] text-[#555]">
             PNG, JPG or WEBP · Max 5MB
           </p>
         </div>
@@ -139,11 +139,11 @@ function UploadBox({
 
       <div className="mt-4 flex min-h-20 items-center justify-center rounded-xl border border-dashed border-[#CBCAC8]/10 bg-[#111111] px-4 text-center">
         {file ? (
-          <span className="max-w-full truncate text-xs text-[#CBCAC8]">
+          <span className="max-w-full truncate text-[14px] text-[#CBCAC8]">
             {file.name}
           </span>
         ) : (
-          <span className="font-mono text-[7px] uppercase tracking-[0.16em] text-[#444]">
+          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#444]">
             Click to upload
           </span>
         )}
@@ -594,14 +594,14 @@ export default function CustomProductPage() {
           <div className="mb-6 flex items-center gap-2">
             <Link
               href="/customize"
-              className="group inline-flex items-center gap-2 font-mono text-[8px] uppercase tracking-[0.2em] text-[#666362] transition-colors hover:text-[#CBCAC8]"
+              className="group inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#666362] transition-colors hover:text-[#CBCAC8]"
             >
               <Icon name="arrow-left" size={15} />
               Back to customize
             </Link>
           </div>
 
-          <div className="mb-8 flex items-center gap-2 font-mono text-[7px] uppercase tracking-[0.25em] text-[#555]">
+          <div className="mb-8 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.25em] text-[#555]">
             <span>The Backstore</span>
             <span className="text-[#DA0D12]">/</span>
             <span>Customize</span>
@@ -613,10 +613,10 @@ export default function CustomProductPage() {
             <div className="flex gap-3 border-b border-[#DA0D12]/10 bg-[#DA0D12]/[0.04] px-5 py-4 sm:px-7">
               <div className="mt-0.5 text-[#DA0D12]">!</div>
               <div>
-                <p className="font-mono text-[7px] uppercase tracking-[0.24em] text-[#DA0D12]">
+                <p className="font-mono text-[9px] uppercase tracking-[0.24em] text-[#DA0D12]">
                   Important notice
                 </p>
-                <p className="mt-1 max-w-4xl text-xs leading-5 text-[#777]">
+                <p className="mt-1 max-w-4xl text-[14px] leading-5 text-[#777]">
                   Upload your artwork in the placement sections below. Keep
                   important artwork away from the edges to allow for a clean
                   print.
@@ -639,14 +639,14 @@ export default function CustomProductPage() {
                   />
 
                   <div className="absolute left-5 top-5 rounded-full border border-[#CBCAC8]/10 bg-[#080808]/75 px-3 py-2 backdrop-blur-md">
-                    <span className="font-mono text-[7px] uppercase tracking-[0.2em] text-[#CBCAC8]">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#CBCAC8]">
                       {product.fit}
                     </span>
                   </div>
                 </div>
 
                 <div className="border-t border-[#CBCAC8]/8 px-5 py-5 sm:px-7">
-                  <p className="font-mono text-[7px] uppercase tracking-[0.2em] text-[#555]">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#555]">
                     Apparel colour
                   </p>
 
@@ -669,7 +669,7 @@ export default function CustomProductPage() {
                               : "bg-white ring-1 ring-black/30"
                           }`}
                         />
-                        <span className="font-mono text-[7px] uppercase tracking-[0.18em] text-[#CBCAC8]">
+                        <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#CBCAC8]">
                           {color}
                         </span>
                         {selectedColor === color && (
@@ -679,7 +679,7 @@ export default function CustomProductPage() {
                     ))}
                   </div>
 
-                  <p className="mt-3 text-[10px] text-[#555]">
+                  <p className="mt-3 text-[12px] text-[#555]">
                     Only black and white are available for custom apparel.
                   </p>
                 </div>
@@ -687,18 +687,18 @@ export default function CustomProductPage() {
 
               <div className="mt-5 rounded-[30px] border border-[#CBCAC8]/8 bg-[#111111] p-5 sm:p-7">
                 <div className="mb-5">
-                  <p className="font-mono text-[7px] uppercase tracking-[0.25em] text-[#DA0D12]">
+                  <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
                     Artwork
                   </p>
                   <h2
-                    className="mt-1 text-3xl uppercase leading-none text-[#CBCAC8]"
+                    className="mt-1 text-[32px] uppercase leading-none text-[#CBCAC8]"
                     style={{
                       fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                     }}
                   >
                     Upload your design
                   </h2>
-                  <p className="mt-2 text-xs leading-5 text-[#555]">
+                  <p className="mt-2 text-[14px] leading-5 text-[#555]">
                     Add artwork to one or more positions. At least one design is
                     required.
                   </p>
@@ -731,12 +731,12 @@ export default function CustomProductPage() {
 
             <aside className="lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-[30px] border border-[#CBCAC8]/8 bg-[#111111] p-5 sm:p-7">
-                <p className="font-mono text-[7px] uppercase tracking-[0.25em] text-[#DA0D12]">
+                <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
                   Custom apparel
                 </p>
 
                 <h1
-                  className="mt-2 text-5xl uppercase leading-[0.88] text-[#CBCAC8] sm:text-6xl"
+                  className="mt-2 text-[50px] uppercase leading-[0.88] text-[#CBCAC8] sm:text-[62px]"
                   style={{
                     fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                   }}
@@ -744,31 +744,31 @@ export default function CustomProductPage() {
                   {product.title}
                 </h1>
 
-                <p className="mt-4 text-sm leading-6 text-[#666362]">
+                <p className="mt-4 text-[16px] leading-6 text-[#666362]">
                   {product.description}
                 </p>
 
                 <div className="mt-6 flex items-end justify-between gap-4 border-b border-[#CBCAC8]/8 pb-6">
                   <div>
-                    <p className="font-mono text-[7px] uppercase tracking-[0.18em] text-[#555]">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#555]">
                       Price
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-[#CBCAC8]">
+                    <p className="mt-1 text-[26px] font-semibold text-[#CBCAC8]">
                       ₹{product.price}
                     </p>
                   </div>
 
-                  <span className="rounded-full border border-[#DA0D12]/20 bg-[#DA0D12]/8 px-3 py-2 font-mono text-[7px] uppercase tracking-[0.16em] text-[#DA0D12]">
+                  <span className="rounded-full border border-[#DA0D12]/20 bg-[#DA0D12]/8 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.16em] text-[#DA0D12]">
                     {product.gsm} GSM Cotton
                   </span>
                 </div>
 
                 <div className="mt-6">
                   <div className="flex items-center justify-between">
-                    <p className="font-mono text-[8px] uppercase tracking-[0.18em] text-[#CBCAC8]">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#CBCAC8]">
                       Select size
                     </p>
-                    <span className="font-mono text-[7px] uppercase tracking-[0.16em] text-[#444]">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#444]">
                       XS — XXL
                     </span>
                   </div>
@@ -779,7 +779,7 @@ export default function CustomProductPage() {
                         key={size}
                         type="button"
                         onClick={() => handleSizeChange(size)}
-                        className={`h-11 rounded-xl border font-mono text-[8px] uppercase transition-all ${
+                        className={`h-11 rounded-xl border font-mono text-[10px] uppercase transition-all ${
                           selectedSize === size
                             ? "border-[#DA0D12] bg-[#DA0D12] text-white"
                             : "border-[#CBCAC8]/10 bg-[#0D0D0D] text-[#777] hover:border-[#CBCAC8]/25 hover:text-[#CBCAC8]"
@@ -792,7 +792,7 @@ export default function CustomProductPage() {
                 </div>
 
                 <div className="mt-6">
-                  <p className="font-mono text-[8px] uppercase tracking-[0.18em] text-[#CBCAC8]">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#CBCAC8]">
                     Quantity
                   </p>
 
@@ -806,7 +806,7 @@ export default function CustomProductPage() {
                       <Icon name="minus" size={14} />
                     </button>
 
-                    <span className="flex h-11 min-w-12 items-center justify-center border-x border-[#CBCAC8]/8 font-mono text-[9px] text-[#CBCAC8]">
+                    <span className="flex h-11 min-w-12 items-center justify-center border-x border-[#CBCAC8]/8 font-mono text-[11px] text-[#CBCAC8]">
                       {quantity}
                     </span>
 
@@ -822,12 +822,12 @@ export default function CustomProductPage() {
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4">
-                  <div className="flex items-center justify-between font-mono text-[8px] text-[#555]">
+                  <div className="flex items-center justify-between font-mono text-[10px] text-[#555]">
                     <span>Price</span>
                     <span>₹{product.price}</span>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between font-mono text-[8px] text-[#555]">
+                  <div className="mt-3 flex items-center justify-between font-mono text-[10px] text-[#555]">
                     <span>Quantity</span>
                     <span>{quantity}</span>
                   </div>
@@ -835,10 +835,10 @@ export default function CustomProductPage() {
                   <div className="my-4 h-px bg-[#CBCAC8]/8" />
 
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-[#CBCAC8]">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#CBCAC8]">
                       Total
                     </span>
-                    <span className="text-lg font-semibold text-[#CBCAC8]">
+                    <span className="text-[20px] font-semibold text-[#CBCAC8]">
                       ₹{total}
                     </span>
                   </div>
@@ -859,7 +859,7 @@ export default function CustomProductPage() {
                     goToCustomize();
                   }}
                   disabled={isSaving || quantity <= 0}
-                  className="group mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.2em] text-white transition-all hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="group mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-all hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {quantity > 0 &&
                   quantityInCart > 0 &&
@@ -878,7 +878,7 @@ export default function CustomProductPage() {
                   ].map((feature) => (
                     <div
                       key={feature}
-                      className="flex items-center gap-3 text-[10px] text-[#666362]"
+                      className="flex items-center gap-3 text-[12px] text-[#666362]"
                     >
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#DA0D12]/10 text-[#DA0D12]">
                         <Icon name="check" size={11} />
@@ -892,12 +892,12 @@ export default function CustomProductPage() {
           </div>
 
           <section className="mt-7 rounded-[30px] border border-[#CBCAC8]/8 bg-[#111111] p-5 sm:p-7">
-            <p className="font-mono text-[7px] uppercase tracking-[0.25em] text-[#DA0D12]">
+            <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
               Why choose it
             </p>
 
             <h2
-              className="mt-1 text-3xl uppercase leading-none text-[#CBCAC8]"
+              className="mt-1 text-[32px] uppercase leading-none text-[#CBCAC8]"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -919,7 +919,7 @@ export default function CustomProductPage() {
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DA0D12]/10 text-[#DA0D12]">
                     <Icon name="check" size={13} />
                   </div>
-                  <p className="mt-4 text-xs text-[#777]">{feature}</p>
+                  <p className="mt-4 text-[14px] text-[#777]">{feature}</p>
                 </div>
               ))}
             </div>

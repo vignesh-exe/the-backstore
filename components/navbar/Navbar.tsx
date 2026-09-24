@@ -26,17 +26,19 @@ const shopItems = [
     number: "01",
     description: "Everyday pieces made to live in.",
   },
+  /*
   {
     label: "Footwear",
     href: "/shop/footwear",
     number: "02",
     description: "Comfort for every step.",
   },
+  */
   {
-    label: "Anime Toys",
-    href: "/shop/anime-toys",
-    number: "03",
-    description: "Collect your favorite characters.",
+    label: "Collectibles",
+    href: "/shop/collectibles",
+    number: "02",
+    description: "Diecast toys, wall posters and more.",
   },
 ];
 
@@ -214,6 +216,7 @@ function TShirtIcon() {
   );
 }
 
+/*
 function ShoeIcon() {
   return (
     <svg
@@ -230,6 +233,7 @@ function ShoeIcon() {
     </svg>
   );
 }
+*/
 
 function ToyIcon() {
   return (
@@ -673,13 +677,13 @@ export default function Navbar() {
                               </div>
 
                               <span className="font-mono text-[9px] text-[#666362]">
-                                03 / 03
+                                02 / 02
                               </span>
                             </div>
 
                             {/* cards */}
 
-                            <div className="grid grid-cols-3 gap-1">
+                            <div className="grid grid-cols-2 gap-1">
                               {shopItems.map((shopItem) => {
                                 const active = isActive(shopItem.href);
 
@@ -725,8 +729,6 @@ export default function Navbar() {
                                     >
                                       {shopItem.label === "T-Shirts" ? (
                                         <TShirtIcon />
-                                      ) : shopItem.label === "Footwear" ? (
-                                        <ShoeIcon />
                                       ) : (
                                         <ToyIcon />
                                       )}
@@ -1130,7 +1132,7 @@ export default function Navbar() {
                             duration-300
                             ${
                               mobileShopOpen
-                                ? "max-h-[155px] opacity-100"
+                                ? "max-h-[105px] opacity-100"
                                 : "max-h-0 opacity-0"
                             }
                           `}
@@ -1146,8 +1148,6 @@ export default function Navbar() {
                                 <span className="flex items-center gap-3">
                                   {shopItem.label === "T-Shirts" ? (
                                     <TShirtIcon />
-                                  ) : shopItem.label === "Footwear" ? (
-                                    <ShoeIcon />
                                   ) : (
                                     <ToyIcon />
                                   )}

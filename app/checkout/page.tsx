@@ -186,7 +186,16 @@ declare global {
 
 const INDIA_LOCATION_API = "https://aniket-thapa.github.io/india-pincode-api";
 
-const SHIPPING_FEE = 0;
+const FREE_DELIVERY_THRESHOLD = 2999;
+const FIRST_ORDER_COUPON = "THEBACK5";
+
+const TAMIL_NADU_STATES = new Set(["tamil nadu"]);
+const SOUTH_INDIA_STATES = new Set([
+  "kerala",
+  "telangana",
+  "andhra pradesh",
+  "karnataka",
+]);
 
 const CHECKOUT_STEPS = [
   { number: "01", label: "Contact" },
@@ -476,8 +485,12 @@ export default function CheckoutPage() {
   const [contactError, setContactError] = useState("");
   const [deliveryError, setDeliveryError] = useState("");
   const [paymentError, setPaymentError] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [couponError, setCouponError] = useState("");
 
   const [updatingKey, setUpdatingKey] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"online">("online");
 
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -961,7 +974,38 @@ export default function CheckoutPage() {
   }, [resolvedItems]);
 
   const productSavings = Math.max(0, mrpTotal - subtotal);
-  const grandTotal = Math.max(0, subtotal + SHIPPING_FEE);
+
+  const couponDiscount =
+    appliedCoupon === FIRST_ORDER_COUPON
+      ? Math.round(subtotal * 0.05 * 100) / 100
+      : 0;
+
+  const totalTShirtQuantity = useMemo(() => {
+    return resolvedItems.reduce(
+      (total, entry) => total + Number(entry.item.quantity || 0),
+      0,
+    );
+  }, [resolvedItems]);
+
+  const normalizedState = address.state.trim().toLowerCase();
+  const isFreeDelivery = subtotal > FREE_DELIVERY_THRESHOLD;
+
+  const baseDeliveryFee = useMemo(() => {
+    if (TAMIL_NADU_STATES.has(normalizedState)) {
+      return totalTShirtQuantity <= 3 ? 50 : 80;
+    }
+
+    if (SOUTH_INDIA_STATES.has(normalizedState)) {
+      return totalTShirtQuantity <= 3 ? 100 : 130;
+    }
+
+    return totalTShirtQuantity <= 3 ? 200 : 230;
+  }, [normalizedState, totalTShirtQuantity]);
+
+  const deliveryFee = isFreeDelivery ? 0 : baseDeliveryFee;
+  const freeDeliverySavings = isFreeDelivery ? baseDeliveryFee : 0;
+  const totalSavings = productSavings + couponDiscount + freeDeliverySavings;
+  const grandTotal = Math.max(0, subtotal + deliveryFee - couponDiscount);
 
   /* ==========================================================
      ADDRESS UPDATE
@@ -1062,6 +1106,7 @@ export default function CheckoutPage() {
 
     setDeliveryError("");
     setDeliveryComplete(true);
+    setDeliveryOpen(false);
 
     return true;
   };
@@ -1270,6 +1315,76 @@ export default function CheckoutPage() {
   };
 
   /* ==========================================================
+     COUPONS
+  ========================================================== */
+
+  const applyCoupon = async () => {
+    const normalized = couponInput.trim().toUpperCase();
+    setCouponError("");
+
+    if (!normalized) {
+      setCouponError("Enter a coupon code.");
+      toast.error("Enter a coupon code.");
+      return;
+    }
+
+    if (normalized !== FIRST_ORDER_COUPON) {
+      const message = "Invalid coupon code.";
+      setCouponError(message);
+      toast.error(message);
+      return;
+    }
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        const message = "Please login to use this first-order coupon.";
+        setCouponError(message);
+        toast.error(message);
+        return;
+      }
+
+      const { count, error: ordersError } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (ordersError) {
+        console.error("First-order coupon validation failed:", ordersError);
+        const message = "Unable to validate the coupon. Please try again.";
+        setCouponError(message);
+        toast.error(message);
+        return;
+      }
+
+      if ((count ?? 0) > 0) {
+        const message = "THEBACK5 is applicable only for first-time users.";
+        setCouponError(message);
+        toast.error(message);
+        return;
+      }
+
+      setAppliedCoupon(FIRST_ORDER_COUPON);
+      setCouponInput(FIRST_ORDER_COUPON);
+    } catch (error) {
+      console.error("First-order coupon validation failed:", error);
+      const message = "Unable to validate the coupon. Please try again.";
+      setCouponError(message);
+      toast.error(message);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon("");
+    setCouponInput("");
+    setCouponError("");
+  };
+
+  /* ==========================================================
      PAYMENT
   ========================================================== */
 
@@ -1305,6 +1420,45 @@ export default function CheckoutPage() {
         setPaymentError(
           `${entry.name} has only ${entry.stock} item(s) available in size ${entry.item.size}.`,
         );
+        return;
+      }
+    }
+
+    if (appliedCoupon === FIRST_ORDER_COUPON) {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        const message =
+          "Please login again before using the first-order coupon.";
+        setPaymentError(message);
+        toast.error(message);
+        return;
+      }
+
+      const { count, error: ordersError } = await supabase
+        .from("orders")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (ordersError) {
+        console.error("First-order coupon revalidation failed:", ordersError);
+        const message =
+          "Unable to validate the first-order coupon. Please try again.";
+        setPaymentError(message);
+        toast.error(message);
+        return;
+      }
+
+      if ((count ?? 0) > 0) {
+        const message = "THEBACK5 is applicable only for first-time users.";
+        setAppliedCoupon("");
+        setCouponInput("");
+        setCouponError(message);
+        setPaymentError(message);
+        toast.error(message);
         return;
       }
     }
@@ -1415,9 +1569,9 @@ export default function CheckoutPage() {
                 },
 
                 subtotal,
-                delivery_charge: SHIPPING_FEE,
-                discount: 0,
-                coupon_code: null,
+                delivery_charge: deliveryFee,
+                discount: couponDiscount,
+                coupon_code: appliedCoupon || null,
                 total_amount: grandTotal,
 
                 cart: checkoutCart,
@@ -1687,13 +1841,13 @@ export default function CheckoutPage() {
                 LEFT
             ================================================= */}
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               {/* CONTACT */}
               <section className="overflow-hidden rounded-[28px] border border-[#CBCAC8]/8 bg-[#111111]">
                 <button
                   type="button"
                   onClick={() => setContactOpen((current) => !current)}
-                  className="flex w-full items-center justify-between gap-4 border-b border-[#CBCAC8]/7 px-5 py-5 text-left sm:px-7"
+                  className="flex w-full items-center justify-between gap-4 border-b border-[#CBCAC8]/7 px-5 py-4 text-left sm:px-6"
                   aria-expanded={contactOpen}
                 >
                   <div className="flex min-w-0 items-center gap-3">
@@ -1717,7 +1871,7 @@ export default function CheckoutPage() {
                       </p>
 
                       <h2
-                        className="mt-1 text-2xl uppercase leading-none text-[#CBCAC8]"
+                        className="mt-1 text-xl uppercase leading-none text-[#CBCAC8]"
                         style={{
                           fontFamily:
                             "var(--font-bebas-neue), Impact, sans-serif",
@@ -1748,13 +1902,13 @@ export default function CheckoutPage() {
                 </button>
 
                 {contactOpen && (
-                  <div className="p-5 sm:p-7">
-                    <p className="mb-5 max-w-2xl text-xs leading-6 text-[#666362]">
+                  <div className="p-5 sm:p-6">
+                    <p className="mb-4 max-w-2xl text-[11px] leading-5 text-[#666362]">
                       We&apos;ll use these details for order confirmation and
                       delivery updates.
                     </p>
 
-                    <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <Field
                         label="Full name"
                         required
@@ -1813,7 +1967,7 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={validateContact}
-                      className="group mt-6 inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-[#b90b10] sm:w-auto sm:min-w-[260px]"
+                      className="group mt-4 inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.18em] text-white transition-all duration-300 hover:bg-[#b90b10] sm:w-auto sm:min-w-[260px]"
                     >
                       {contactComplete
                         ? "Contact confirmed"
@@ -1837,7 +1991,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setDeliveryOpen((current) => !current)}
-                  className="flex w-full items-center justify-between gap-4 border-b border-[#CBCAC8]/7 px-5 py-5 text-left sm:px-7"
+                  className="flex w-full items-center justify-between gap-4 border-b border-[#CBCAC8]/7 px-5 py-4 text-left sm:px-6"
                   aria-expanded={deliveryOpen}
                 >
                   <div className="flex min-w-0 items-center gap-3">
@@ -1861,7 +2015,7 @@ export default function CheckoutPage() {
                       </p>
 
                       <h2
-                        className="mt-1 text-2xl uppercase leading-none text-[#CBCAC8]"
+                        className="mt-1 text-xl uppercase leading-none text-[#CBCAC8]"
                         style={{
                           fontFamily:
                             "var(--font-bebas-neue), Impact, sans-serif",
@@ -1892,8 +2046,8 @@ export default function CheckoutPage() {
                 </button>
 
                 {deliveryOpen && (
-                  <div className="p-5 sm:p-7">
-                    <p className="mb-5 max-w-2xl text-xs leading-6 text-[#666362]">
+                  <div className="p-5 sm:p-6">
+                    <p className="mb-4 max-w-2xl text-[11px] leading-5 text-[#666362]">
                       Where should we send your Backstore order?
                     </p>
 
@@ -1996,7 +2150,7 @@ export default function CheckoutPage() {
 
                     {deliveryError && <ErrorBox message={deliveryError} />}
 
-                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                       <button
                         type="button"
                         onClick={validateDelivery}
@@ -2023,6 +2177,61 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 )}
+              </section>
+
+              {/* PAYMENT */}
+              <section className="overflow-hidden rounded-[24px] border border-[#CBCAC8]/8 bg-[#111111]">
+                <div className="px-5 py-4 sm:px-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DA0D12]/10 text-[#DA0D12]">
+                      <Icon name="credit-card" size={18} />
+                    </div>
+
+                    <div>
+                      <p className="font-mono text-[7px] uppercase tracking-[0.25em] text-[#DA0D12]">
+                        Step 03
+                      </p>
+                      <h2
+                        className="mt-1 text-xl uppercase leading-none text-[#CBCAC8]"
+                        style={{
+                          fontFamily:
+                            "var(--font-bebas-neue), Impact, sans-serif",
+                        }}
+                      >
+                        Payment
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-[#DA0D12]/30 bg-[#DA0D12]/[0.04] p-4">
+                    <label className="flex cursor-pointer items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="payment-method"
+                          value="online"
+                          checked={paymentMethod === "online"}
+                          onChange={() => setPaymentMethod("online")}
+                          className="h-4 w-4 accent-[#DA0D12]"
+                        />
+                        <div>
+                          <p className="text-sm font-semibold text-[#CBCAC8]">
+                            Online payment
+                          </p>
+                          <p className="mt-1 text-[10px] text-[#555]">
+                            UPI, cards, net banking and wallets via Razorpay
+                          </p>
+                        </div>
+                      </div>
+
+                      <Icon
+                        name="lock"
+                        size={15}
+                        className="shrink-0 text-[#DA0D12]"
+                      />
+                    </label>
+                  </div>
+                </div>
               </section>
 
               {/* TRUST PANEL */}
@@ -2243,26 +2452,109 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* SUMMARY TOTALS */}
+                {/* COUPON + SUMMARY TOTALS */}
                 <div className="border-t border-[#CBCAC8]/7 px-5 py-5 sm:px-6">
-                  <div className="space-y-3">
+                  <div className="rounded-2xl border border-[#CBCAC8]/8 bg-[#0F0F0F] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="font-mono text-[7px] uppercase tracking-[0.22em] text-[#666362]">
+                        Coupon code
+                      </p>
+                      {appliedCoupon && (
+                        <button
+                          type="button"
+                          onClick={removeCoupon}
+                          className="font-mono text-[7px] uppercase tracking-[0.15em] text-[#555] transition-colors hover:text-[#DA0D12]"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        disabled={Boolean(appliedCoupon)}
+                        onChange={(event) => {
+                          setCouponInput(event.target.value.toUpperCase());
+                          setCouponError("");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") applyCoupon();
+                        }}
+                        placeholder="Enter coupon code"
+                        className="min-w-0 flex-1 rounded-xl border border-[#CBCAC8]/10 bg-[#161616] px-3 py-3 font-mono text-[9px] uppercase tracking-[0.12em] text-[#CBCAC8] outline-none placeholder:text-[#444] focus:border-[#DA0D12]/45 disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        disabled={Boolean(appliedCoupon)}
+                        onClick={applyCoupon}
+                        className="shrink-0 rounded-xl bg-[#DA0D12] px-4 font-mono text-[8px] uppercase tracking-[0.12em] text-white transition-colors hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Apply
+                      </button>
+                    </div>
+
+                    {!appliedCoupon && (
+                      <p className="mt-3 text-[9px] leading-4 text-[#555]">
+                        THEBACK5 — 5% off for First Order
+                      </p>
+                    )}
+
+                    {appliedCoupon && (
+                      <p className="mt-3 font-mono text-[8px] uppercase tracking-[0.1em] text-[#DA0D12]">
+                        5% discount applied
+                      </p>
+                    )}
+
+                    {couponError && (
+                      <p className="mt-3 text-[9px] text-[#DA0D12]">
+                        {couponError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-5 space-y-3">
                     <SummaryRow
                       label="Subtotal"
                       value={formatPrice(subtotal)}
                     />
 
                     <SummaryRow
-                      label="Shipping"
+                      label="Delivery"
                       value={
-                        SHIPPING_FEE === 0 ? "FREE" : formatPrice(SHIPPING_FEE)
+                        isFreeDelivery
+                          ? "FREE"
+                          : address.state
+                            ? formatPrice(deliveryFee)
+                            : "Select state"
                       }
                       accent
                     />
 
-                    {productSavings > 0 && (
+                    {isFreeDelivery ? (
+                      <p className="-mt-1 font-mono text-[6px] uppercase tracking-[0.12em] text-[#DA0D12]">
+                        Free delivery unlocked — order above{" "}
+                        {formatPrice(FREE_DELIVERY_THRESHOLD)}
+                      </p>
+                    ) : (
+                      <p className="-mt-1 font-mono text-[6px] uppercase tracking-[0.12em] text-[#444]">
+                        Shipping depends on your state and T-shirt quantity
+                      </p>
+                    )}
+
+                    {couponDiscount > 0 && (
+                      <SummaryRow
+                        label="Coupon discount"
+                        value={`-${formatPrice(couponDiscount)}`}
+                        accent
+                      />
+                    )}
+
+                    {totalSavings > 0 && (
                       <SummaryRow
                         label="You save"
-                        value={`-${formatPrice(productSavings)}`}
+                        value={`-${formatPrice(totalSavings)}`}
                         accent
                       />
                     )}
@@ -2290,7 +2582,11 @@ export default function CheckoutPage() {
 
                   <button
                     type="button"
-                    disabled={isPaymentLoading || !isCheckoutReady}
+                    disabled={
+                      isPaymentLoading ||
+                      !isCheckoutReady ||
+                      paymentMethod !== "online"
+                    }
                     onClick={handlePayment}
                     className="group mt-5 flex w-full items-center justify-center gap-3 rounded-2xl bg-[#DA0D12] px-5 py-4 font-mono text-[8px] uppercase tracking-[0.18em] text-white shadow-[0_14px_40px_rgba(218,13,18,0.16)] transition-all duration-300 hover:bg-[#b90b10] hover:shadow-[0_18px_45px_rgba(218,13,18,0.22)] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                   >

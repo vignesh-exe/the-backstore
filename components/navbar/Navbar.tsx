@@ -474,7 +474,7 @@ export default function Navbar() {
           DESKTOP GLASS PILL NAVBAR
       ========================================================= */}
 
-      <header className="fixed inset-x-0 top-0 z-[100]">
+      <header className="fixed inset-x-0 top-[19px] z-[100]">
         <div className="hidden px-4 pt-4 lg:block">
           <nav
             className="

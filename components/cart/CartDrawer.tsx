@@ -181,8 +181,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     );
   }, [resolvedItems]);
 
-  const shipping = subtotal >= 1999 || subtotal === 0 ? 0 : 99;
-  const total = subtotal + shipping;
+  const FREE_SHIPPING_THRESHOLD = 2999;
+  const qualifiesForFreeShipping =
+    subtotal >= FREE_SHIPPING_THRESHOLD && subtotal > 0;
 
   const itemCount = resolvedItems.reduce(
     (total, item) => total + item.quantity,
@@ -474,7 +475,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </div>
 
               {/* Free shipping message */}
-              {shipping > 0 && (
+              {!qualifiesForFreeShipping && subtotal > 0 && (
                 <div className="mt-5 rounded-xl border border-[#DA0D12]/15 bg-[#DA0D12]/5 px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🐾</span>
@@ -482,7 +483,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <p className="text-[9px] leading-4 text-[#CBCAC8]">
                       Add{" "}
                       <span className="font-semibold text-white">
-                        {formatPrice(1999 - subtotal)}
+                        {formatPrice(
+                          Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal),
+                        )}
                       </span>{" "}
                       more for free shipping.
                     </p>
@@ -490,7 +493,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
               )}
 
-              {shipping === 0 && subtotal > 0 && (
+              {qualifiesForFreeShipping && (
                 <div className="mt-5 flex items-center gap-2 rounded-xl border border-white/10 bg-[#424141]/20 px-4 py-3">
                   <span className="text-sm">🐾</span>
 
@@ -515,8 +518,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[#666362]">Shipping</span>
 
-                  <span className="text-sm font-medium text-[#CBCAC8]">
-                    {shipping === 0 ? "FREE" : formatPrice(shipping)}
+                  <span
+                    className={`text-sm font-medium ${
+                      qualifiesForFreeShipping
+                        ? "text-[#CBCAC8]"
+                        : "text-[#666362]"
+                    }`}
+                  >
+                    {qualifiesForFreeShipping
+                      ? "FREE"
+                      : "Calculated at checkout"}
                   </span>
                 </div>
 
@@ -534,7 +545,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
 
                   <p className="font-[family-name:var(--font-bebas-neue)] text-3xl tracking-wide text-white">
-                    {formatPrice(total)}
+                    {formatPrice(subtotal)}
                   </p>
                 </div>
               </div>

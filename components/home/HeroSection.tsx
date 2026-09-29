@@ -52,11 +52,19 @@ const collectionMedia = [
   },
   {
     id: 4,
+    type: "image",
+    src: "/images/hero/collectibles-poster.png",
+    alt: "Collectibles",
+    collection: "Collectibles",
+    code: "TB / 004",
+  },
+  {
+    id: 5,
     type: "video",
     src: "/images/hero/collection-video.mp4",
     alt: "The Backstore Collection Video",
     collection: "The Pack",
-    code: "TB / 004",
+    code: "TB / 005",
   },
 ];
 
@@ -238,54 +246,6 @@ function CollectionCard({
         `}
       />
 
-      {/* ======================================================
-          COLLAR BUCKLE
-      ====================================================== */}
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          left-1/2
-          top-[-14px]
-          z-40
-          flex
-          -translate-x-1/2
-          items-center
-          justify-center
-        "
-      >
-        <div
-          className={`
-            rounded-[9px]
-            border
-            border-[#CBCAC8]/10
-            bg-[#161616]/90
-            shadow-[0_15px_40px_rgba(0,0,0,0.3)]
-            backdrop-blur-xl
-            ${mobile ? "h-[32px] w-[68px]" : "h-[44px] w-[88px]"}
-          `}
-        >
-          <div
-            className={`
-              mx-auto
-              rounded-[5px]
-              border
-              border-[#666362]/40
-              ${mobile ? "mt-[6px] h-[19px] w-[34px]" : "mt-[9px] h-[24px] w-[44px]"}
-            `}
-          >
-            <div
-              className={`
-                mx-auto
-                rounded-[2px]
-                bg-[#DA0D12]/60
-                ${mobile ? "mt-[5px] h-[7px] w-[13px]" : "mt-[7px] h-[8px] w-[16px]"}
-              `}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* ======================================================
           OUTER GLASS FRAME
@@ -613,7 +573,7 @@ function CollectionCard({
             {String(activeMedia + 1).padStart(2, "0")}
           </span>
           <span className="mx-1">/</span>
-          <span>04</span>
+          <span>05</span>
         </div>
       </div>
     </div>

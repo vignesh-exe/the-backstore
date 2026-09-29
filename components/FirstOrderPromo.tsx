@@ -2,17 +2,25 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function FirstOrderPromo() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    // Close immediately when navigating to another page
+    setIsOpen(false);
+
+    // Show once after 4 seconds on the current page
     const timer = window.setTimeout(() => {
       setIsOpen(true);
     }, 4000);
 
-    return () => window.clearTimeout(timer);
-  }, []);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [pathname]);
 
   if (!isOpen) return null;
 

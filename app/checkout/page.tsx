@@ -1728,7 +1728,7 @@ export default function CheckoutPage() {
         strategy="afterInteractive"
       />
 
-      <main className="min-h-screen bg-[#080808] text-[#CBCAC8]">
+      <main className="box-border min-h-screen w-full max-w-full overflow-x-hidden bg-[#080808] text-[#CBCAC8]">
         {/* ====================================================
             TOP STRIP
         ==================================================== */}
@@ -1737,7 +1737,7 @@ export default function CheckoutPage() {
           <div className="pointer-events-none absolute -left-24 -top-24 h-56 w-56 rounded-full bg-[#DA0D12]/10 blur-[80px]" />
           <div className="pointer-events-none absolute -right-24 top-0 h-64 w-64 rounded-full bg-[#DA0D12]/5 blur-[90px]" />
 
-          <div className="relative mx-auto max-w-[1440px] px-4 pb-7 pt-28 sm:px-7 sm:pt-28 lg:px-10 lg:pb-9 lg:pt-32">
+          <div className="relative mx-auto max-w-[1440px] px-4 pb-6 pt-[112px] sm:px-7 sm:pb-7 sm:pt-28 lg:px-10 lg:pb-9 lg:pt-32">
             <Link
               href="/shop/t-shirts"
               className="group inline-flex items-center gap-2 font-mono text-[8px] uppercase tracking-[0.2em] text-[#666362] transition-colors hover:text-[#CBCAC8]"
@@ -1763,7 +1763,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <h1
-                  className="mt-2 text-5xl uppercase leading-[0.86] tracking-tight text-[#CBCAC8] sm:text-6xl lg:text-7xl"
+                  className="mt-2 text-[3.25rem] uppercase leading-[0.88] tracking-tight text-[#CBCAC8] sm:text-6xl lg:text-7xl"
                   style={{
                     fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
                   }}
@@ -1771,7 +1771,7 @@ export default function CheckoutPage() {
                   Finish the order.
                 </h1>
 
-                <p className="mt-3 max-w-xl text-xs leading-6 text-[#666362] sm:text-sm">
+                <p className="mt-3 max-w-xl text-[11px] leading-5 text-[#666362] sm:text-sm sm:leading-6">
                   Your selected pieces are reserved in your checkout. Add your
                   details, choose where they should go, then pay securely.
                 </p>
@@ -1796,30 +1796,29 @@ export default function CheckoutPage() {
             </div>
 
             {/* Step indicator */}
-            <div className="mt-8 flex max-w-2xl items-center">
+            <div className="mx-auto mt-7 flex w-full max-w-2xl items-center sm:mt-8">
               {CHECKOUT_STEPS.map((step, index) => (
-                <div
-                  key={step.number}
-                  className="flex min-w-0 flex-1 items-center"
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-[8px] tracking-[0.08em] ${
-                        index === 0
-                          ? "border-[#DA0D12] bg-[#DA0D12] text-white"
-                          : "border-[#CBCAC8]/12 bg-[#111111] text-[#666362]"
-                      }`}
-                    >
-                      {step.number}
-                    </div>
+                <div key={step.number} className="contents">
+                  <div className="flex min-w-0 flex-1 items-center justify-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-[8px] tracking-[0.08em] ${
+                          index === 0
+                            ? "border-[#DA0D12] bg-[#DA0D12] text-white"
+                            : "border-[#CBCAC8]/12 bg-[#111111] text-[#666362]"
+                        }`}
+                      >
+                        {step.number}
+                      </div>
 
-                    <span
-                      className={`hidden font-mono text-[8px] uppercase tracking-[0.16em] sm:block ${
-                        index === 0 ? "text-[#CBCAC8]" : "text-[#666362]"
-                      }`}
-                    >
-                      {step.label}
-                    </span>
+                      <span
+                        className={`hidden font-mono text-[8px] uppercase tracking-[0.16em] sm:block ${
+                          index === 0 ? "text-[#CBCAC8]" : "text-[#666362]"
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
                   </div>
 
                   {index < CHECKOUT_STEPS.length - 1 && (
@@ -1835,19 +1834,19 @@ export default function CheckoutPage() {
             CONTENT
         ==================================================== */}
 
-        <section className="mx-auto max-w-[1440px] px-4 py-6 sm:px-7 sm:py-8 lg:px-10 lg:py-10">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_410px] lg:gap-8">
+        <section className="mx-auto box-border w-full max-w-[1440px] px-4 py-4 sm:px-7 sm:py-8 lg:px-10 lg:py-10">
+          <div className="grid w-full min-w-0 max-w-full gap-6 lg:grid-cols-[minmax(0,1fr)_410px] lg:gap-8">
             {/* =================================================
                 LEFT
             ================================================= */}
 
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               {/* CONTACT */}
-              <section className="overflow-hidden rounded-[28px] border border-[#CBCAC8]/8 bg-[#111111]">
+              <section className="box-border w-full min-w-0 max-w-full overflow-hidden rounded-[22px] border border-[#CBCAC8]/8 bg-[#111111] sm:rounded-[28px]">
                 <button
                   type="button"
                   onClick={() => setContactOpen((current) => !current)}
-                  className="flex w-full items-center justify-between gap-4 border-b border-[#CBCAC8]/7 px-5 py-4 text-left sm:px-6"
+                  className="flex w-full items-center justify-between gap-3 border-b border-[#CBCAC8]/7 px-4 py-3.5 text-left sm:gap-4 sm:px-6 sm:py-4"
                   aria-expanded={contactOpen}
                 >
                   <div className="flex min-w-0 items-center gap-3">
@@ -1902,7 +1901,7 @@ export default function CheckoutPage() {
                 </button>
 
                 {contactOpen && (
-                  <div className="p-5 sm:p-6">
+                  <div className="p-4 sm:p-6">
                     <p className="mb-4 max-w-2xl text-[11px] leading-5 text-[#666362]">
                       We&apos;ll use these details for order confirmation and
                       delivery updates.
@@ -1987,11 +1986,11 @@ export default function CheckoutPage() {
               </section>
 
               {/* DELIVERY */}
-              <section className="overflow-hidden rounded-[28px] border border-[#CBCAC8]/8 bg-[#111111]">
+              <section className="box-border w-full min-w-0 max-w-full overflow-hidden rounded-[22px] border border-[#CBCAC8]/8 bg-[#111111] sm:rounded-[28px]">
                 <button
                   type="button"
                   onClick={() => setDeliveryOpen((current) => !current)}
-                  className="flex w-full items-center justify-between gap-4 border-b border-[#CBCAC8]/7 px-5 py-4 text-left sm:px-6"
+                  className="flex w-full items-center justify-between gap-3 border-b border-[#CBCAC8]/7 px-4 py-3.5 text-left sm:gap-4 sm:px-6 sm:py-4"
                   aria-expanded={deliveryOpen}
                 >
                   <div className="flex min-w-0 items-center gap-3">
@@ -2046,7 +2045,7 @@ export default function CheckoutPage() {
                 </button>
 
                 {deliveryOpen && (
-                  <div className="p-5 sm:p-6">
+                  <div className="p-4 sm:p-6">
                     <p className="mb-4 max-w-2xl text-[11px] leading-5 text-[#666362]">
                       Where should we send your Backstore order?
                     </p>
@@ -2180,8 +2179,8 @@ export default function CheckoutPage() {
               </section>
 
               {/* PAYMENT */}
-              <section className="overflow-hidden rounded-[24px] border border-[#CBCAC8]/8 bg-[#111111]">
-                <div className="px-5 py-4 sm:px-6">
+              <section className="box-border w-full min-w-0 max-w-full overflow-hidden rounded-[22px] border border-[#CBCAC8]/8 bg-[#111111] sm:rounded-[24px]">
+                <div className="px-4 py-3.5 sm:px-6 sm:py-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DA0D12]/10 text-[#DA0D12]">
                       <Icon name="credit-card" size={18} />
@@ -2258,9 +2257,9 @@ export default function CheckoutPage() {
                 RIGHT SUMMARY
             ================================================= */}
 
-            <aside className="lg:sticky lg:top-24 lg:self-start">
-              <div className="overflow-hidden rounded-[30px] border border-[#CBCAC8]/9 bg-[#111111] shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
-                <div className="border-b border-[#CBCAC8]/7 px-5 py-5 sm:px-6">
+            <aside className="w-full min-w-0 max-w-full lg:sticky lg:top-24 lg:self-start">
+              <div className="box-border w-full min-w-0 max-w-full overflow-hidden rounded-[24px] border border-[#CBCAC8]/9 bg-[#111111] shadow-[0_30px_100px_rgba(0,0,0,0.35)] sm:rounded-[30px]">
+                <div className="border-b border-[#CBCAC8]/7 px-4 py-4 sm:px-6 sm:py-5">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="font-mono text-[7px] uppercase tracking-[0.28em] text-[#DA0D12]">
@@ -2289,7 +2288,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="max-h-[430px] overflow-y-auto px-4 py-4 sm:px-5">
+                <div className="max-h-[430px] overflow-y-auto px-3 py-3 sm:px-5 sm:py-4">
                   <div className="space-y-3">
                     {resolvedItems.map((entry) => (
                       <div
@@ -2453,7 +2452,7 @@ export default function CheckoutPage() {
                 </div>
 
                 {/* COUPON + SUMMARY TOTALS */}
-                <div className="border-t border-[#CBCAC8]/7 px-5 py-5 sm:px-6">
+                <div className="border-t border-[#CBCAC8]/7 px-4 py-4 sm:px-6 sm:py-5">
                   <div className="rounded-2xl border border-[#CBCAC8]/8 bg-[#0F0F0F] p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="font-mono text-[7px] uppercase tracking-[0.22em] text-[#666362]">
@@ -2713,7 +2712,7 @@ function Field({
         autoComplete={autoComplete}
         inputMode={inputMode}
         maxLength={maxLength}
-        className="w-full rounded-2xl border border-[#CBCAC8]/10 bg-[#161616] px-4 py-3.5 text-sm text-[#CBCAC8] outline-none transition placeholder:text-[#444] focus:border-[#DA0D12]/45 focus:ring-4 focus:ring-[#DA0D12]/[0.06]"
+        className="box-border w-full max-w-full rounded-2xl border border-[#CBCAC8]/10 bg-[#161616] px-4 py-3.5 text-sm text-[#CBCAC8] outline-none transition placeholder:text-[#444] focus:border-[#DA0D12]/45 focus:ring-4 focus:ring-[#DA0D12]/[0.06]"
       />
     </div>
   );
@@ -2838,8 +2837,8 @@ function SummaryRow({
   accent?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 text-sm">
-      <span className="text-[#666362]">{label}</span>
+    <div className="flex min-w-0 items-center justify-between gap-4 text-sm">
+      <span className="min-w-0">{label}</span>
       <span
         className={
           accent ? "font-semibold text-[#DA0D12]" : "font-medium text-[#CBCAC8]"

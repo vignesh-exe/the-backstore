@@ -279,11 +279,11 @@ export default function ContactPage() {
           {/* Quick contact pills */}
           <div className="mx-auto mt-12 flex max-w-3xl flex-wrap items-center justify-center gap-3">
             <a
-              href="tel:+917845721716"
+              href="tel:+916374777151"
               className="group inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-[#424141]/25 px-4 py-3 text-xs text-[#CBCAC8] backdrop-blur-xl transition duration-300 hover:border-[#DA0D12]/30 hover:bg-[#DA0D12]/[0.06]"
             >
               <PhoneIcon className="h-4 w-4 text-[#DA0D12]" />
-              +91 78457 21716
+              +91 63747 77151
             </a>
 
             <a
@@ -330,7 +330,7 @@ export default function ContactPage() {
               <div className="mt-10 space-y-0">
                 {/* Phone */}
                 <a
-                  href="tel:+917845721716"
+                  href="tel:+916374777151"
                   className="group flex items-center gap-4 border-t border-white/[0.07] py-5 transition-colors hover:border-[#DA0D12]/30"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#161616] text-[#DA0D12] transition-colors group-hover:bg-[#DA0D12] group-hover:text-white">
@@ -343,7 +343,7 @@ export default function ContactPage() {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold text-[#CBCAC8]">
-                      +91 78457 21716
+                      +91 63747 77151
                     </p>
                   </div>
 

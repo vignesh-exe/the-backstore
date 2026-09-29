@@ -467,7 +467,7 @@ export default function Footer() {
             <div className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               {/* Phone */}
 
-              <a href="tel:+917845721716" className="flex items-center gap-3">
+              <a href="tel:+916374777151" className="flex items-center gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#424141]/70 text-[#DA0D12]">
                   <PhoneIcon />
                 </span>
@@ -478,7 +478,7 @@ export default function Footer() {
                   </span>
 
                   <span className="mt-0.5 block text-[10px] text-[#CBCAC8]/70">
-                    +91 78457 21716
+                    +91 63747 77151
                   </span>
                 </span>
               </a>

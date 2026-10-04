@@ -370,7 +370,7 @@ export default function Footer() {
               </Link>
 
               <Link
-                href="/shop"
+                href="/shop/t-shirts"
                 className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Shop
@@ -410,14 +410,14 @@ export default function Footer() {
 
             <nav className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               <Link
-                href="/shop"
+                href="/shop/t-shirts"
                 className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 All Products
               </Link>
 
               <Link
-                href="/shop"
+                href="/shop/t-shirts"
                 className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 New Arrivals

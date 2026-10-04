@@ -610,7 +610,7 @@ export default function AboutPage() {
 
           <div className="shrink-0">
             <Link
-              href="/shop"
+              href="/shop/t-shirts"
               className="group inline-flex items-center gap-4 rounded-full border border-[#DA0D12]/40 bg-[#161616] px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#CBCAC8] transition duration-300 hover:border-[#DA0D12] hover:bg-[#DA0D12] hover:text-white"
             >
               Explore the store
@@ -650,7 +650,7 @@ export default function AboutPage() {
           </p>
 
           <Link
-            href="/shop"
+            href="/shop/t-shirts"
             className="group mt-10 inline-flex items-center gap-3 rounded-full bg-[#DA0D12] px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-white transition duration-300 hover:bg-[#80060B]"
           >
             Explore The Store

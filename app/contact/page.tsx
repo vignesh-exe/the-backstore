@@ -648,7 +648,7 @@ export default function ContactPage() {
           </p>
 
           <Link
-            href="/shop"
+            href="/shop/t-shirts"
             className="group mt-9 inline-flex items-center gap-3 rounded-full bg-[#DA0D12] px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-white transition duration-300 hover:bg-[#80060B]"
           >
             Explore The Store

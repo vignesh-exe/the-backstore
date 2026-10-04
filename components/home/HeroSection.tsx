@@ -938,7 +938,7 @@ export default function HeroSection() {
 
               <div className="mt-6 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center lg:mt-8 lg:items-start lg:justify-start">
                 <a
-                  href="/shop"
+                  href="/shop/t-shirts"
                   className="
                     group
                     inline-flex

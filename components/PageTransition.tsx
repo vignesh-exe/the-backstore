@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 const pageNames: Record<string, string> = {
   "/": "Home",
-  "/shop": "Shop",
+  "/shop/t-shirts": "Shop",
   "/customize": "Customize",
   "/about": "About Us",
   "/contact": "Contact",

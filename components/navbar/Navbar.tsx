@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase";
 
 const navItems = [
   { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
+  { label: "Shop", href: "/shop/t-shirts" },
   { label: "Customize", href: "/customize" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
@@ -678,7 +678,7 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const isShopActive = pathname === "/shop" || pathname.startsWith("/shop/");
+  const isShopActive = pathname === "/shop/t-shirts" || pathname.startsWith("/shop/");
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);

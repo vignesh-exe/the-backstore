@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
 import LoginModal from "@/components/auth/LoginModal";
@@ -42,12 +42,17 @@ type Product = {
 const collections = [
   "All Collections",
   "Anime",
+  "Comic",
+  "Kollywood",
   "Sports",
+  "Cinephile",
+  "F1",
   "Football",
-  "Doomsday",
-  "Streetwear",
-  "Fandom",
-  "New Arrivals",
+  "Cricket",
+  "Memes",
+  "Motivational Quotes",
+  "Garage Culture",
+  "Music",
 ];
 
 const categories = [
@@ -165,8 +170,14 @@ function normalizeProduct(raw: any): Product {
     id: String(raw?.id ?? ""),
     name: String(raw?.name ?? "Untitled Product"),
     description: raw?.description ?? "",
-    category: String(raw?.category ?? raw?.category_name ?? "T-Shirt"),
-    collection: String(tags[0] ?? "The Backstore"),
+    category: String(raw?.category ?? raw?.category_name ?? "T-Shirt").trim(),
+    collection: String(
+      raw?.collection ??
+        raw?.collection_name ??
+        raw?.collections ??
+        tags[0] ??
+        "The Backstore",
+    ).trim(),
     price,
     mrp,
     discount: getDiscount(price, mrp),
@@ -547,9 +558,10 @@ function ProductCard({
       ============================================================ */}
       <div className="flex flex-1 flex-col px-2 pt-5 sm:px-3 sm:pt-6">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h2
-              className="line-clamp-2 text-[26px] leading-[0.82] text-[#CBCAC8] sm:text-[31px]"
+              title={product.name}
+              className="min-w-0 max-w-full truncate text-[26px] leading-[0.82] text-[#CBCAC8] sm:text-[31px]"
               style={{
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
@@ -587,10 +599,14 @@ function ProductCard({
 
 export default function TshirtsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
 
-  const [selectedCollection, setSelectedCollection] =
-    useState("All Collections");
+  const collectionFromUrl = searchParams.get("collection");
+
+  const [selectedCollection, setSelectedCollection] = useState(
+    collectionFromUrl || "All Collections",
+  );
 
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedPrice, setSelectedPrice] = useState("All Prices");
@@ -834,7 +850,10 @@ export default function TshirtsPage() {
           return true;
         }
 
-        return product.collection === selectedCollection;
+        return (
+          product.collection.trim().toLowerCase() ===
+          selectedCollection.trim().toLowerCase()
+        );
       })
       .filter((product) => {
         if (selectedCategory === "All Products") {
@@ -867,6 +886,20 @@ export default function TshirtsPage() {
 
         if (sort === "price-high") {
           return b.price - a.price;
+        }
+
+        if (sort === "name-az") {
+          return a.name.localeCompare(b.name, undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
+        }
+
+        if (sort === "name-za") {
+          return b.name.localeCompare(a.name, undefined, {
+            sensitivity: "base",
+            numeric: true,
+          });
         }
 
         if (a.featured !== b.featured) {
@@ -946,6 +979,8 @@ export default function TshirtsPage() {
               >
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
+                <option value="name-az">Name: A to Z</option>
+                <option value="name-za">Name: Z to A</option>
               </select>
             </div>
           </div>
@@ -979,6 +1014,8 @@ export default function TshirtsPage() {
           >
             <option value="price-low">Price: Low</option>
             <option value="price-high">Price: High</option>
+            <option value="name-az">Name: A to Z</option>
+            <option value="name-za">Name: Z to A</option>
           </select>
         </div>
 

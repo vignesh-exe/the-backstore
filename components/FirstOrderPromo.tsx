@@ -4,17 +4,33 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+const PROMO_STORAGE_KEY = "thebackstore-first-order-promo-shown";
+
 export default function FirstOrderPromo() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Close immediately when navigating to another page
-    setIsOpen(false);
+    // Only show the promo on the Home page.
+    if (pathname !== "/") {
+      setIsOpen(false);
+      return;
+    }
 
-    // Show once after 4 seconds on the current page
+    // Check whether the promo has already been shown.
+    const hasShownPromo = window.localStorage.getItem(PROMO_STORAGE_KEY);
+
+    if (hasShownPromo === "true") {
+      setIsOpen(false);
+      return;
+    }
+
+    // Show once after 4 seconds.
     const timer = window.setTimeout(() => {
       setIsOpen(true);
+
+      // Mark it as shown so it won't appear again.
+      window.localStorage.setItem(PROMO_STORAGE_KEY, "true");
     }, 4000);
 
     return () => {

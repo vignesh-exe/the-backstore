@@ -42,6 +42,19 @@ type DatabaseOrderItem = {
   variant_details?: unknown | null;
 };
 
+type CancellationRequest = {
+  id: string;
+  order_id: string;
+  order_number: string;
+  user_id: string | null;
+  customer_email: string | null;
+  reason: string;
+  status: string;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 function getCustomization(details: unknown) {
   if (!details || typeof details !== "object" || Array.isArray(details)) {
     return null;
@@ -105,11 +118,11 @@ function getOrderType(
 function getOrderTypeClass(orderType: OrderType) {
   switch (orderType) {
     case "Custom":
-      return "bg-[#fff0f0] text-[#d81920] border-[#ffd2d4]";
+      return "bg-[#e8f7ee] text-[#15803d] border-[#b9e6c8]";
     case "Mixed":
       return "bg-[#fff7e6] text-[#b56b00] border-[#ffe2ad]";
     default:
-      return "bg-[#eef6f1] text-[#23643f] border-[#cce5d6]";
+      return "bg-[#fff0f0] text-[#d81920] border-[#ffd2d4]";
   }
 }
 
@@ -226,6 +239,41 @@ const statusTabs: Array<"All" | OrderStatus> = [
   "Cancelled",
 ];
 
+function BellIcon() {
+  return (
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21h4" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 function SearchIcon() {
   return (
     <svg
@@ -326,7 +374,7 @@ function getStatusClass(status: OrderStatus) {
       return "bg-[#fff0df] text-[#c2410c]";
 
     case "Delivered":
-      return "bg-[#dcfce7] text-[#15803d]";
+      return "bg-[#fff0f0] text-[#d81920]";
 
     case "Cancelled":
       return "bg-[#fee2e2] text-[#dc2626]";
@@ -357,6 +405,53 @@ export default function OrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState("All");
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const [cancellationRequests, setCancellationRequests] = useState<
+    CancellationRequest[]
+  >([]);
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [cancellationLoading, setCancellationLoading] = useState(true);
+  const [cancellationError, setCancellationError] = useState("");
+
+  const loadCancellationRequests = async () => {
+    setCancellationLoading(true);
+    setCancellationError("");
+
+    const { data, error: cancellationRequestError } = await supabase
+      .from("cancellation_requests")
+      .select(
+        `
+        id,
+        order_id,
+        order_number,
+        user_id,
+        customer_email,
+        reason,
+        status,
+        admin_note,
+        created_at,
+        updated_at
+      `,
+      )
+      .order("created_at", { ascending: false });
+
+    if (cancellationRequestError) {
+      console.error(
+        "Load cancellation requests error:",
+        cancellationRequestError,
+      );
+
+      // Keep the orders page usable if the table/RLS is not ready yet.
+      setCancellationRequests([]);
+      setCancellationError(cancellationRequestError.message);
+      setCancellationLoading(false);
+      return;
+    }
+
+    setCancellationRequests((data ?? []) as CancellationRequest[]);
+    setCancellationLoading(false);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -421,6 +516,7 @@ export default function OrdersPage() {
     };
 
     loadOrders();
+    loadCancellationRequests();
 
     return () => {
       mounted = false;
@@ -458,6 +554,104 @@ export default function OrdersPage() {
 
   const closeOrderDrawer = () => {
     setSelectedOrder(null);
+  };
+
+  const updateCancellationRequestForOrder = async (
+    databaseOrder: DatabaseOrder,
+  ) => {
+    const orderNumber = databaseOrder.order_number || databaseOrder.id;
+
+    // Fetch the request directly from Supabase instead of relying on the
+    // notification state currently held in the browser.
+    const { data: matchingRequests, error: findRequestError } = await supabase
+      .from("cancellation_requests")
+      .select(
+        `
+        id,
+        order_id,
+        order_number,
+        user_id,
+        customer_email,
+        reason,
+        status,
+        admin_note,
+        created_at,
+        updated_at
+      `,
+      )
+      .or(`order_id.eq.${databaseOrder.id},order_number.eq.${orderNumber}`);
+
+    if (findRequestError) {
+      console.error("Find cancellation request error:", findRequestError);
+
+      throw new Error(
+        `Order was cancelled, but the cancellation request could not be found: ${findRequestError.message}`,
+      );
+    }
+
+    if (!matchingRequests || matchingRequests.length === 0) {
+      console.warn(
+        "No cancellation request found for cancelled order:",
+        databaseOrder.id,
+        orderNumber,
+      );
+      return;
+    }
+
+    const requestIds = matchingRequests.map((request) => request.id);
+    const cancelledAt = new Date().toISOString();
+
+    const { error: cancellationUpdateError } = await supabase
+      .from("cancellation_requests")
+      .update({
+        status: "Cancelled",
+        updated_at: cancelledAt,
+      })
+      .in("id", requestIds);
+
+    if (cancellationUpdateError) {
+      console.error(
+        "Update cancellation request error:",
+        cancellationUpdateError,
+      );
+
+      throw new Error(
+        `Order was cancelled, but the cancellation request could not be updated: ${cancellationUpdateError.message}`,
+      );
+    }
+
+    setCancellationRequests((current) =>
+      current.map((request) =>
+        requestIds.includes(request.id)
+          ? {
+              ...request,
+              status: "Cancelled",
+              updated_at: cancelledAt,
+            }
+          : request,
+      ),
+    );
+  };
+
+  const openCancellationRequest = (request: CancellationRequest) => {
+    const matchingOrder = orders.find(
+      (order) =>
+        (request.order_id && order.databaseId === request.order_id) ||
+        (request.order_number && order.id === request.order_number),
+    );
+
+    if (!matchingOrder) {
+      setError(
+        `Unable to find order ${
+          request.order_number || request.order_id || ""
+        } for this cancellation request.`,
+      );
+      return;
+    }
+
+    setSelectedOrder(matchingOrder);
+    setShowNotifications(false);
+    setError("");
   };
 
   const handleStatusUpdate = async (
@@ -544,6 +738,11 @@ export default function OrdersPage() {
         );
       }
 
+      if (status === "Cancelled") {
+        await updateCancellationRequestForOrder(databaseOrder);
+        await loadCancellationRequests();
+      }
+
       const updatedRow: Partial<DatabaseOrder> = result?.data ?? {};
 
       const updatedDatabaseOrder: DatabaseOrder = {
@@ -586,6 +785,10 @@ export default function OrdersPage() {
       );
 
       setError("");
+
+      if (status === "Cancelled") {
+        await loadCancellationRequests();
+      }
     } catch (error) {
       console.error("Update order status API error:", error);
 
@@ -598,6 +801,12 @@ export default function OrdersPage() {
       throw new Error(message);
     }
   };
+
+  const pendingCancellationRequests = cancellationRequests.filter(
+    (request) => request.status === "Pending",
+  );
+
+  const pendingCancellationCount = pendingCancellationRequests.length;
 
   return (
     <>
@@ -658,6 +867,163 @@ export default function OrdersPage() {
                 </p>
               </div>
             </div>
+
+            {/* CANCELLATION NOTIFICATIONS */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowNotifications((current) => !current)}
+                className={[
+                  "relative inline-flex h-[46px] items-center gap-2.5 rounded-[12px]",
+                  "border border-[#e1e6ed] bg-white px-4 text-[#52627a]",
+                  "shadow-[0_2px_8px_rgba(15,23,42,0.05)] transition",
+                  "hover:border-[#d81920] hover:text-[#d81920]",
+                ].join(" ")}
+                aria-label="Cancellation notifications"
+                aria-expanded={showNotifications}
+              >
+                <BellIcon />
+
+                <span className="hidden text-[11px] font-bold uppercase tracking-[0.06em] sm:inline">
+                  Notifications
+                </span>
+
+                {pendingCancellationCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#d81920] px-1 text-[8px] font-black text-white shadow-sm">
+                    {pendingCancellationCount > 99
+                      ? "99+"
+                      : pendingCancellationCount}
+                  </span>
+                )}
+
+                <ChevronDownIcon />
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 top-[54px] z-[80] w-[360px] max-w-[calc(100vw-32px)] overflow-hidden rounded-[14px] border border-[#e1e6ed] bg-white shadow-[0_18px_45px_rgba(15,23,42,0.16)]">
+                  <div className="flex items-center justify-between border-b border-[#edf0f3] px-4 py-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#17233b]">
+                        Cancellation Requests
+                      </p>
+                      <p className="mt-1 text-[9px] text-[#8a96aa]">
+                        Pending requests from customers
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-[#fff0f0] px-2 py-1 text-[8px] font-black text-[#d81920]">
+                      {pendingCancellationCount}
+                    </span>
+                  </div>
+
+                  {cancellationLoading ? (
+                    <div className="px-4 py-7 text-center">
+                      <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[#e2e7ed] border-t-[#d81920]" />
+                      <p className="mt-3 text-[9px] text-[#8a96aa]">
+                        Loading requests...
+                      </p>
+                    </div>
+                  ) : cancellationRequests.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#f3f5f7] text-[#8a96aa]">
+                        <BellIcon />
+                      </div>
+
+                      <p className="mt-3 text-[10px] font-bold text-[#52627a]">
+                        No pending cancellation requests
+                      </p>
+
+                      <p className="mt-1 text-[8px] text-[#9aa5b5]">
+                        New customer requests will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[420px] overflow-y-auto">
+                      {cancellationRequests.map((request) => (
+                        <button
+                          key={request.id}
+                          type="button"
+                          onClick={() => openCancellationRequest(request)}
+                          className="block w-full border-b border-[#edf0f3] px-4 py-3 text-left transition hover:bg-[#fff8f8] last:border-b-0"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="truncate text-[11px] font-black text-[#17233b]">
+                                {request.order_number ||
+                                  request.order_id ||
+                                  "Order"}
+                              </p>
+
+                              <p className="mt-1 truncate text-[9px] font-semibold text-[#52627a]">
+                                {orders.find(
+                                  (order) =>
+                                    order.databaseId === request.order_id ||
+                                    order.id === request.order_number,
+                                )?.customer ||
+                                  request.customer_email ||
+                                  "Customer"}
+                              </p>
+                            </div>
+
+                            <span
+                              className={[
+                                "shrink-0 rounded-full px-2 py-1 text-[7px] font-black uppercase tracking-[0.08em]",
+                                request.status === "Cancelled"
+                                  ? "bg-[#fee2e2] text-[#dc2626]"
+                                  : "bg-[#fff4cf] text-[#9a6500]",
+                              ].join(" ")}
+                            >
+                              {request.status === "Cancelled"
+                                ? "Cancelled"
+                                : "Pending"}
+                            </span>
+                          </div>
+
+                          <div className="mt-2 rounded-[8px] bg-[#fafbfc] px-2.5 py-2">
+                            <p className="text-[8px] font-bold uppercase tracking-[0.08em] text-[#9aa5b5]">
+                              Reason
+                            </p>
+
+                            <p className="mt-1 line-clamp-2 text-[9px] leading-4 text-[#52627a]">
+                              {request.reason || "No reason provided"}
+                            </p>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-[7px] text-[#9aa5b5]">
+                              {new Date(request.created_at).toLocaleString(
+                                "en-IN",
+                                {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </span>
+
+                            <span className="text-[8px] font-black text-[#d81920]">
+                              View Order →
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {cancellationError && (
+                    <div className="border-t border-[#ffd5d7] bg-[#fff5f5] px-4 py-2.5 text-[8px] leading-4 text-[#b4232b]">
+                      Unable to load cancellation requests. Check the
+                      <span className="font-bold">
+                        {" "}
+                        cancellation_requests
+                      </span>{" "}
+                      table and its RLS policies.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </section>
 
           {/* FILTER */}
@@ -713,7 +1079,7 @@ export default function OrdersPage() {
                         "inline-flex h-[34px] items-center gap-1.5 rounded-[8px] px-3",
                         "whitespace-nowrap text-[11px] font-semibold transition-all duration-200",
                         active
-                          ? "bg-[#23643f] text-white shadow-sm"
+                          ? "bg-[#d81920] text-white shadow-sm"
                           : "text-[#64748b] hover:bg-[#f4f6f8] hover:text-[#17233b]",
                       ].join(" ")}
                     >
@@ -741,7 +1107,7 @@ export default function OrdersPage() {
 
             {loading && (
               <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#dce3eb] border-t-[#23643f]" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#dce3eb] border-t-[#d81920]" />
                 <p className="mt-4 text-[12px] text-[#7b8799]">
                   Loading orders from database...
                 </p>
@@ -799,7 +1165,7 @@ export default function OrdersPage() {
                           className="border-b border-[#e7ebf0] last:border-b-0 hover:bg-[#fafbfc]"
                         >
                           <td className="px-5 py-4">
-                            <p className="text-[12px] font-bold text-[#23643f]">
+                            <p className="text-[12px] font-bold text-[#d81920]">
                               ##{order.id}
                             </p>
                           </td>
@@ -866,7 +1232,7 @@ export default function OrdersPage() {
                             <button
                               type="button"
                               onClick={() => openOrderDrawer(order)}
-                              className="inline-flex h-[34px] items-center gap-1.5 rounded-[9px] border border-[#dce3eb] bg-white px-3 text-[11px] font-semibold text-[#52627a] transition-all duration-200 hover:border-[#23643f] hover:text-[#23643f]"
+                              className="inline-flex h-[34px] items-center gap-1.5 rounded-[9px] border border-[#dce3eb] bg-white px-3 text-[11px] font-semibold text-[#52627a] transition-all duration-200 hover:border-[#d81920] hover:text-[#d81920]"
                             >
                               View
                               <ArrowRightIcon />
@@ -884,7 +1250,7 @@ export default function OrdersPage() {
                     <article key={order.id} className="p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-[12px] font-bold text-[#23643f]">
+                          <p className="text-[12px] font-bold text-[#d81920]">
                             ##{order.id}
                           </p>
 
@@ -976,7 +1342,7 @@ export default function OrdersPage() {
                         <button
                           type="button"
                           onClick={() => openOrderDrawer(order)}
-                          className="inline-flex h-[34px] items-center gap-1.5 rounded-[9px] border border-[#dce3eb] bg-white px-3 text-[11px] font-semibold text-[#52627a] transition-all duration-200 hover:border-[#23643f] hover:text-[#23643f]"
+                          className="inline-flex h-[34px] items-center gap-1.5 rounded-[9px] border border-[#dce3eb] bg-white px-3 text-[11px] font-semibold text-[#52627a] transition-all duration-200 hover:border-[#d81920] hover:text-[#d81920]"
                         >
                           View
                           <ArrowRightIcon />

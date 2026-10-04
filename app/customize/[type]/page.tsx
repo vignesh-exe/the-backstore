@@ -44,7 +44,15 @@ function Icon({
   name,
   size = 18,
 }: {
-  name: "arrow-left" | "arrow-right" | "check" | "plus" | "minus" | "upload";
+  name:
+    | "arrow-left"
+    | "arrow-right"
+    | "check"
+    | "plus"
+    | "minus"
+    | "upload"
+    | "chevron-down"
+    | "chevron-up";
   size?: number;
 }) {
   const common = {
@@ -102,6 +110,22 @@ function Icon({
     );
   }
 
+  if (name === "chevron-down") {
+    return (
+      <svg {...common}>
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    );
+  }
+
+  if (name === "chevron-up") {
+    return (
+      <svg {...common}>
+        <path d="m6 15 6-6 6 6" />
+      </svg>
+    );
+  }
+
   return (
     <svg {...common}>
       <path d="M12 16V4" />
@@ -111,19 +135,38 @@ function Icon({
   );
 }
 
+type UploadValue = File | string | null;
+
+function getDisplayFileName(value: UploadValue) {
+  if (value instanceof File) return value.name;
+  if (typeof value === "string") {
+    try {
+      const pathname = new URL(value).pathname;
+      const lastPart = pathname.split("/").pop();
+      return lastPart ? decodeURIComponent(lastPart) : "Uploaded design";
+    } catch {
+      return "Uploaded design";
+    }
+  }
+  return "";
+}
+
 function UploadBox({
   title,
-  file,
+  value,
   onChange,
 }: {
   title: string;
-  file: File | null;
+  value: UploadValue;
   onChange: (file: File | null) => void;
 }) {
+  const fileName = getDisplayFileName(value);
+  const persistedUrl = typeof value === "string" ? value : null;
+
   return (
-    <label className="group block cursor-pointer rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4 transition-colors hover:border-[#DA0D12]/30">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+    <label className="group block min-w-0 cursor-pointer overflow-hidden rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4 transition-colors hover:border-[#DA0D12]/30">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-[#CBCAC8]">
             {title}
           </p>
@@ -131,29 +174,48 @@ function UploadBox({
             PNG, JPG or WEBP · Max 5MB
           </p>
         </div>
-
-        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#CBCAC8]/8 text-[#666362] transition-colors group-hover:border-[#DA0D12]/35 group-hover:text-[#DA0D12]">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#CBCAC8]/8 text-[#666362]">
           <Icon name="upload" size={15} />
         </span>
       </div>
 
-      <div className="mt-4 flex min-h-20 items-center justify-center rounded-xl border border-dashed border-[#CBCAC8]/10 bg-[#111111] px-4 text-center">
-        {file ? (
-          <span className="max-w-full truncate text-[14px] text-[#CBCAC8]">
-            {file.name}
-          </span>
-        ) : (
-          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#444]">
-            Click to upload
-          </span>
+      <div className="mt-4 flex min-h-20 min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-dashed border-[#CBCAC8]/10 bg-[#111111] px-4 text-left">
+        {persistedUrl && (
+          <img
+            src={persistedUrl}
+            alt={`${title} preview`}
+            className="h-12 w-12 shrink-0 rounded-lg border border-[#CBCAC8]/10 object-cover"
+          />
         )}
+        <div className="min-w-0 flex-1 overflow-hidden">
+          {fileName ? (
+            <>
+              <span
+                title={fileName}
+                className="block max-w-full truncate text-[13px] text-[#CBCAC8]"
+              >
+                {fileName}
+              </span>
+              <span className="mt-1 block font-mono text-[8px] uppercase tracking-[0.14em] text-[#555]">
+                {persistedUrl ? "Uploaded design" : "Ready to upload"}
+              </span>
+            </>
+          ) : (
+            <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-[#444]">
+              Click to upload
+            </span>
+          )}
+        </div>
       </div>
 
       <input
         type="file"
         accept="image/png,image/jpeg,image/webp"
         className="hidden"
-        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+        onChange={(event) => {
+          onChange(event.target.files?.[0] ?? null);
+          event.currentTarget.value = "";
+        }}
       />
     </label>
   );
@@ -183,6 +245,12 @@ export default function CustomProductPage() {
   const [backFile, setBackFile] = useState<File | null>(null);
   const [leftFile, setLeftFile] = useState<File | null>(null);
   const [rightFile, setRightFile] = useState<File | null>(null);
+
+  const [savedFrontUrl, setSavedFrontUrl] = useState<string | null>(null);
+  const [savedBackUrl, setSavedBackUrl] = useState<string | null>(null);
+  const [savedLeftUrl, setSavedLeftUrl] = useState<string | null>(null);
+  const [savedRightUrl, setSavedRightUrl] = useState<string | null>(null);
+  const [isArtworkExpanded, setIsArtworkExpanded] = useState(false);
 
   useEffect(() => {
     const fetchCustomProduct = async () => {
@@ -215,6 +283,10 @@ export default function CustomProductPage() {
           setCartItemId(null);
           setQuantityInCart(0);
           setQuantity(0);
+          setSavedFrontUrl(null);
+          setSavedBackUrl(null);
+          setSavedLeftUrl(null);
+          setSavedRightUrl(null);
         }
         return;
       }
@@ -229,13 +301,17 @@ export default function CustomProductPage() {
           setCartItemId(null);
           setQuantityInCart(0);
           setQuantity(0);
+          setSavedFrontUrl(null);
+          setSavedBackUrl(null);
+          setSavedLeftUrl(null);
+          setSavedRightUrl(null);
         }
         return;
       }
 
       const { data, error } = await supabase
         .from("custom_cart_items")
-        .select("id, quantity")
+        .select("id, quantity, customization")
         .eq("user_id", user.id)
         .eq("custom_product_id", customProductId)
         .eq("size", selectedSize)
@@ -257,6 +333,26 @@ export default function CustomProductPage() {
         setCartItemId(existingItem?.id ?? null);
         setQuantityInCart(storedQuantity);
         setQuantity(storedQuantity);
+
+        const customization = existingItem?.customization as
+          | {
+              frontImages?: unknown;
+              backImages?: unknown;
+              leftSleeveImages?: unknown;
+              rightSleeveImages?: unknown;
+            }
+          | null
+          | undefined;
+
+        const firstUrl = (value: unknown) =>
+          Array.isArray(value) && typeof value[0] === "string"
+            ? value[0]
+            : null;
+
+        setSavedFrontUrl(firstUrl(customization?.frontImages));
+        setSavedBackUrl(firstUrl(customization?.backImages));
+        setSavedLeftUrl(firstUrl(customization?.leftSleeveImages));
+        setSavedRightUrl(firstUrl(customization?.rightSleeveImages));
       }
     };
 
@@ -478,8 +574,12 @@ export default function CustomProductPage() {
           ? crypto.randomUUID()
           : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-      const uploadImage = async (file: File | null, position: string) => {
-        if (!file) return null;
+      const uploadImage = async (
+        file: File | null,
+        position: string,
+        existingUrl: string | null,
+      ) => {
+        if (!file) return existingUrl;
 
         if (!file.type.startsWith("image/")) {
           throw new Error(`${position} design must be an image file.`);
@@ -521,10 +621,10 @@ export default function CustomProductPage() {
       };
 
       const [frontUrl, backUrl, leftUrl, rightUrl] = await Promise.all([
-        uploadImage(frontFile, "front"),
-        uploadImage(backFile, "back"),
-        uploadImage(leftFile, "left-sleeve"),
-        uploadImage(rightFile, "right-sleeve"),
+        uploadImage(frontFile, "front", savedFrontUrl),
+        uploadImage(backFile, "back", savedBackUrl),
+        uploadImage(leftFile, "left-sleeve", savedLeftUrl),
+        uploadImage(rightFile, "right-sleeve", savedRightUrl),
       ]);
 
       const uploadedCustomization = {
@@ -617,15 +717,17 @@ export default function CustomProductPage() {
                   Important notice
                 </p>
                 <p className="mt-1 max-w-4xl text-[14px] leading-5 text-[#777]">
-                  Upload your artwork in the placement sections below. Keep
-                  important artwork away from the edges to allow for a clean
-                  print.
+                  Once your custom order has been placed, please contact{" "}
+                  <strong>Backstore</strong> to review and confirm your
+                  customization details before production. This helps prevent
+                  printing errors and ensures your order is produced exactly as
+                  intended.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_480px]">
+          <div className="grid min-w-0 gap-7 lg:grid-cols-[minmax(0,1fr)_480px]">
             <div>
               <div className="overflow-hidden rounded-[30px] border border-[#CBCAC8]/8 bg-[#111111]">
                 <div className="relative aspect-square bg-[#0D0D0D] sm:aspect-[1.05]">
@@ -685,47 +787,86 @@ export default function CustomProductPage() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[30px] border border-[#CBCAC8]/8 bg-[#111111] p-5 sm:p-7">
-                <div className="mb-5">
-                  <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
-                    Artwork
-                  </p>
-                  <h2
-                    className="mt-1 text-[32px] uppercase leading-none text-[#CBCAC8]"
-                    style={{
-                      fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
-                    }}
-                  >
-                    Upload your design
-                  </h2>
-                  <p className="mt-2 text-[14px] leading-5 text-[#555]">
-                    Add artwork to one or more positions. At least one design is
-                    required.
-                  </p>
-                </div>
+              <div className="mt-5 overflow-hidden rounded-[30px] border border-[#CBCAC8]/8 bg-[#111111]">
+                <button
+                  type="button"
+                  onClick={() => setIsArtworkExpanded((current) => !current)}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left hover:bg-white/[0.02] sm:px-7"
+                  aria-expanded={isArtworkExpanded}
+                  aria-controls="custom-artwork-upload-panel"
+                >
+                  <div className="min-w-0">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
+                      Artwork
+                    </p>
+                    <h2
+                      className="mt-1 text-[32px] uppercase leading-none text-[#CBCAC8]"
+                      style={{
+                        fontFamily:
+                          "var(--font-bebas-neue), Impact, sans-serif",
+                      }}
+                    >
+                      Upload your design
+                    </h2>
+                    <p className="mt-2 text-[14px] leading-5 text-[#555]">
+                      Add artwork to one or more positions.
+                    </p>
+                  </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <UploadBox
-                    title="Front design"
-                    file={frontFile}
-                    onChange={setFrontFile}
-                  />
-                  <UploadBox
-                    title="Back design"
-                    file={backFile}
-                    onChange={setBackFile}
-                  />
-                  <UploadBox
-                    title="Left sleeve"
-                    file={leftFile}
-                    onChange={setLeftFile}
-                  />
-                  <UploadBox
-                    title="Right sleeve"
-                    file={rightFile}
-                    onChange={setRightFile}
-                  />
-                </div>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#CBCAC8]/10 bg-[#0D0D0D] text-[#777]">
+                    <Icon
+                      name={isArtworkExpanded ? "chevron-up" : "chevron-down"}
+                      size={17}
+                    />
+                  </span>
+                </button>
+
+                {isArtworkExpanded && (
+                  <div
+                    id="custom-artwork-upload-panel"
+                    className="border-t border-[#CBCAC8]/8 p-5 sm:p-7"
+                  >
+                    <p className="mb-5 text-[13px] leading-5 text-[#555]">
+                      Add artwork to one or more positions. At least one design
+                      is required.
+                    </p>
+
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                      <UploadBox
+                        title="Front design"
+                        value={frontFile ?? savedFrontUrl}
+                        onChange={(file) => {
+                          setFrontFile(file);
+                          if (file) setSavedFrontUrl(null);
+                        }}
+                      />
+                      <UploadBox
+                        title="Back design"
+                        value={backFile ?? savedBackUrl}
+                        onChange={(file) => {
+                          setBackFile(file);
+                          if (file) setSavedBackUrl(null);
+                        }}
+                      />
+                      <UploadBox
+                        title="Left sleeve"
+                        value={leftFile ?? savedLeftUrl}
+                        onChange={(file) => {
+                          setLeftFile(file);
+                          if (file) setSavedLeftUrl(null);
+                        }}
+                      />
+                      <UploadBox
+                        title="Right sleeve"
+                        value={rightFile ?? savedRightUrl}
+                        onChange={(file) => {
+                          setRightFile(file);
+                          if (file) setSavedRightUrl(null);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

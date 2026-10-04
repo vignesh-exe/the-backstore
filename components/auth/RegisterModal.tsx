@@ -244,6 +244,42 @@ export default function RegisterModal({
       }
 
       /*
+       * Step 3:
+       * Trigger the Backstore welcome email.
+       *
+       * The actual Resend API key and email rendering stay
+       * on the server. This client component only sends the
+       * registration details to our email API route.
+       *
+       * Email failure should not make a successful registration
+       * look like a failed registration.
+       */
+      try {
+        const emailResponse = await fetch("/api/email/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "welcome",
+            fullName,
+            email,
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          const emailResult = await emailResponse.json().catch(() => null);
+
+          console.error("Welcome email failed:", {
+            status: emailResponse.status,
+            result: emailResult,
+          });
+        }
+      } catch (emailError) {
+        console.error("Welcome email request failed:", emailError);
+      }
+
+      /*
        * Email confirmation has been disabled in Supabase,
        * so a session should be available immediately.
        */

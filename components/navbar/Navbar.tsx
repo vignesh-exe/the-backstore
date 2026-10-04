@@ -253,6 +253,83 @@ function ToyIcon() {
   );
 }
 
+type SearchProduct = {
+  id: string;
+  name: string;
+  slug?: string | null;
+  price?: number | null;
+  mrp?: number | null;
+  description?: string | null;
+  sku?: string | null;
+  category?: string | null;
+  product_type?: string | null;
+  type?: string | null;
+  status?: string | null;
+  image?: string | null;
+  product_images?: Array<{
+    image_url?: string | null;
+    is_primary?: boolean | null;
+    sort_order?: number | null;
+  }> | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+function getSearchProductImage(product: SearchProduct) {
+  if (product.image) {
+    return product.image;
+  }
+
+  const images = [...(product.product_images ?? [])].sort((a, b) => {
+    if (a.is_primary && !b.is_primary) return -1;
+    if (!a.is_primary && b.is_primary) return 1;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+
+  return images.find((image) => image.image_url)?.image_url || "";
+}
+
+function getSearchProductCategory(product: SearchProduct) {
+  const values = [
+    product.category,
+    product.product_type,
+    product.type,
+    typeof product.metadata?.category === "string"
+      ? product.metadata.category
+      : null,
+    typeof product.metadata?.product_type === "string"
+      ? product.metadata.product_type
+      : null,
+  ]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase());
+
+  if (
+    values.some(
+      (value) =>
+        value.includes("collect") ||
+        value.includes("diecast") ||
+        value.includes("poster") ||
+        value.includes("toy"),
+    )
+  ) {
+    return "collectibles";
+  }
+
+  return "t-shirts";
+}
+
+function getSearchProductHref(product: SearchProduct) {
+  const category = getSearchProductCategory(product);
+  const slug = String(product.slug || product.id).trim();
+
+  return `/shop/${category}/${encodeURIComponent(slug)}`;
+}
+
+function getSearchProductPrice(product: SearchProduct) {
+  const price = Number(product.price ?? 0);
+  return `₹${price.toLocaleString("en-IN")}`;
+}
+
 export default function Navbar() {
   const pathname = usePathname();
 
@@ -268,6 +345,12 @@ export default function Navbar() {
   const [loggedInFirstName, setLoggedInFirstName] = useState<string | null>(
     null,
   );
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   const cartItems = useSelector((state: any) => state.cart?.cartItems ?? {});
 
@@ -416,6 +499,140 @@ export default function Navbar() {
 
   const openMyOrders = () => {
     setProfileMenuOpen(false);
+    closeMobileMenu();
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchError("");
+  };
+
+  const openSearch = () => {
+    closeMobileMenu();
+    setProfileMenuOpen(false);
+    setWishlistOpen(false);
+    setCartOpen(false);
+    setSearchError("");
+    setSearchOpen(true);
+  };
+
+  useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeSearch();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    const query = searchQuery.trim();
+
+    if (!query) {
+      setSearchProducts([]);
+      setSearchError("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setIsSearchLoading(true);
+        setSearchError("");
+
+        const response = await fetch("/api/admin/products", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load products.");
+        }
+
+        const payload = await response.json();
+
+        const products = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.products)
+            ? payload.products
+            : Array.isArray(payload?.data)
+              ? payload.data
+              : [];
+
+        const normalizedQuery = query.toLowerCase();
+
+        const results = products
+          .filter((product: SearchProduct) => {
+            if (!product?.id || product?.status === "Inactive") {
+              return false;
+            }
+
+            const searchableText = [
+              product.name,
+              product.slug,
+              product.sku,
+              product.description,
+              product.category,
+              product.product_type,
+              product.type,
+              typeof product.metadata?.category === "string"
+                ? product.metadata.category
+                : "",
+              typeof product.metadata?.product_type === "string"
+                ? product.metadata.product_type
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+
+            return searchableText.includes(normalizedQuery);
+          })
+          .slice(0, 8);
+
+        if (!cancelled) {
+          setSearchProducts(results);
+        }
+      } catch (error) {
+        console.error("Product search failed:", error);
+
+        if (!cancelled) {
+          setSearchProducts([]);
+          setSearchError("Unable to search products. Please try again.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsSearchLoading(false);
+        }
+      }
+    }, 220);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchOpen, searchQuery]);
+
+  const handleSearchResultClick = () => {
+    closeSearch();
     closeMobileMenu();
   };
 
@@ -823,7 +1040,8 @@ export default function Navbar() {
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
-                aria-label="Search"
+                aria-label="Search products"
+                onClick={openSearch}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-[#666362] transition-all hover:bg-[#CBCAC8]/8 hover:text-[#CBCAC8]"
               >
                 <SearchIcon />
@@ -1242,7 +1460,9 @@ export default function Navbar() {
               <div className="mt-1 grid grid-cols-3 gap-1">
                 <button
                   type="button"
-                  className="flex h-[40px] items-center justify-center gap-2 rounded-[13px] bg-[#CBCAC8]/[0.035] text-[9px] uppercase tracking-[0.1em] text-[#666362]"
+                  aria-label="Search products"
+                  onClick={openSearch}
+                  className="flex h-[40px] items-center justify-center gap-2 rounded-[13px] bg-[#CBCAC8]/[0.035] text-[9px] uppercase tracking-[0.1em] text-[#666362] transition-colors hover:bg-[#DA0D12]/10 hover:text-[#CBCAC8]"
                 >
                   <SearchIcon />
                   Search
@@ -1342,6 +1562,149 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+
+      {searchOpen && (
+        <div
+          className="fixed inset-0 z-[1000] bg-[#050505]/80 px-4 pb-6 pt-[86px] backdrop-blur-xl sm:px-6 sm:pt-[100px]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Search products"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeSearch();
+            }
+          }}
+        >
+          <div className="mx-auto flex max-h-[calc(100vh-110px)] w-full max-w-[760px] flex-col overflow-hidden rounded-[26px] border border-[#CBCAC8]/12 bg-[#111111]/95 shadow-[0_30px_100px_rgba(0,0,0,0.55)]">
+            <div className="flex shrink-0 items-center gap-3 border-b border-[#CBCAC8]/8 px-4 py-4 sm:px-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#CBCAC8]/[0.05] text-[#CBCAC8]">
+                <SearchIcon />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      closeSearch();
+                    }
+                  }}
+                  placeholder="Search T-Shirts, Collectibles..."
+                  className="!m-0 !border-0 !outline-none !ring-0 appearance-none w-full bg-transparent text-[15px] text-[#CBCAC8] shadow-none focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none placeholder:text-[#555]"
+                  style={{
+                    border: "0",
+                    outline: "none",
+                    boxShadow: "none",
+                  }}
+                  aria-label="Search products"
+                />
+                <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.18em] text-[#444]">
+                  Search across T-Shirts and Collectibles
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeSearch}
+                aria-label="Close search"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#555] transition-colors hover:bg-[#CBCAC8]/8 hover:text-[#CBCAC8]"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="min-h-0 overflow-y-auto p-3 sm:p-4">
+              {!searchQuery.trim() ? (
+                <div className="rounded-[20px] border border-[#CBCAC8]/6 bg-[#0D0D0D] px-5 py-8 text-center">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-[#DA0D12]">
+                    Product search
+                  </p>
+                  <p className="mt-2 text-[13px] text-[#666362]">
+                    Start typing to search products across the shop and
+                    collectibles.
+                  </p>
+                </div>
+              ) : isSearchLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#CBCAC8]/15 border-t-[#DA0D12]" />
+                </div>
+              ) : searchError ? (
+                <div className="rounded-[20px] border border-[#DA0D12]/15 bg-[#DA0D12]/[0.04] px-5 py-8 text-center">
+                  <p className="text-[13px] text-[#999]">{searchError}</p>
+                </div>
+              ) : searchProducts.length === 0 ? (
+                <div className="rounded-[20px] border border-[#CBCAC8]/6 bg-[#0D0D0D] px-5 py-8 text-center">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.24em] text-[#555]">
+                    No products found
+                  </p>
+                  <p className="mt-2 text-[13px] text-[#666362]">
+                    Try another product name, SKU or keyword.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {searchProducts.map((product) => {
+                    const category = getSearchProductCategory(product);
+                    const image = getSearchProductImage(product);
+
+                    return (
+                      <a
+                        key={String(product.id)}
+                        href={getSearchProductHref(product)}
+                        onClick={handleSearchResultClick}
+                        className="flex min-w-0 items-center gap-3 rounded-[18px] border border-[#CBCAC8]/7 bg-[#0D0D0D] p-3 transition-all hover:border-[#DA0D12]/30 hover:bg-[#161616]"
+                      >
+                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-[#CBCAC8]/7 bg-[#171717]">
+                          {image ? (
+                            <img
+                              src={image}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[9px] text-[#444]">
+                              NO IMAGE
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-[#CBCAC8]">
+                            {product.name}
+                          </p>
+                          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-[#CBCAC8]/[0.05] px-2 py-1 font-mono text-[7px] uppercase tracking-[0.12em] text-[#666362]">
+                              {category === "collectibles"
+                                ? "Collectibles"
+                                : "T-Shirts"}
+                            </span>
+                            {product.sku && (
+                              <span className="truncate font-mono text-[7px] uppercase tracking-[0.1em] text-[#444]">
+                                SKU: {product.sku}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <p className="text-[12px] font-semibold text-[#CBCAC8]">
+                            {getSearchProductPrice(product)}
+                          </p>
+                          <span className="mt-1 block text-[8px] uppercase tracking-[0.12em] text-[#555]">
+                            View
+                          </span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
 

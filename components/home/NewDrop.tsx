@@ -878,7 +878,7 @@ export default function NewDrop() {
 
             <div className="mt-5 flex items-center gap-4">
               <a
-                href="/shop"
+                href="/shop/t-shirts"
                 className="
                   group
                   inline-flex

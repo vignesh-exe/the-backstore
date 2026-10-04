@@ -334,12 +334,14 @@ function SectionHeader({
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#111827] text-white shadow-sm">
         {icon}
       </div>
+
       <div>
         {eyebrow && (
           <p className="text-[7px] font-bold uppercase tracking-[0.18em] text-[#9aa5b5]">
             {eyebrow}
           </p>
         )}
+
         <h3 className="text-[12px] font-bold text-[#17233b]">{title}</h3>
       </div>
     </div>
@@ -352,10 +354,12 @@ export default function OrderActionDrawer({
   onStatusUpdate,
 }: OrderActionDrawerProps) {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus>("Placed");
+
   const [trackingId, setTrackingId] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [actionError, setActionError] = useState("");
   const [deletingImageKey, setDeletingImageKey] = useState<string | null>(null);
+
   const [visibleItems, setVisibleItems] = useState<OrderItem[]>([]);
 
   useEffect(() => {
@@ -376,6 +380,7 @@ export default function OrderActionDrawer({
     };
 
     document.addEventListener("keydown", handleEscape);
+
     return () => document.removeEventListener("keydown", handleEscape);
   }, [order, onClose]);
 
@@ -393,8 +398,141 @@ export default function OrderActionDrawer({
   if (!order) return null;
 
   const hasStatusChanged = selectedStatus !== order.status;
+
   const requiresTracking = trackingStatuses.includes(selectedStatus);
+
   const normalizedTrackingId = trackingId.trim();
+
+  /*
+   * ---------------------------------------------------------
+   * ORDER STATUS EMAIL
+   * ---------------------------------------------------------
+   *
+   * This single helper handles:
+   *
+   * 1. order-shipped
+   * 2. order-delivered
+   *
+   * The email is sent only after the order status has been
+   * successfully updated.
+   *
+   * Email failure is intentionally handled separately so
+   * that a successful status update is never treated as
+   * a failed order update.
+   */
+  const sendStatusEmail = async (
+    emailType: "order-shipped" | "order-delivered",
+  ) => {
+    if (!order.email?.trim()) {
+      console.warn(`${emailType} email skipped: customer email is missing.`);
+
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/email/send", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          type: emailType,
+
+          fullName: order.customer,
+
+          email: order.email,
+
+          orderNumber: order.id,
+
+          trackingId: normalizedTrackingId || order.trackingId || null,
+
+          items: order.orderItems.map((item) => ({
+            name: item.name,
+
+            size: item.customization?.size || "",
+
+            quantity: Number(item.quantity) || 0,
+
+            price: Number(item.unitPrice) || 0,
+
+            image: item.image || null,
+
+            isCustom: Boolean(item.isCustom),
+
+            customColor: item.customization?.color || null,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+
+        console.error(`${emailType} email failed:`, {
+          status: response.status,
+          result,
+        });
+      }
+    } catch (emailError) {
+      console.error(`${emailType} email request failed:`, emailError);
+    }
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * CANCELLATION REQUEST EMAIL
+   * ---------------------------------------------------------
+   *
+   * Sends an email to the customer after the cancellation
+   * request has been successfully raised in Supabase.
+   *
+   * Email failure is handled separately so it does not
+   * affect the cancellation request/status update.
+   */
+  const sendCancellationRequestEmail = async () => {
+    if (!order.email?.trim()) {
+      console.warn(
+        "Cancellation request email skipped: customer email is missing.",
+      );
+
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/email/send", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          type: "cancellation-request",
+
+          fullName: order.customer,
+
+          email: order.email,
+
+          orderNumber: order.id,
+
+          reason:
+            "Customer cancellation request raised from the admin order flow.",
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+
+        console.error("Cancellation request email failed:", {
+          status: response.status,
+          result,
+        });
+      }
+    } catch (emailError) {
+      console.error("Cancellation request email request failed:", emailError);
+    }
+  };
 
   const handleUpdateStatus = async () => {
     if (isUpdating) return;
@@ -403,6 +541,7 @@ export default function OrderActionDrawer({
       if (requiresTracking && !normalizedTrackingId) {
         setActionError("Tracking ID is mandatory for shipped orders.");
       }
+
       return;
     }
 
@@ -410,6 +549,7 @@ export default function OrderActionDrawer({
       setActionError(
         "Enter a tracking ID before moving this order to shipped.",
       );
+
       return;
     }
 
@@ -417,9 +557,37 @@ export default function OrderActionDrawer({
     setIsUpdating(true);
 
     try {
+      /*
+       * First update the order status in the database.
+       */
       await onStatusUpdate(order.id, selectedStatus, normalizedTrackingId);
+
+      /*
+       * -------------------------------------------------------
+       * SEND STATUS EMAIL AFTER SUCCESSFUL UPDATE
+       * -------------------------------------------------------
+       *
+       * Shipped:
+       *   order-shipped
+       *
+       * Delivered:
+       *   order-delivered
+       *
+       * The email request is deliberately executed after
+       * onStatusUpdate() succeeds.
+       */
+      if (selectedStatus === "Shipped" || selectedStatus === "Delivered") {
+        await sendStatusEmail(
+          selectedStatus === "Shipped" ? "order-shipped" : "order-delivered",
+        );
+      }
+
+      if (selectedStatus === "Cancelled") {
+        await sendCancellationRequestEmail();
+      }
     } catch (error) {
       console.error("Order status update failed:", error);
+
       setActionError(
         error instanceof Error
           ? error.message
@@ -433,19 +601,31 @@ export default function OrderActionDrawer({
   const handleDownload = async (image: CustomImage) => {
     try {
       const response = await fetch(image.url);
-      if (!response.ok) throw new Error("Unable to download image.");
+
+      if (!response.ok) {
+        throw new Error("Unable to download image.");
+      }
 
       const blob = await response.blob();
+
       const objectUrl = URL.createObjectURL(blob);
+
       const anchor = document.createElement("a");
+
       anchor.href = objectUrl;
+
       anchor.download = image.url.split("/").pop() || "custom-design.png";
+
       document.body.appendChild(anchor);
+
       anchor.click();
+
       anchor.remove();
+
       URL.revokeObjectURL(objectUrl);
     } catch (error) {
       console.error("Custom image download failed:", error);
+
       window.open(image.url, "_blank", "noopener,noreferrer");
     }
   };
@@ -457,6 +637,7 @@ export default function OrderActionDrawer({
       setActionError(
         "This custom image cannot be deleted because its order item is missing.",
       );
+
       return;
     }
 
@@ -475,7 +656,9 @@ export default function OrderActionDrawer({
           .from("custom-designs")
           .remove([image.storagePath]);
 
-        if (storageError) throw storageError;
+        if (storageError) {
+          throw storageError;
+        }
       }
 
       const currentCustomization = item.customization ?? {};
@@ -493,6 +676,7 @@ export default function OrderActionDrawer({
 
       for (const group of imageGroups) {
         const values = updatedCustomization[group];
+
         if (Array.isArray(values)) {
           updatedCustomization[group] = values.filter(
             (value) => value !== image.url,
@@ -509,12 +693,15 @@ export default function OrderActionDrawer({
                   ...item.customization,
                 }
               : {}) as Record<string, unknown>),
+
             customization: updatedCustomization,
           },
         })
         .eq("id", item.orderItemId);
 
-      if (databaseError) throw databaseError;
+      if (databaseError) {
+        throw databaseError;
+      }
 
       setVisibleItems((current) =>
         current.map((currentItem, currentIndex) =>
@@ -528,6 +715,7 @@ export default function OrderActionDrawer({
       );
     } catch (error) {
       console.error("Delete custom image failed:", error);
+
       setActionError(
         error instanceof Error
           ? error.message
@@ -550,6 +738,7 @@ export default function OrderActionDrawer({
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-[520px] flex-col overflow-hidden border-l border-white/20 bg-[#f7f8fa] shadow-[-24px_0_60px_rgba(15,23,42,0.22)]">
         <div className="relative shrink-0 overflow-hidden bg-[#111827] px-5 pb-5 pt-5 text-white">
           <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#d81920]/25 blur-2xl" />
+
           <div className="pointer-events-none absolute -bottom-24 left-1/3 h-36 w-36 rounded-full bg-[#ffffff]/10 blur-2xl" />
 
           <div className="relative flex items-start justify-between gap-4">
@@ -558,6 +747,7 @@ export default function OrderActionDrawer({
                 <span className="rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.16em] text-white/70">
                   Order
                 </span>
+
                 <span
                   className={`rounded-full border px-2 py-1 text-[7px] font-bold ${getStatusClass(
                     order.status,
@@ -570,6 +760,7 @@ export default function OrderActionDrawer({
               <h2 className="text-[18px] font-black tracking-[-0.02em]">
                 #{order.id}
               </h2>
+
               <p className="mt-1 text-[9px] text-white/55">
                 Placed on {order.date}
               </p>
@@ -599,22 +790,27 @@ export default function OrderActionDrawer({
                 <p className="text-[7px] font-bold uppercase tracking-[0.14em] text-[#9aa5b5]">
                   Customer
                 </p>
+
                 <p className="mt-1 text-[11px] font-bold text-[#17233b]">
                   {order.customer}
                 </p>
               </div>
+
               <div className="rounded-[12px] border border-[#e5e9ef] bg-[#fafbfc] p-3">
                 <p className="text-[7px] font-bold uppercase tracking-[0.14em] text-[#9aa5b5]">
                   Phone
                 </p>
+
                 <p className="mt-1 text-[11px] font-semibold text-[#52627a]">
                   {order.phone || "—"}
                 </p>
               </div>
+
               <div className="rounded-[12px] border border-[#e5e9ef] bg-[#fafbfc] p-3 sm:col-span-2">
                 <p className="text-[7px] font-bold uppercase tracking-[0.14em] text-[#9aa5b5]">
                   Email
                 </p>
+
                 <p className="mt-1 truncate text-[10px] font-semibold text-[#52627a]">
                   {order.email}
                 </p>
@@ -629,6 +825,7 @@ export default function OrderActionDrawer({
                 eyebrow="Line items"
                 title="Order Items"
               />
+
               <span className="rounded-full bg-[#111827] px-2.5 py-1 text-[8px] font-bold text-white">
                 {visibleItems.length}
               </span>
@@ -668,6 +865,7 @@ export default function OrderActionDrawer({
                               <h4 className="truncate text-[11px] font-bold text-[#17233b]">
                                 {item.name}
                               </h4>
+
                               <span
                                 className={`rounded-full border px-1.5 py-0.5 text-[6px] font-black uppercase tracking-[0.08em] ${
                                   custom
@@ -693,14 +891,17 @@ export default function OrderActionDrawer({
                           <span className="rounded-md bg-[#f5f6f8] px-2 py-1 text-[7px] font-semibold text-[#68768a]">
                             Qty {item.quantity}
                           </span>
+
                           <span className="rounded-md bg-[#f5f6f8] px-2 py-1 text-[7px] font-semibold text-[#68768a]">
                             {formatCurrency(item.unitPrice)} each
                           </span>
+
                           {item.customization?.size && (
                             <span className="rounded-md bg-[#f5f6f8] px-2 py-1 text-[7px] font-semibold text-[#68768a]">
                               Size {item.customization.size}
                             </span>
                           )}
+
                           {item.customization?.color && (
                             <span className="rounded-md bg-[#f5f6f8] px-2 py-1 text-[7px] font-semibold text-[#68768a]">
                               {item.customization.color}
@@ -715,22 +916,27 @@ export default function OrderActionDrawer({
                         <p className="text-[6px] uppercase tracking-[0.12em] text-[#9aa5b5]">
                           Weight
                         </p>
+
                         <p className="mt-1 text-[8px] font-bold text-[#52627a]">
                           {item.weight || "—"}
                         </p>
                       </div>
+
                       <div className="border-r border-[#edf0f3] px-3 py-2.5">
                         <p className="text-[6px] uppercase tracking-[0.12em] text-[#9aa5b5]">
                           Unit Price
                         </p>
+
                         <p className="mt-1 text-[8px] font-bold text-[#52627a]">
                           {formatCurrency(item.unitPrice)}
                         </p>
                       </div>
+
                       <div className="px-3 py-2.5">
                         <p className="text-[6px] uppercase tracking-[0.12em] text-[#9aa5b5]">
                           MRP
                         </p>
+
                         <p className="mt-1 text-[8px] font-bold text-[#52627a]">
                           {formatCurrency(item.mrp)}
                         </p>
@@ -742,6 +948,7 @@ export default function OrderActionDrawer({
                         <p className="text-[6px] font-bold uppercase tracking-[0.12em] text-[#9aa5b5]">
                           Product Details
                         </p>
+
                         <p className="mt-1 text-[8px] leading-4 text-[#71809a]">
                           {item.details}
                         </p>
@@ -761,6 +968,7 @@ export default function OrderActionDrawer({
                   eyebrow="Production assets"
                   title="Custom Uploaded Images"
                 />
+
                 <span className="rounded-full bg-[#d81920] px-2.5 py-1 text-[8px] font-bold text-white">
                   {customImages.length}
                 </span>
@@ -774,6 +982,7 @@ export default function OrderActionDrawer({
               <div className="mt-3 space-y-3">
                 {customImages.map((image) => {
                   const itemIndex = image.itemIndex;
+
                   const isDeleting = deletingImageKey === image.key;
 
                   return (
@@ -805,6 +1014,7 @@ export default function OrderActionDrawer({
                               <p className="text-[10px] font-bold text-[#17233b]">
                                 {image.label}
                               </p>
+
                               <p className="mt-1 text-[7px] uppercase tracking-[0.1em] text-[#a2767a]">
                                 Customer artwork
                               </p>
@@ -830,6 +1040,7 @@ export default function OrderActionDrawer({
                               className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[8px] border border-[#f0c5c8] bg-white px-2 text-[8px] font-bold text-[#d81920] transition hover:bg-[#fff1f2] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <TrashIcon />
+
                               {isDeleting ? "Deleting..." : "Delete"}
                             </button>
                           </div>
@@ -848,6 +1059,7 @@ export default function OrderActionDrawer({
               eyebrow="Shipping"
               title="Delivery Address"
             />
+
             <div className="mt-3 rounded-[12px] border border-[#e5e9ef] bg-[#fafbfc] p-3">
               <p className="text-[9px] leading-5 text-[#52627a]">
                 {order.address || "No delivery address available."}
@@ -861,8 +1073,10 @@ export default function OrderActionDrawer({
               eyebrow="Checkout"
               title="Payment"
             />
+
             <div className="mt-3 flex items-center justify-between rounded-[12px] border border-[#e5e9ef] bg-[#fafbfc] px-3 py-3">
               <span className="text-[9px] text-[#8795a9]">Payment Method</span>
+
               <span className="text-[9px] font-black text-[#17233b]">
                 {order.paymentDetails}
               </span>
@@ -874,10 +1088,12 @@ export default function OrderActionDrawer({
               <p className="text-[7px] font-bold uppercase tracking-[0.18em] text-white/45">
                 Order total
               </p>
+
               <div className="mt-1 flex items-end justify-between gap-4">
                 <span className="text-[9px] text-white/60">
                   {order.items} {order.items === 1 ? "item" : "items"}
                 </span>
+
                 <span className="text-[22px] font-black tracking-[-0.03em]">
                   {formatCurrency(order.amount)}
                 </span>
@@ -891,10 +1107,12 @@ export default function OrderActionDrawer({
                 <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#d81920] text-white">
                   <TruckIcon />
                 </div>
+
                 <div>
                   <p className="text-[7px] font-bold uppercase tracking-[0.18em] text-[#9aa5b5]">
                     Fulfilment
                   </p>
+
                   <h3 className="text-[12px] font-bold text-[#17233b]">
                     Update Order Status
                   </h3>
@@ -905,10 +1123,12 @@ export default function OrderActionDrawer({
                 <label className="mb-1.5 block text-[7px] font-bold uppercase tracking-[0.14em] text-[#8d99aa]">
                   Status
                 </label>
+
                 <select
                   value={selectedStatus}
                   onChange={(event) => {
                     setSelectedStatus(event.target.value as OrderStatus);
+
                     setActionError("");
                   }}
                   className="h-[44px] w-full rounded-[10px] border border-[#dce3eb] bg-[#fbfcfd] px-3 text-[10px] font-bold text-[#52627a] outline-none transition focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/5"
@@ -927,6 +1147,7 @@ export default function OrderActionDrawer({
                     <label className="text-[7px] font-black uppercase tracking-[0.14em] text-[#0075a8]">
                       Tracking ID <span className="text-[#d81920]">*</span>
                     </label>
+
                     <span className="text-[7px] font-semibold text-[#6f8ea0]">
                       Mandatory
                     </span>
@@ -936,6 +1157,7 @@ export default function OrderActionDrawer({
                     value={trackingId}
                     onChange={(event) => {
                       setTrackingId(event.target.value);
+
                       setActionError("");
                     }}
                     placeholder="Enter courier tracking number"
@@ -964,6 +1186,7 @@ export default function OrderActionDrawer({
                 onClick={handleUpdateStatus}
                 className={[
                   "mt-3 h-[44px] w-full rounded-[10px] text-[9px] font-black uppercase tracking-[0.08em] transition-all",
+
                   isUpdating ||
                   (!hasStatusChanged &&
                     !(requiresTracking && !trackingId.trim()))

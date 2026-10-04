@@ -1595,7 +1595,73 @@ export default function CheckoutPage() {
               );
             }
 
-            setOrderNumber(order.order_number || order.orderNumber || "");
+            const placedOrderNumber =
+              order.order_number || order.orderNumber || "";
+
+            setOrderNumber(placedOrderNumber);
+
+            /*
+             * Send the order confirmation email only after the payment
+             * has been verified and the order has been created successfully.
+             *
+             * Email failure must never make a successful order look like
+             * a failed payment/order.
+             */
+            try {
+              const emailResponse = await fetch("/api/email/send", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  type: "order-placed",
+                  fullName: customer.name.trim(),
+                  email: customer.email.trim(),
+                  orderNumber: placedOrderNumber,
+                  items: resolvedItems.map((entry) => ({
+                    name: entry.name,
+                    size: entry.item.size,
+                    quantity: Number(entry.item.quantity),
+                    price: entry.price,
+                    image: entry.image || null,
+                    isCustom: entry.isCustom,
+                    customColor: entry.customColor || null,
+                  })),
+                  subtotal,
+                  shippingAmount: deliveryFee,
+                  discount: couponDiscount,
+                  couponCode: appliedCoupon || null,
+                  totalAmount: grandTotal,
+                  paymentMethod:
+                    paymentMethod === "online"
+                      ? "Online Payment"
+                      : paymentMethod,
+                  deliveryAddress: {
+                    addressLine1: address.addressLine1.trim(),
+                    addressLine2: address.addressLine2.trim(),
+                    landmark: address.landmark.trim(),
+                    city: address.city.trim(),
+                    district: address.district.trim(),
+                    state: address.state.trim(),
+                    pincode: address.pincode.trim(),
+                    country: "India",
+                  },
+                }),
+              });
+
+              if (!emailResponse.ok) {
+                const emailResult = await emailResponse
+                  .json()
+                  .catch(() => null);
+
+                console.error("Order placed email failed:", {
+                  status: emailResponse.status,
+                  result: emailResult,
+                });
+              }
+            } catch (emailError) {
+              console.error("Order placed email request failed:", emailError);
+            }
 
             if (buyNowItem) {
               /*

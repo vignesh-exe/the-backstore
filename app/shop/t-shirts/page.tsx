@@ -1,12 +1,10 @@
 "use client";
-
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
 import LoginModal from "@/components/auth/LoginModal";
-
 import {
   addToWishlist,
   removeFromWishlist,
@@ -38,7 +36,6 @@ type Product = {
   sizes: string[];
   product_images: ProductImage[];
 };
-
 const collections = [
   "All Collections",
   "Anime",
@@ -54,7 +51,6 @@ const collections = [
   "Garage Culture",
   "Music",
 ];
-
 const categories = [
   "All Products",
   "Oversized T-Shirt",
@@ -63,31 +59,25 @@ const categories = [
   "Sweatshirt",
   "Footwear",
 ];
-
 const priceRanges = [
   { label: "Under ₹500", min: 0, max: 499 },
   { label: "₹500 – ₹999", min: 500, max: 999 },
   { label: "₹1,000 – ₹1,499", min: 1000, max: 1499 },
   { label: "₹1,500+", min: 1500, max: Infinity },
 ];
-
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
-
 function getDiscount(price: number, mrp: number) {
   if (!mrp || mrp <= price) return 0;
   return Math.round(((mrp - price) / mrp) * 100);
 }
-
 function getProductImage(product: Product) {
   const images = [...(product.product_images ?? [])].sort((a, b) => {
     if (a.is_primary && !b.is_primary) return -1;
     if (!a.is_primary && b.is_primary) return 1;
     return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
   });
-
   return images[0]?.image_url || "";
 }
-
 function normalizeSizes(raw: any): string[] {
   const source =
     raw?.sizes ??
@@ -97,17 +87,12 @@ function normalizeSizes(raw: any): string[] {
     raw?.variants ??
     raw?.product_variants ??
     raw?.variant_details;
-
   if (!source) return [];
-
   const values: string[] = [];
-
   const addValue = (value: any) => {
     if (value === null || value === undefined) return;
-
     if (typeof value === "string") {
       const trimmed = value.trim();
-
       if (
         (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
         (trimmed.startsWith("{") && trimmed.endsWith("}"))
@@ -119,22 +104,18 @@ function normalizeSizes(raw: any): string[] {
           // Fall through and treat it as a literal size.
         }
       }
-
       if (trimmed) values.push(trimmed.toUpperCase());
       return;
     }
-
     if (typeof value === "number") {
       const normalized = String(value).trim().toUpperCase();
       if (normalized) values.push(normalized);
       return;
     }
-
     if (Array.isArray(value)) {
       value.forEach(addValue);
       return;
     }
-
     if (typeof value === "object") {
       const candidate =
         value.size ??
@@ -142,12 +123,10 @@ function normalizeSizes(raw: any): string[] {
         value.label ??
         value.variant_size ??
         value.value;
-
       if (candidate !== undefined) {
         addValue(candidate);
         return;
       }
-
       Object.keys(value).forEach((key) => {
         if (/^(XS|S|M|L|XL|XXL|XXXL)$/i.test(key.trim())) {
           addValue(key);
@@ -155,17 +134,13 @@ function normalizeSizes(raw: any): string[] {
       });
     }
   };
-
   addValue(source);
-
   return Array.from(new Set(values));
 }
-
 function normalizeProduct(raw: any): Product {
   const tags = Array.isArray(raw?.tags) ? raw.tags.filter(Boolean) : [];
   const price = Number(raw?.price ?? 0);
   const mrp = Number(raw?.mrp ?? 0);
-
   return {
     id: String(raw?.id ?? ""),
     name: String(raw?.name ?? "Untitled Product"),
@@ -191,7 +166,6 @@ function normalizeProduct(raw: any): Product {
       : [],
   };
 }
-
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -199,11 +173,9 @@ function slugify(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
-
 function formatPrice(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
 }
-
 function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg
@@ -213,14 +185,15 @@ function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
       aria-hidden="true"
     >
       <ellipse cx="7.2" cy="7.2" rx="2.1" ry="2.8" />
+
       <ellipse cx="12" cy="5.2" rx="2.1" ry="2.8" />
+
       <ellipse cx="16.8" cy="7.2" rx="2.1" ry="2.8" />
 
       <path d="M12 10.1c-3.3 0-5.9 2.4-5.9 5.1 0 2.1 1.6 3.2 3.5 2.6 1-.3 1.6-1 2.4-1s1.4.7 2.4 1c1.9.6 3.5-.5 3.5-2.6 0-2.7-2.6-5.1-5.9-5.1Z" />
     </svg>
   );
 }
-
 function HeartIcon({
   active,
   className = "h-[19px] w-[19px]",
@@ -241,7 +214,6 @@ function HeartIcon({
     </svg>
   );
 }
-
 function FilterIcon() {
   return (
     <svg
@@ -253,12 +225,13 @@ function FilterIcon() {
       aria-hidden="true"
     >
       <path d="M4 6h16" />
+
       <path d="M7 12h10" />
+
       <path d="M10 18h4" />
     </svg>
   );
 }
-
 function CheckIcon() {
   return (
     <svg
@@ -273,11 +246,11 @@ function CheckIcon() {
     </svg>
   );
 }
-
 /* ================================================================
-   MOCK PRODUCT ART
-================================================================ */
 
+ MOCK PRODUCT ART
+
+\================================================================ */
 function ProductArtwork({
   design,
 }: {
@@ -321,7 +294,6 @@ function ProductArtwork({
       </div>
     );
   }
-
   if (design === "comic") {
     return (
       <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#e9e5df]">
@@ -367,7 +339,6 @@ function ProductArtwork({
       </div>
     );
   }
-
   if (design === "anime") {
     return (
       <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#111318]">
@@ -417,7 +388,6 @@ function ProductArtwork({
       </div>
     );
   }
-
   return (
     <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#d7d1c8]">
       <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(135deg,transparent_45%,#111_46%,#111_48%,transparent_49%)] [background-size:18px_18px]" />
@@ -462,11 +432,11 @@ function ProductArtwork({
     </div>
   );
 }
-
 /* ================================================================
-   PRODUCT CARD
-================================================================ */
 
+ PRODUCT CARD
+
+\================================================================ */
 function ProductCard({
   product,
   isWishlisted,
@@ -484,11 +454,9 @@ function ProductCard({
     product.discount > 0
       ? product.discount
       : getDiscount(product.price, product.mrp);
-
   const openProduct = () => {
     router.push(`/shop/t-shirts/product/${productSlug}`);
   };
-
   return (
     <article
       role="link"
@@ -504,8 +472,11 @@ function ProductCard({
       className="group flex h-full min-w-0 cursor-pointer flex-col outline-none"
     >
       {/* ============================================================
-          IMAGE / ARTWORK PANEL
-      ============================================================ */}
+
+      IMAGE / ARTWORK PANEL
+
+    \============================================================ */}
+
       <div className="relative aspect-[0.84] w-full overflow-hidden rounded-[28px] border border-[#CBCAC8]/15 bg-[#171717] transition-all duration-500 group-hover:-translate-y-1 group-hover:border-[#CBCAC8]/30 group-hover:shadow-[0_28px_70px_rgba(0,0,0,0.42)]">
         {getProductImage(product) ? (
           <img
@@ -518,9 +489,13 @@ function ProductCard({
         )}
 
         {/* Soft editorial overlay */}
+
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/35" />
+
         <div className="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/[0.04]" />
+
         {/* Tiny discount marker */}
+
         {discount > 0 && (
           <div className="absolute bottom-3 left-3 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border border-white/[0.10] bg-[#DA0D12]/95 px-1.5 backdrop-blur-md shadow-[0_8px_20px_rgba(218,13,18,0.18)]">
             <span className="font-[var(--font-outfit)] text-[9px] font-bold leading-none tracking-[-0.02em] text-white">
@@ -530,6 +505,7 @@ function ProductCard({
         )}
 
         {/* Minimal wishlist control */}
+
         <button
           type="button"
           aria-label={
@@ -554,8 +530,11 @@ function ProductCard({
       </div>
 
       {/* ============================================================
-          EDITORIAL PRODUCT META
-      ============================================================ */}
+
+      EDITORIAL PRODUCT META
+
+    \============================================================ */}
+
       <div className="flex flex-1 flex-col px-2 pt-5 sm:px-3 sm:pt-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -571,11 +550,13 @@ function ProductCard({
 
             <p className="mt-3 line-clamp-1 text-[10px] uppercase tracking-[0.22em] text-[#666362] sm:text-[11px]">
               {product.category}
+
               {product.collection ? ` / ${product.collection}` : ""}
             </p>
           </div>
 
           {/* Price stays visually aligned with the product title block */}
+
           <div className="shrink-0 pt-1 text-right">
             <span className="font-mono text-[14px] font-medium tracking-[-0.02em] text-[#CBCAC8]/80 sm:text-[16px]">
               {formatPrice(product.price)}
@@ -592,69 +573,69 @@ function ProductCard({
     </article>
   );
 }
-
 /* ================================================================
-   PAGE
-================================================================ */
 
-export default function TshirtsPage() {
+ PAGE
+
+\================================================================ */
+function TshirtsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
-
   const collectionFromUrl = searchParams.get("collection");
-
-  const [selectedCollection, setSelectedCollection] = useState(
-    collectionFromUrl || "All Collections",
-  );
-
+  const [selectedCollection, setSelectedCollection] =
+    useState("All Collections");
+  // Keep the collection filter synchronized with the URL.
+  // This handles navigation from collection cards even when
+  // the T-shirts page remains mounted and only the query string changes.
+  useEffect(() => {
+    const requestedCollection = collectionFromUrl?.trim();
+    if (!requestedCollection) {
+      setSelectedCollection("All Collections");
+      return;
+    }
+    const matchedCollection = collections.find(
+      (collection) =>
+        collection.toLowerCase() === requestedCollection.toLowerCase(),
+    );
+    setSelectedCollection(matchedCollection ?? "All Collections");
+  }, [collectionFromUrl]);
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [selectedPrice, setSelectedPrice] = useState("All Prices");
   const [selectedSize, setSelectedSize] = useState("All Sizes");
-
   const [sort, setSort] = useState("featured");
-
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [wishlistLoadingIds, setWishlistLoadingIds] = useState<string[]>([]);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-
+  
   useEffect(() => {
     let cancelled = false;
-
     const loadProducts = async () => {
       try {
         setLoading(true);
         setLoadError("");
-
         const response = await fetch("/api/admin/products", {
           method: "GET",
           cache: "no-store",
         });
-
         const data = await response.json().catch(() => null);
-
         if (!response.ok || !data?.success) {
           throw new Error(
             data?.message || data?.error || "Failed to load products.",
           );
         }
-
         const normalized = Array.isArray(data.products)
           ? data.products.map(normalizeProduct)
           : [];
-
         if (!cancelled) {
           setProducts(normalized);
         }
       } catch (error) {
         console.error("T-shirts products load error:", error);
-
         if (!cancelled) {
           setLoadError(
             error instanceof Error ? error.message : "Failed to load products.",
@@ -666,169 +647,146 @@ export default function TshirtsPage() {
         }
       }
     };
-
     loadProducts();
-
     return () => {
       cancelled = true;
     };
   }, []);
-
   /*
-   * Load the logged-in user's wishlist from Supabase.
-   * Supabase is the persistent source of truth; local state is used
-   * only to render the current page immediately.
-   */
+
+  * Load the logged-in user's wishlist from Supabase.
+
+  * Supabase is the persistent source of truth; local state is used
+
+  * only to render the current page immediately.
+
+  */
   useEffect(() => {
     let cancelled = false;
-
     const loadWishlist = async () => {
       try {
         const {
           data: { session },
           error: sessionError,
         } = await supabase.auth.getSession();
-
         if (sessionError) {
           throw sessionError;
         }
-
         if (!session?.user) {
           if (!cancelled) {
             setWishlist([]);
           }
           return;
         }
-
         const { data, error: wishlistError } = await supabase
           .from("wishlist_items")
           .select("product_id")
           .eq("user_id", session.user.id);
-
         if (wishlistError) {
           throw wishlistError;
         }
-
         if (!cancelled) {
           const wishlistIds = (data ?? [])
             .map((item) => String(item.product_id))
             .filter(Boolean);
-
           setWishlist(wishlistIds);
         }
       } catch (wishlistError) {
         console.error("Failed to load wishlist:", wishlistError);
-
         if (!cancelled) {
           setWishlist([]);
         }
       }
     };
-
     loadWishlist();
-
     return () => {
       cancelled = true;
     };
   }, []);
-
   /*
-   * The Navbar and WishlistDrawer read wishlist state from Redux.
-   * Hydrate Redux from the persisted Supabase wishlist once both
-   * the wishlist IDs and the product list are available.
-   */
+
+  * The Navbar and WishlistDrawer read wishlist state from Redux.
+
+  * Hydrate Redux from the persisted Supabase wishlist once both
+
+  * the wishlist IDs and the product list are available.
+
+  */
   useEffect(() => {
     if (!products.length || !wishlist.length) {
       return;
     }
-
     wishlist.forEach((productId) => {
       const product = products.find((item) => item.id === productId);
-
       if (product) {
         dispatch(addToWishlist({ product: product as any }));
       }
     });
   }, [dispatch, products, wishlist]);
-
   const toggleWishlist = async (id: string) => {
     if (wishlistLoadingIds.includes(id)) return;
-
     setWishlistLoadingIds((current) =>
       current.includes(id) ? current : [...current, id],
     );
-
     try {
       const {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
-
       if (sessionError || !session?.user) {
         setLoginModalOpen(true);
         return;
       }
-
       const userId = session.user.id;
       const isCurrentlyWishlisted = wishlist.includes(id);
-
       if (isCurrentlyWishlisted) {
         const { error: deleteError } = await supabase
           .from("wishlist_items")
           .delete()
           .eq("user_id", userId)
           .eq("product_id", id);
-
         if (deleteError) {
           throw deleteError;
         }
-
         setWishlist((current) => current.filter((item) => item !== id));
         dispatch(removeFromWishlist({ productId: id }));
         return;
       }
-
       const { error: insertError } = await supabase
         .from("wishlist_items")
         .insert({
           user_id: userId,
           product_id: id,
         });
-
       if (insertError) {
         /*
-         * The unique constraint prevents duplicates if the row already
-         * exists because of a stale UI state or another tab.
-         */
+
+        * The unique constraint prevents duplicates if the row already
+
+        * exists because of a stale UI state or another tab.
+
+        */
         if (insertError.code === "23505") {
           setWishlist((current) =>
             current.includes(id) ? current : [...current, id],
           );
-
           const product = products.find((item) => item.id === id);
-
           if (product) {
             dispatch(addToWishlist({ product: product as any }));
           }
-
           return;
         }
-
         throw insertError;
       }
-
       setWishlist((current) =>
         current.includes(id) ? current : [...current, id],
       );
-
       const product = products.find((item) => item.id === id);
-
       if (product) {
         dispatch(addToWishlist({ product: product as any }));
       }
     } catch (wishlistError) {
       console.error("Wishlist update failed:", wishlistError);
-
       toast.error(
         wishlistError instanceof Error
           ? wishlistError.message
@@ -838,18 +796,15 @@ export default function TshirtsPage() {
       setWishlistLoadingIds((current) => current.filter((item) => item !== id));
     }
   };
-
   const filteredProducts = useMemo(() => {
     const activePriceRange = priceRanges.find(
       (range) => range.label === selectedPrice,
     );
-
     return products
       .filter((product) => {
         if (selectedCollection === "All Collections") {
           return true;
         }
-
         return (
           product.collection.trim().toLowerCase() ===
           selectedCollection.trim().toLowerCase()
@@ -859,14 +814,12 @@ export default function TshirtsPage() {
         if (selectedCategory === "All Products") {
           return true;
         }
-
         return product.category === selectedCategory;
       })
       .filter((product) => {
         if (selectedPrice === "All Prices" || !activePriceRange) {
           return true;
         }
-
         return (
           product.price >= activePriceRange.min &&
           product.price <= activePriceRange.max
@@ -876,36 +829,30 @@ export default function TshirtsPage() {
         if (selectedSize === "All Sizes") {
           return true;
         }
-
         return product.sizes.includes(selectedSize);
       })
       .sort((a, b) => {
         if (sort === "price-low") {
           return a.price - b.price;
         }
-
         if (sort === "price-high") {
           return b.price - a.price;
         }
-
         if (sort === "name-az") {
           return a.name.localeCompare(b.name, undefined, {
             sensitivity: "base",
             numeric: true,
           });
         }
-
         if (sort === "name-za") {
           return b.name.localeCompare(a.name, undefined, {
             sensitivity: "base",
             numeric: true,
           });
         }
-
         if (a.featured !== b.featured) {
           return a.featured ? -1 : 1;
         }
-
         return a.name.localeCompare(b.name);
       });
   }, [
@@ -916,26 +863,25 @@ export default function TshirtsPage() {
     selectedSize,
     sort,
   ]);
-
   const activeFilterCount =
     (selectedCollection !== "All Collections" ? 1 : 0) +
     (selectedCategory !== "All Products" ? 1 : 0) +
     (selectedPrice !== "All Prices" ? 1 : 0) +
     (selectedSize !== "All Sizes" ? 1 : 0);
-
   const clearFilters = () => {
     setSelectedCollection("All Collections");
     setSelectedCategory("All Products");
     setSelectedPrice("All Prices");
     setSelectedSize("All Sizes");
   };
-
   return (
     <main className="min-h-screen bg-[#080808] px-4 pb-24 pt-32 text-[#CBCAC8]">
       <section className="mx-auto max-w-[1180px]">
         {/* ========================================================
-            HEADER
-        ======================================================== */}
+
+      HEADER
+
+    \======================================================== */}
 
         <header className="mb-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -967,6 +913,7 @@ export default function TshirtsPage() {
             </div>
 
             {/* Desktop sort */}
+
             <div className="hidden md:block">
               <label className="mb-2 block text-[9px] font-semibold uppercase tracking-[0.2em] text-[#666362]">
                 Sort Collection
@@ -978,8 +925,11 @@ export default function TshirtsPage() {
                 className="h-10 min-w-[180px] rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[11px] text-[#CBCAC8] outline-none transition-colors focus:border-[#DA0D12]/50"
               >
                 <option value="price-low">Price: Low to High</option>
+
                 <option value="price-high">Price: High to Low</option>
+
                 <option value="name-az">Name: A to Z</option>
+
                 <option value="name-za">Name: Z to A</option>
               </select>
             </div>
@@ -989,8 +939,10 @@ export default function TshirtsPage() {
         </header>
 
         {/* ========================================================
-            MOBILE FILTER BUTTON
-        ======================================================== */}
+
+      MOBILE FILTER BUTTON
+
+    \======================================================== */}
 
         <div className="mb-5 flex items-center justify-between md:hidden">
           <button
@@ -1013,15 +965,20 @@ export default function TshirtsPage() {
             className="h-10 rounded-full border border-[#CBCAC8]/10 bg-[#161616] px-4 text-[10px] text-[#CBCAC8] outline-none"
           >
             <option value="price-low">Price: Low</option>
+
             <option value="price-high">Price: High</option>
+
             <option value="name-az">Name: A to Z</option>
+
             <option value="name-za">Name: Z to A</option>
           </select>
         </div>
 
         {/* ========================================================
-            MOBILE FILTER BOTTOM SHEET
-        ======================================================== */}
+
+      MOBILE FILTER BOTTOM SHEET
+
+    \======================================================== */}
 
         {mobileFiltersOpen && typeof document !== "undefined"
           ? createPortal(
@@ -1054,6 +1011,7 @@ export default function TshirtsPage() {
                       >
                         FILTERS
                       </h2>
+
                       <p className="mt-1 text-[9px] uppercase tracking-[0.16em] text-[#666362]">
                         {activeFilterCount > 0
                           ? `${activeFilterCount} active`
@@ -1125,13 +1083,17 @@ export default function TshirtsPage() {
           : null}
 
         {/* ========================================================
-            CONTENT
-        ======================================================== */}
+
+      CONTENT
+
+    \======================================================== */}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[210px_1fr]">
           {/* ======================================================
-              DESKTOP SIDEBAR
-          ====================================================== */}
+
+      DESKTOP SIDEBAR
+
+    \====================================================== */}
 
           <aside className="hidden md:block">
             <div className="sticky top-28 rounded-[20px] border border-[#CBCAC8]/10 bg-[#111111] p-5">
@@ -1181,6 +1143,7 @@ export default function TshirtsPage() {
               </button>
 
               {/* Sidebar footer */}
+
               <div className="mt-7 rounded-[14px] bg-[#DA0D12]/8 p-3">
                 <div className="flex items-center gap-2">
                   <PawIcon className="h-3 w-3 text-[#DA0D12]" />
@@ -1198,8 +1161,10 @@ export default function TshirtsPage() {
           </aside>
 
           {/* ======================================================
-              PRODUCT GRID
-          ====================================================== */}
+
+      PRODUCT GRID
+
+    \====================================================== */}
 
           <div>
             <div className="mb-4 flex items-center justify-between">
@@ -1213,6 +1178,7 @@ export default function TshirtsPage() {
 
               <div className="hidden items-center gap-2 sm:flex">
                 <span className="h-1 w-1 rounded-full bg-[#DA0D12]" />
+
                 <span className="text-[9px] uppercase tracking-[0.18em] text-[#666362]">
                   Fresh Drop
                 </span>
@@ -1227,10 +1193,14 @@ export default function TshirtsPage() {
                     className="overflow-hidden rounded-[22px] border border-[#CBCAC8]/10 bg-[#111111]"
                   >
                     <div className="aspect-[0.86] animate-pulse bg-[#171717]" />
+
                     <div className="space-y-3 p-4">
                       <div className="h-2 w-16 animate-pulse rounded bg-[#252525]" />
+
                       <div className="h-6 w-3/4 animate-pulse rounded bg-[#252525]" />
+
                       <div className="h-3 w-1/2 animate-pulse rounded bg-[#252525]" />
+
                       <div className="h-5 w-1/3 animate-pulse rounded bg-[#252525]" />
                     </div>
                   </div>
@@ -1240,6 +1210,7 @@ export default function TshirtsPage() {
               <div className="flex min-h-[400px] items-center justify-center rounded-[22px] border border-[#DA0D12]/20 bg-[#111111] px-6">
                 <div className="text-center">
                   <PawIcon className="mx-auto h-7 w-7 text-[#DA0D12]" />
+
                   <h2
                     className="mt-4 text-[38px] text-[#CBCAC8]"
                     style={{
@@ -1248,6 +1219,7 @@ export default function TshirtsPage() {
                   >
                     PRODUCTS OFFLINE
                   </h2>
+
                   <p className="mx-auto mt-2 max-w-md text-[11px] leading-relaxed text-[#666362]">
                     {loadError}
                   </p>
@@ -1301,11 +1273,11 @@ export default function TshirtsPage() {
     </main>
   );
 }
-
 /* ================================================================
-   FILTER SECTION
-================================================================ */
 
+ FILTER SECTION
+
+\================================================================ */
 function FilterSection({
   title,
   items,
@@ -1337,7 +1309,6 @@ function FilterSection({
       <div className="space-y-1">
         {items.map((item) => {
           const active = selected === item;
-
           return (
             <button
               key={item}
@@ -1365,5 +1336,16 @@ function FilterSection({
         })}
       </div>
     </div>
+  );
+}
+export default function TshirtsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#080808] px-4 pb-24 pt-32 text-[#CBCAC8]" />
+      }
+    >
+      <TshirtsPageContent />
+    </Suspense>
   );
 }

@@ -611,7 +611,7 @@ function TshirtsPageContent() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [wishlistLoadingIds, setWishlistLoadingIds] = useState<string[]>([]);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  
+
   useEffect(() => {
     let cancelled = false;
     const loadProducts = async () => {

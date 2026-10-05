@@ -863,7 +863,7 @@ export default function NewDrop() {
                 fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
               }}
             >
-              NEW <span className="text-[#DA0D12]">PACK.</span>
+              TRENDING <span className="text-[#DA0D12]">PACK.</span>
             </h2>
           </div>
 

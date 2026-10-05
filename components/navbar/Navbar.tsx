@@ -678,7 +678,8 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  const isShopActive = pathname === "/shop/t-shirts" || pathname.startsWith("/shop/");
+  const isShopActive =
+    pathname === "/shop/t-shirts" || pathname.startsWith("/shop/");
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);

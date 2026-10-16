@@ -281,12 +281,13 @@ export default function TrendingCollectibles() {
           <p className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#71695F]">
             Small details. Serious shelf appeal.
           </p>
+
           <Link
             href="/shop/collectibles"
-            className="group inline-flex items-center justify-center gap-3 self-start rounded-full border border-black/20 px-5 py-3 font-mono text-[8px] uppercase tracking-[0.2em] text-[#171717] transition-all duration-300 hover:border-[#DA0D12] hover:bg-[#DA0D12] hover:text-white sm:self-auto"
+            className="group inline-flex items-center justify-center gap-3 self-start rounded-full border border-black/20 px-5 py-3 font-mono text-[8px] uppercase tracking-[0.2em] !text-black transition-all duration-300 hover:border-[#DA0D12] hover:bg-[#DA0D12] hover:!text-white sm:self-auto"
           >
             Explore the collection{" "}
-            <span className="transition-transform duration-300 group-hover:translate-x-1">
+            <span className="text-black transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white">
               <ArrowIcon />
             </span>
           </Link>

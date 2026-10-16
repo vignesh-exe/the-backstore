@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
@@ -10,7 +9,6 @@ import LoginModal from "@/components/auth/LoginModal";
 import RegisterModal from "@/components/auth/RegisterModal";
 import AccountModal from "@/components/account/AccountModal";
 import { supabase } from "@/lib/supabase";
-
 const navItems = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop/t-shirts" },
@@ -18,7 +16,6 @@ const navItems = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
-
 const shopItems = [
   {
     label: "T-Shirts",
@@ -41,7 +38,6 @@ const shopItems = [
     description: "Diecast toys, wall posters and more.",
   },
 ];
-
 function SearchIcon() {
   return (
     <svg
@@ -57,7 +53,6 @@ function SearchIcon() {
     </svg>
   );
 }
-
 function HeartIcon() {
   return (
     <svg
@@ -72,7 +67,6 @@ function HeartIcon() {
     </svg>
   );
 }
-
 function BagIcon() {
   return (
     <svg
@@ -88,7 +82,6 @@ function BagIcon() {
     </svg>
   );
 }
-
 function UserIcon() {
   return (
     <svg
@@ -104,7 +97,6 @@ function UserIcon() {
     </svg>
   );
 }
-
 function MenuIcon() {
   return (
     <svg
@@ -121,7 +113,6 @@ function MenuIcon() {
     </svg>
   );
 }
-
 function CloseIcon() {
   return (
     <svg
@@ -137,7 +128,6 @@ function CloseIcon() {
     </svg>
   );
 }
-
 function ChevronDownIcon() {
   return (
     <svg
@@ -152,7 +142,6 @@ function ChevronDownIcon() {
     </svg>
   );
 }
-
 function ArrowUpRightIcon() {
   return (
     <svg
@@ -168,7 +157,6 @@ function ArrowUpRightIcon() {
     </svg>
   );
 }
-
 function ArrowRightIcon() {
   return (
     <svg
@@ -184,7 +172,6 @@ function ArrowRightIcon() {
     </svg>
   );
 }
-
 function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg
@@ -200,7 +187,6 @@ function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
     </svg>
   );
 }
-
 function TShirtIcon() {
   return (
     <svg
@@ -215,7 +201,6 @@ function TShirtIcon() {
     </svg>
   );
 }
-
 /*
 function ShoeIcon() {
   return (
@@ -234,7 +219,6 @@ function ShoeIcon() {
   );
 }
 */
-
 function ToyIcon() {
   return (
     <svg
@@ -252,7 +236,6 @@ function ToyIcon() {
     </svg>
   );
 }
-
 type SearchProduct = {
   id: string;
   name: string;
@@ -273,18 +256,15 @@ type SearchProduct = {
   }> | null;
   metadata?: Record<string, unknown> | null;
 };
-
 function getSearchProductImage(product: SearchProduct) {
   if (product.image) {
     return product.image;
   }
-
   const images = [...(product.product_images ?? [])].sort((a, b) => {
     if (a.is_primary && !b.is_primary) return -1;
     if (!a.is_primary && b.is_primary) return 1;
     return (a.sort_order ?? 0) - (b.sort_order ?? 0);
   });
-
   return images.find((image) => image.image_url)?.image_url || "";
 }
 
@@ -299,17 +279,16 @@ function getSearchProductCategory(product: SearchProduct) {
     typeof product.metadata?.product_type === "string"
       ? product.metadata.product_type
       : null,
+    product.name,
+    product.slug,
+    product.sku,
   ]
     .filter(Boolean)
     .map((value) => String(value).trim().toLowerCase());
 
   if (
-    values.some(
-      (value) =>
-        value.includes("collect") ||
-        value.includes("diecast") ||
-        value.includes("poster") ||
-        value.includes("toy"),
+    values.some((value) =>
+      /collectible|diecast|die-cast|poster|toy|figurine|model car/i.test(value),
     )
   ) {
     return "collectibles";
@@ -321,18 +300,14 @@ function getSearchProductCategory(product: SearchProduct) {
 function getSearchProductHref(product: SearchProduct) {
   const category = getSearchProductCategory(product);
   const slug = String(product.slug || product.id).trim();
-
   return `/shop/${category}/${encodeURIComponent(slug)}`;
 }
-
 function getSearchProductPrice(product: SearchProduct) {
   const price = Number(product.price ?? 0);
   return `₹${price.toLocaleString("en-IN")}`;
 }
-
 export default function Navbar() {
   const pathname = usePathname();
-
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileShopOpen, setMobileShopOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -345,111 +320,97 @@ export default function Navbar() {
   const [loggedInFirstName, setLoggedInFirstName] = useState<string | null>(
     null,
   );
-
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchProducts, setSearchProducts] = useState<SearchProduct[]>([]);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
-
   const cartItems = useSelector((state: any) => state.cart?.cartItems ?? {});
-
   const wishlistItems = useSelector(
     (state: any) => state.wishlist?.wishlistItems ?? [],
   );
-
   const cartCount = useMemo(() => {
-    if (!loggedInFirstName) {
-      return 0;
-    }
-
     if (!cartItems || typeof cartItems !== "object") {
       return 0;
     }
 
     return Object.values(cartItems).reduce(
       (total: number, item: any) =>
-        total + Math.max(0, Number(item?.quantity ?? 1)),
+        total + Math.max(0, Number(item?.quantity ?? 0)),
       0,
     );
-  }, [cartItems, loggedInFirstName]);
-
+  }, [cartItems]);
   const wishlistCount = useMemo(() => {
     if (!loggedInFirstName) {
       return 0;
     }
-
     if (Array.isArray(wishlistItems)) {
       return wishlistItems.length;
     }
-
     if (wishlistItems && typeof wishlistItems === "object") {
       return Object.keys(wishlistItems).length;
     }
-
     return 0;
   }, [wishlistItems, loggedInFirstName]);
-
   useEffect(() => {
     const storedFirstName = window.localStorage.getItem(
       "backstore_user_first_name",
     );
-
     if (storedFirstName) {
       setLoggedInFirstName(storedFirstName);
     }
-
     const handleLogin = (event: Event) => {
       const customEvent = event as CustomEvent<{ firstName?: string }>;
       const firstName =
         customEvent.detail?.firstName ||
         window.localStorage.getItem("backstore_user_first_name");
-
       if (firstName) {
         setLoggedInFirstName(firstName);
       }
     };
-
     const handleStorage = (event: StorageEvent) => {
       if (event.key === "backstore_user_first_name") {
         setLoggedInFirstName(event.newValue);
-
         if (!event.newValue) {
           setProfileMenuOpen(false);
         }
       }
     };
-
     const handleOpenCart = () => {
       closeMobileMenu();
       setWishlistOpen(false);
       setProfileMenuOpen(false);
       setCartOpen(true);
     };
-
     const handleOpenAccount = () => {
       closeMobileMenu();
       setProfileMenuOpen(false);
       setAccountOpen(true);
     };
-
     const handleAuthStateChange = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session?.user) {
         setLoggedInFirstName(null);
         setProfileMenuOpen(false);
         window.localStorage.removeItem("backstore_user_first_name");
       }
     };
-
+    const handleOpenLogin = () => {
+      closeMobileMenu();
+      setCartOpen(false);
+      setWishlistOpen(false);
+      setProfileMenuOpen(false);
+      setAccountOpen(false);
+      setRegisterOpen(false);
+      setLoginOpen(true);
+    };
     window.addEventListener("backstore:login", handleLogin);
+    window.addEventListener("backstore:open-login", handleOpenLogin);
     window.addEventListener("storage", handleStorage);
     window.addEventListener("backstore:open-cart", handleOpenCart);
     window.addEventListener("backstore:open-account", handleOpenAccount);
-
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT" || !session?.user) {
@@ -459,55 +420,46 @@ export default function Navbar() {
         }
       },
     );
-
     handleAuthStateChange();
-
     return () => {
       window.removeEventListener("backstore:login", handleLogin);
+      window.removeEventListener("backstore:open-login", handleOpenLogin);
       window.removeEventListener("storage", handleStorage);
       window.removeEventListener("backstore:open-cart", handleOpenCart);
       window.removeEventListener("backstore:open-account", handleOpenAccount);
       authListener.subscription.unsubscribe();
     };
   }, []);
-
   const openWishlist = () => {
     closeMobileMenu();
     setWishlistOpen(true);
   };
-
   const openCart = () => {
     closeMobileMenu();
     setCartOpen(true);
   };
-
   const openAccount = () => {
     if (loggedInFirstName) {
       setProfileMenuOpen((prev) => !prev);
       return;
     }
-
     closeMobileMenu();
     setLoginOpen(true);
   };
-
   const openMyAccount = () => {
     setProfileMenuOpen(false);
     closeMobileMenu();
     setAccountOpen(true);
   };
-
   const openMyOrders = () => {
     setProfileMenuOpen(false);
     closeMobileMenu();
   };
-
   const closeSearch = () => {
     setSearchOpen(false);
     setSearchQuery("");
     setSearchError("");
   };
-
   const openSearch = () => {
     closeMobileMenu();
     setProfileMenuOpen(false);
@@ -516,59 +468,45 @@ export default function Navbar() {
     setSearchError("");
     setSearchOpen(true);
   };
-
   useEffect(() => {
     if (!searchOpen) {
       return;
     }
-
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         closeSearch();
       }
     };
-
     window.addEventListener("keydown", handleEscape);
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     return () => {
       window.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = previousOverflow;
     };
   }, [searchOpen]);
-
   useEffect(() => {
     if (!searchOpen) {
       return;
     }
-
     const query = searchQuery.trim();
-
     if (!query) {
       setSearchProducts([]);
       setSearchError("");
       return;
     }
-
     let cancelled = false;
-
     const timeoutId = window.setTimeout(async () => {
       try {
         setIsSearchLoading(true);
         setSearchError("");
-
         const response = await fetch("/api/admin/products", {
           cache: "no-store",
         });
-
         if (!response.ok) {
           throw new Error("Unable to load products.");
         }
-
         const payload = await response.json();
-
         const products = Array.isArray(payload)
           ? payload
           : Array.isArray(payload?.products)
@@ -576,15 +514,12 @@ export default function Navbar() {
             : Array.isArray(payload?.data)
               ? payload.data
               : [];
-
         const normalizedQuery = query.toLowerCase();
-
         const results = products
           .filter((product: SearchProduct) => {
             if (!product?.id || product?.status === "Inactive") {
               return false;
             }
-
             const searchableText = [
               product.name,
               product.slug,
@@ -603,17 +538,14 @@ export default function Navbar() {
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
-
             return searchableText.includes(normalizedQuery);
           })
           .slice(0, 8);
-
         if (!cancelled) {
           setSearchProducts(results);
         }
       } catch (error) {
         console.error("Product search failed:", error);
-
         if (!cancelled) {
           setSearchProducts([]);
           setSearchError("Unable to search products. Please try again.");
@@ -624,43 +556,32 @@ export default function Navbar() {
         }
       }
     }, 220);
-
     return () => {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
   }, [searchOpen, searchQuery]);
-
   const handleSearchResultClick = () => {
     closeSearch();
     closeMobileMenu();
   };
-
   const handleLogout = async () => {
     if (isLoggingOut) {
       return;
     }
-
     try {
       setIsLoggingOut(true);
-
       const { error } = await supabase.auth.signOut();
-
       if (error) {
         console.error("Logout error:", error);
         return;
       }
-
       setLoggedInFirstName(null);
       setProfileMenuOpen(false);
       setAccountOpen(false);
-
       window.localStorage.removeItem("backstore_user_first_name");
-
       window.dispatchEvent(new CustomEvent("backstore:logout"));
-
       window.dispatchEvent(new CustomEvent("janavi-auth-changed"));
-
       // Refresh the page so the logged-out state is reflected everywhere.
       window.location.reload();
     } catch (error) {
@@ -669,29 +590,23 @@ export default function Navbar() {
       setIsLoggingOut(false);
     }
   };
-
   const isActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";
     }
-
     return pathname === href || pathname.startsWith(`${href}/`);
   };
-
   const isShopActive =
     pathname === "/shop/t-shirts" || pathname.startsWith("/shop/");
-
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
     setMobileShopOpen(false);
   };
-
   return (
     <>
       {/* =========================================================
           DESKTOP GLASS PILL NAVBAR
       ========================================================= */}
-
       <header className="fixed inset-x-0 top-[19px] z-[100]">
         <div className="hidden px-4 pt-4 lg:block">
           <nav
@@ -715,13 +630,10 @@ export default function Navbar() {
             {/* =====================================================
                 GLASS HIGHLIGHT
             ===================================================== */}
-
             <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#CBCAC8]/25 to-transparent" />
-
             {/* =====================================================
                 LOGO BADGE
             ===================================================== */}
-
             <a
               href="/"
               aria-label="The Backstore home"
@@ -737,7 +649,6 @@ export default function Navbar() {
               "
             >
               {/* torn red paper */}
-
               <div
                 className="
                   absolute
@@ -752,9 +663,7 @@ export default function Navbar() {
                     "polygon(3% 15%, 13% 9%, 24% 13%, 36% 7%, 49% 11%, 61% 6%, 74% 12%, 86% 7%, 97% 14%, 94% 86%, 84% 92%, 73% 88%, 61% 94%, 49% 89%, 37% 94%, 24% 89%, 12% 93%, 3% 86%, 1% 24%)",
                 }}
               />
-
               {/* subtle paper texture */}
-
               <div
                 className="absolute inset-[3px] opacity-15"
                 style={{
@@ -765,9 +674,7 @@ export default function Navbar() {
                     "polygon(3% 15%, 13% 9%, 24% 13%, 36% 7%, 49% 11%, 61% 6%, 74% 12%, 86% 7%, 97% 14%, 94% 86%, 84% 92%, 73% 88%, 61% 94%, 49% 89%, 37% 94%, 24% 89%, 12% 93%, 3% 86%, 1% 24%)",
                 }}
               />
-
               {/* logo */}
-
               <img
                 src="/logo/backstore-logo.png"
                 alt="The Backstore"
@@ -784,23 +691,18 @@ export default function Navbar() {
                 "
               />
             </a>
-
             {/* =====================================================
                 DIVIDER
             ===================================================== */}
-
             <div className="mx-3 h-6 w-px bg-[#CBCAC8]/10" />
-
             {/* =====================================================
                 NAVIGATION
             ===================================================== */}
-
             <div className="flex h-full flex-1 items-center justify-center">
               <div className="flex items-center gap-1">
                 {navItems.map((item) => {
                   const active = isActive(item.href);
                   const isShop = item.label === "Shop";
-
                   if (isShop) {
                     return (
                       <div key={item.label} className="group relative h-full">
@@ -831,16 +733,12 @@ export default function Navbar() {
                           {isShopActive && (
                             <PawIcon className="h-3 w-3 text-[#80060B]" />
                           )}
-
                           <span>Shop</span>
-
                           <ChevronDownIcon />
                         </button>
-
                         {/* =================================================
                             SHOP DROPDOWN
                         ================================================= */}
-
                         <div
                           className="
                             invisible
@@ -865,24 +763,21 @@ export default function Navbar() {
                               rounded-[24px]
                               border
                               border-[#CBCAC8]/15
-                              bg-[#161616]/90
+                              bg-[#161616]
                               p-2
                               shadow-[0_25px_70px_rgba(0,0,0,0.3)]
                               backdrop-blur-2xl
                             "
                           >
                             {/* heading */}
-
                             <div className="flex items-end justify-between px-4 pb-3 pt-3">
                               <div>
                                 <div className="mb-1.5 flex items-center gap-2">
                                   <PawIcon className="h-3 w-3 text-[#80060B]" />
-
                                   <span className="text-[9px] uppercase tracking-[0.2em] text-[#666362]">
                                     Explore collection
                                   </span>
                                 </div>
-
                                 <h3
                                   className="text-[29px] leading-none text-[#CBCAC8]"
                                   style={{
@@ -893,18 +788,14 @@ export default function Navbar() {
                                   FIND YOUR EVERYDAY
                                 </h3>
                               </div>
-
                               <span className="font-mono text-[9px] text-[#666362]">
                                 02 / 02
                               </span>
                             </div>
-
                             {/* cards */}
-
                             <div className="grid grid-cols-2 gap-1">
                               {shopItems.map((shopItem) => {
                                 const active = isActive(shopItem.href);
-
                                 return (
                                   <a
                                     key={shopItem.label}
@@ -929,7 +820,6 @@ export default function Navbar() {
                                     <span className="absolute right-4 top-4 font-mono text-[10px] text-[#666362]">
                                       {shopItem.number}
                                     </span>
-
                                     <div
                                       className={`
                                         flex
@@ -951,7 +841,6 @@ export default function Navbar() {
                                         <ToyIcon />
                                       )}
                                     </div>
-
                                     <div className="absolute bottom-4 left-4 right-4">
                                       <div className="flex items-end justify-between">
                                         <div>
@@ -964,18 +853,15 @@ export default function Navbar() {
                                           >
                                             {shopItem.label}
                                           </h4>
-
                                           <p className="mt-2 max-w-[175px] text-[10px] leading-relaxed text-[#666362]">
                                             {shopItem.description}
                                           </p>
                                         </div>
-
                                         <span className="transition-transform duration-300 group-hover/card:-translate-y-1 group-hover/card:translate-x-1">
                                           <ArrowUpRightIcon />
                                         </span>
                                       </div>
                                     </div>
-
                                     {active && (
                                       <span className="absolute bottom-0 left-5 h-[2px] w-8 rounded-full bg-[#80060B]" />
                                     )}
@@ -983,14 +869,11 @@ export default function Navbar() {
                                 );
                               })}
                             </div>
-
                             {/* bottom */}
-
                             <div className="mt-1 flex items-center justify-between rounded-[16px] bg-[#CBCAC8]/[0.035] px-4 py-2.5">
                               <span className="text-[9px] uppercase tracking-[0.18em] text-[#666362]">
                                 Made for the everyday pack
                               </span>
-
                               <PawIcon className="h-3 w-3 text-[#80060B]" />
                             </div>
                           </div>
@@ -998,7 +881,6 @@ export default function Navbar() {
                       </div>
                     );
                   }
-
                   return (
                     <a
                       key={item.label}
@@ -1024,20 +906,16 @@ export default function Navbar() {
                       `}
                     >
                       {active && <PawIcon className="h-3 w-3 text-[#80060B]" />}
-
                       {item.label}
                     </a>
                   );
                 })}
               </div>
             </div>
-
             {/* =====================================================
                 RIGHT ACTIONS
             ===================================================== */}
-
             <div className="mx-2 h-6 w-px bg-[#CBCAC8]/10" />
-
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
@@ -1047,7 +925,6 @@ export default function Navbar() {
               >
                 <SearchIcon />
               </button>
-
               <button
                 type="button"
                 aria-label="Wishlist"
@@ -1055,12 +932,10 @@ export default function Navbar() {
                 className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#666362] transition-all hover:bg-[#CBCAC8]/8 hover:text-[#CBCAC8]"
               >
                 <HeartIcon />
-
                 <span className="absolute right-[5px] top-[4px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[7px] text-[#CBCAC8]">
                   {wishlistCount}
                 </span>
               </button>
-
               <button
                 type="button"
                 aria-label="Shopping bag"
@@ -1068,12 +943,10 @@ export default function Navbar() {
                 className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#666362] transition-all hover:bg-[#CBCAC8]/8 hover:text-[#CBCAC8]"
               >
                 <BagIcon />
-
                 <span className="absolute right-[5px] top-[4px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[7px] text-[#CBCAC8]">
                   {cartCount}
                 </span>
               </button>
-
               <div className="relative ml-1">
                 <button
                   type="button"
@@ -1109,7 +982,6 @@ export default function Navbar() {
                     {loggedInFirstName || "Login"}
                   </span>
                 </button>
-
                 {loggedInFirstName && profileMenuOpen && (
                   <div className="absolute right-0 top-[43px] z-[700] w-[210px] overflow-hidden rounded-[18px] border border-[#CBCAC8]/12 bg-[#161616]/95 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
                     <div className="border-b border-[#CBCAC8]/8 px-3 py-2.5">
@@ -1120,7 +992,6 @@ export default function Navbar() {
                         My account
                       </p>
                     </div>
-
                     <button
                       type="button"
                       onClick={openMyAccount}
@@ -1129,7 +1000,6 @@ export default function Navbar() {
                       <UserIcon />
                       <span>My Account</span>
                     </button>
-
                     <a
                       href="/my-orders"
                       onClick={openMyOrders}
@@ -1138,9 +1008,7 @@ export default function Navbar() {
                       <BagIcon />
                       <span>My Orders</span>
                     </a>
-
                     <div className="my-1 h-px bg-[#CBCAC8]/8" />
-
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -1158,11 +1026,9 @@ export default function Navbar() {
             </div>
           </nav>
         </div>
-
         {/* =========================================================
             MOBILE GLASS PILL
         ========================================================= */}
-
         <div className="px-3 pt-3 lg:hidden">
           <nav
             className="
@@ -1181,13 +1047,10 @@ export default function Navbar() {
             "
           >
             {/* glass highlight */}
-
             <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#CBCAC8]/25 to-transparent" />
-
             {/* =====================================================
                 MOBILE LEFT MENU BUTTON
             ===================================================== */}
-
             <button
               type="button"
               aria-label={
@@ -1196,7 +1059,6 @@ export default function Navbar() {
               aria-expanded={mobileMenuOpen}
               onClick={() => {
                 setMobileMenuOpen((prev) => !prev);
-
                 if (mobileMenuOpen) {
                   setMobileShopOpen(false);
                 }
@@ -1205,11 +1067,9 @@ export default function Navbar() {
             >
               {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
             </button>
-
             {/* =====================================================
                 MOBILE CENTER LOGO
             ===================================================== */}
-
             <a
               href="/"
               aria-label="The Backstore home"
@@ -1222,18 +1082,15 @@ export default function Navbar() {
                     "polygon(3% 15%, 14% 9%, 26% 13%, 39% 7%, 52% 11%, 65% 6%, 78% 12%, 90% 7%, 98% 14%, 94% 86%, 83% 92%, 71% 88%, 59% 94%, 46% 89%, 34% 94%, 22% 89%, 11% 93%, 3% 86%)",
                 }}
               />
-
               <img
                 src="/logo/backstore-logo.png"
                 alt="The Backstore"
                 className="relative z-10 h-[63px] w-auto max-w-[130px] object-contain transition-transform duration-300 group-hover:scale-[1.025]"
               />
             </a>
-
             {/* =====================================================
                 MOBILE RIGHT CART
             ===================================================== */}
-
             <button
               type="button"
               aria-label="Shopping bag"
@@ -1241,17 +1098,14 @@ export default function Navbar() {
               className="absolute right-2 flex h-9 w-9 items-center justify-center rounded-full text-[#666362] transition-colors hover:bg-[#CBCAC8]/8 hover:text-[#CBCAC8]"
             >
               <BagIcon />
-
               <span className="absolute right-[3px] top-[2px] flex h-[10px] min-w-[10px] items-center justify-center rounded-full bg-[#80060B] px-0.5 text-[7px] text-[#CBCAC8]">
                 {cartCount}
               </span>
             </button>
           </nav>
-
           {/* =======================================================
               MOBILE MENU
           ======================================================= */}
-
           <div
             className={`
               mx-auto
@@ -1272,35 +1126,29 @@ export default function Navbar() {
                 rounded-[24px]
                 border
                 border-[#CBCAC8]/10
-                bg-[#161616]/90
+                bg-[#161616]
                 p-2
                 shadow-[0_20px_50px_rgba(0,0,0,0.28)]
                 backdrop-blur-2xl
               "
             >
               {/* header */}
-
               <div className="flex items-center justify-between border-b border-[#CBCAC8]/8 px-3 py-2.5">
                 <div className="flex items-center gap-2">
                   <PawIcon className="h-3 w-3 text-[#80060B]" />
-
                   <span className="text-[9px] uppercase tracking-[0.2em] text-[#666362]">
                     The Backstore
                   </span>
                 </div>
-
                 <span className="font-mono text-[9px] text-[#666362]">
                   EST. 2026
                 </span>
               </div>
-
               {/* navigation */}
-
               <div className="mt-1">
                 {navItems.map((item) => {
                   const active = isActive(item.href);
                   const isShop = item.label === "Shop";
-
                   if (isShop) {
                     return (
                       <div key={item.label}>
@@ -1329,12 +1177,10 @@ export default function Navbar() {
                             ) : (
                               <span className="h-1 w-1 rounded-full bg-[#424141]" />
                             )}
-
                             <span className="text-[12px] font-medium">
                               Shop
                             </span>
                           </span>
-
                           <span
                             className={`transition-transform duration-200 ${
                               mobileShopOpen ? "rotate-180" : ""
@@ -1343,7 +1189,6 @@ export default function Navbar() {
                             <ChevronDownIcon />
                           </span>
                         </button>
-
                         <div
                           className={`
                             overflow-hidden
@@ -1370,12 +1215,10 @@ export default function Navbar() {
                                   ) : (
                                     <ToyIcon />
                                   )}
-
                                   <span className="text-[11px]">
                                     {shopItem.label}
                                   </span>
                                 </span>
-
                                 <ArrowRightIcon />
                               </a>
                             ))}
@@ -1384,7 +1227,6 @@ export default function Navbar() {
                       </div>
                     );
                   }
-
                   return (
                     <a
                       key={item.label}
@@ -1411,15 +1253,12 @@ export default function Navbar() {
                         ) : (
                           <span className="h-1 w-1 rounded-full bg-[#424141]" />
                         )}
-
                         <span className="text-[12px]">{item.label}</span>
                       </span>
-
                       <ArrowRightIcon />
                     </a>
                   );
                 })}
-
                 {loggedInFirstName && (
                   <a
                     href="/my-orders"
@@ -1447,17 +1286,13 @@ export default function Navbar() {
                       ) : (
                         <BagIcon />
                       )}
-
                       <span className="text-[12px]">My Orders</span>
                     </span>
-
                     <ArrowRightIcon />
                   </a>
                 )}
               </div>
-
               {/* mobile utilities */}
-
               <div className="mt-1 grid grid-cols-3 gap-1">
                 <button
                   type="button"
@@ -1468,7 +1303,6 @@ export default function Navbar() {
                   <SearchIcon />
                   Search
                 </button>
-
                 <button
                   type="button"
                   aria-label="Open wishlist"
@@ -1478,7 +1312,6 @@ export default function Navbar() {
                   <HeartIcon />
                   Wishlist
                 </button>
-
                 <button
                   type="button"
                   aria-label={
@@ -1512,7 +1345,6 @@ export default function Navbar() {
                   </span>
                 </button>
               </div>
-
               {loggedInFirstName && profileMenuOpen && (
                 <div className="mt-1 overflow-hidden rounded-[16px] border border-[#CBCAC8]/10 bg-[#080808]/70 p-1.5">
                   <div className="border-b border-[#CBCAC8]/8 px-3 py-2">
@@ -1520,7 +1352,6 @@ export default function Navbar() {
                       {loggedInFirstName}
                     </p>
                   </div>
-
                   <button
                     type="button"
                     onClick={openMyAccount}
@@ -1529,9 +1360,7 @@ export default function Navbar() {
                     <UserIcon />
                     My Account
                   </button>
-
                   <div className="my-1 h-px bg-[#CBCAC8]/8" />
-
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -1545,25 +1374,19 @@ export default function Navbar() {
                   </button>
                 </div>
               )}
-
               {/* bottom */}
-
               <div className="flex items-center justify-center gap-2 py-2.5">
                 <span className="h-px w-7 bg-[#CBCAC8]/8" />
-
                 <PawIcon className="h-2.5 w-2.5 text-[#80060B]" />
-
                 <span className="text-[8px] uppercase tracking-[0.2em] text-[#666362]">
                   Made for the pack
                 </span>
-
                 <span className="h-px w-7 bg-[#CBCAC8]/8" />
               </div>
             </div>
           </div>
         </div>
       </header>
-
       {searchOpen && (
         <div
           className="fixed inset-0 z-[1000] bg-[#050505]/80 px-4 pb-6 pt-[86px] backdrop-blur-xl sm:px-6 sm:pt-[100px]"
@@ -1581,7 +1404,6 @@ export default function Navbar() {
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#CBCAC8]/[0.05] text-[#CBCAC8]">
                 <SearchIcon />
               </div>
-
               <div className="min-w-0 flex-1">
                 <input
                   autoFocus
@@ -1605,7 +1427,6 @@ export default function Navbar() {
                   Search across T-Shirts and Collectibles
                 </p>
               </div>
-
               <button
                 type="button"
                 onClick={closeSearch}
@@ -1615,7 +1436,6 @@ export default function Navbar() {
                 <CloseIcon />
               </button>
             </div>
-
             <div className="min-h-0 overflow-y-auto p-3 sm:p-4">
               {!searchQuery.trim() ? (
                 <div className="rounded-[20px] border border-[#CBCAC8]/6 bg-[#0D0D0D] px-5 py-8 text-center">
@@ -1649,7 +1469,6 @@ export default function Navbar() {
                   {searchProducts.map((product) => {
                     const category = getSearchProductCategory(product);
                     const image = getSearchProductImage(product);
-
                     return (
                       <a
                         key={String(product.id)}
@@ -1670,7 +1489,6 @@ export default function Navbar() {
                             </div>
                           )}
                         </div>
-
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[13px] font-medium text-[#CBCAC8]">
                             {product.name}
@@ -1688,7 +1506,6 @@ export default function Navbar() {
                             )}
                           </div>
                         </div>
-
                         <div className="shrink-0 text-right">
                           <p className="text-[12px] font-semibold text-[#CBCAC8]">
                             {getSearchProductPrice(product)}
@@ -1706,14 +1523,11 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-
       <WishlistDrawer
         isOpen={wishlistOpen}
         onClose={() => setWishlistOpen(false)}
       />
-
       <LoginModal
         isOpen={loginOpen}
         onClose={() => setLoginOpen(false)}
@@ -1722,7 +1536,6 @@ export default function Navbar() {
           setRegisterOpen(true);
         }}
       />
-
       <RegisterModal
         isOpen={registerOpen}
         onClose={() => setRegisterOpen(false)}
@@ -1731,7 +1544,6 @@ export default function Navbar() {
           setLoginOpen(true);
         }}
       />
-
       <AccountModal
         isOpen={accountOpen}
         onClose={() => setAccountOpen(false)}

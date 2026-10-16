@@ -212,12 +212,11 @@ function ProductCard({
   onWishlist: () => void;
   wishlistLoading?: boolean;
 }) {
+  const router = useRouter();
+
   const openProduct = () => {
     const productUrl = `/shop/t-shirts/product/${slugify(product.name)}`;
-
-    // Use a real browser navigation here so the product opens reliably even
-    // when the carousel is handling pointer/touch gestures on iOS.
-    window.location.assign(productUrl);
+    router.push(productUrl);
   };
 
   const handleCardKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
@@ -662,10 +661,15 @@ export default function NewDrop() {
     isDraggingRef.current = true;
     setIsDragging(true);
 
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture is not available in every browser context.
+    // Keep native mouse click targeting intact on desktop. Pointer capture is
+    // useful for touch gestures, but can retarget desktop click interactions
+    // away from the product card.
+    if (event.pointerType !== "mouse") {
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture is not available in every browser context.
+      }
     }
   };
 
@@ -699,7 +703,9 @@ export default function NewDrop() {
     dragDeltaXRef.current = 0;
 
     try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
     } catch {
       // Pointer capture may already have been released.
     }
@@ -718,7 +724,9 @@ export default function NewDrop() {
     dragDeltaXRef.current = 0;
 
     try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
     } catch {
       // Pointer capture may already have been released.
     }

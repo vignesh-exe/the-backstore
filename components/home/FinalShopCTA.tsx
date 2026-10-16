@@ -65,9 +65,10 @@ export default function FinalShopCTA() {
                 with personality.
               </p>
             </div>
+
             <Link
               href="/shop/t-shirts"
-              className="relative mt-8 inline-flex w-fit items-center gap-4 border-b border-[#DA0D12] pb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#F3EBDD] transition-colors hover:text-[#DA0D12]"
+              className="relative mt-8 inline-flex w-fit items-center gap-4 border-b border-[#DA0D12] pb-2 font-mono text-[10px] uppercase tracking-[0.2em] !text-black transition-colors hover:!text-[#DA0D12]"
             >
               Shop T-Shirts
               <span className="text-[#DA0D12] transition-transform duration-300 group-hover:translate-x-1">

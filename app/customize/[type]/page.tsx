@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useDispatch } from "react-redux";
@@ -52,7 +52,8 @@ function Icon({
     | "minus"
     | "upload"
     | "chevron-down"
-    | "chevron-up";
+    | "chevron-up"
+    | "trash";
   size?: number;
 }) {
   const common = {
@@ -126,6 +127,17 @@ function Icon({
     );
   }
 
+  if (name === "trash") {
+    return (
+      <svg {...common}>
+        <path d="M3 6h18" />
+        <path d="M8 6V4h8v2" />
+        <path d="m19 6-1 14H6L5 6" />
+        <path d="M10 10v6M14 10v6" />
+      </svg>
+    );
+  }
+
   return (
     <svg {...common}>
       <path d="M12 16V4" />
@@ -155,16 +167,30 @@ function UploadBox({
   title,
   value,
   onChange,
+  onRemove,
 }: {
   title: string;
   value: UploadValue;
   onChange: (file: File | null) => void;
+  onRemove: () => void;
 }) {
   const fileName = getDisplayFileName(value);
-  const persistedUrl = typeof value === "string" ? value : null;
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!(value instanceof File)) {
+      setLocalPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(value);
+    setLocalPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [value]);
+
+  const previewUrl = typeof value === "string" ? value : localPreview;
 
   return (
-    <label className="group block min-w-0 cursor-pointer overflow-hidden rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4 transition-colors hover:border-[#DA0D12]/30">
+    <div className="group block min-w-0 overflow-hidden rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4 transition-colors hover:border-[#DA0D12]/30">
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[14px] uppercase tracking-[0.22em] text-[#CBCAC8]">
@@ -174,17 +200,41 @@ function UploadBox({
             PNG, JPG or WEBP · Max 5MB
           </p>
         </div>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#CBCAC8]/8 text-[#666362]">
-          <Icon name="upload" size={15} />
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          {value && (
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={`Remove ${title.toLowerCase()}`}
+              title="Remove uploaded image"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#DA0D12]/30 text-[#DA0D12] transition-colors hover:bg-[#DA0D12]/10"
+            >
+              <Icon name="trash" size={15} />
+            </button>
+          )}
+          <label
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[#CBCAC8]/8 text-[#666362] transition-colors hover:border-[#DA0D12]/30 hover:text-[#CBCAC8]"
+            title={value ? "Replace image" : "Upload image"}
+          >
+            <Icon name="upload" size={15} />
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(event) => {
+                onChange(event.target.files?.[0] ?? null);
+                event.currentTarget.value = "";
+              }}
+            />
+          </label>
+        </div>
       </div>
-
-      <div className="mt-4 flex min-h-20 min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-dashed border-[#CBCAC8]/10 bg-[#111111] px-4 text-left">
-        {persistedUrl && (
+      <div className="mt-4 flex min-h-20 min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-dashed border-[#CBCAC8]/10 bg-[#111111] px-4 py-3 text-left">
+        {previewUrl && (
           <img
-            src={persistedUrl}
+            src={previewUrl}
             alt={`${title} preview`}
-            className="h-12 w-12 shrink-0 rounded-lg border border-[#CBCAC8]/10 object-cover"
+            className="h-16 w-16 shrink-0 rounded-lg border border-[#CBCAC8]/10 bg-black object-contain"
           />
         )}
         <div className="min-w-0 flex-1 overflow-hidden">
@@ -197,27 +247,19 @@ function UploadBox({
                 {fileName}
               </span>
               <span className="mt-1 block font-mono text-[8px] uppercase tracking-[0.14em] text-[#555]">
-                {persistedUrl ? "Uploaded design" : "Ready to upload"}
+                {typeof value === "string"
+                  ? "Uploaded design"
+                  : "Ready to upload"}
               </span>
             </>
           ) : (
             <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-[#444]">
-              Click to upload
+              Click the upload icon to choose a design
             </span>
           )}
         </div>
       </div>
-
-      <input
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        className="hidden"
-        onChange={(event) => {
-          onChange(event.target.files?.[0] ?? null);
-          event.currentTarget.value = "";
-        }}
-      />
-    </label>
+    </div>
   );
 }
 
@@ -643,6 +685,7 @@ export default function CustomProductPage() {
       const { data: customCartData, error: customCartError } = await supabase
         .from("custom_cart_items")
         .insert({
+          user_id: userId,
           custom_product_id: customProductId,
           size: selectedSize,
           color: selectedColor,
@@ -672,6 +715,17 @@ export default function CustomProductPage() {
       setCartItemId(customCartData?.id ?? null);
       setQuantityInCart(quantity);
       setQuantity(quantity);
+
+      // Reset all artwork upload fields after successfully adding to cart.
+      setFrontFile(null);
+      setBackFile(null);
+      setLeftFile(null);
+      setRightFile(null);
+      setSavedFrontUrl(null);
+      setSavedBackUrl(null);
+      setSavedLeftUrl(null);
+      setSavedRightUrl(null);
+
       window.dispatchEvent(new Event("backstore:cart-updated"));
     } catch (error) {
       toast.dismiss("custom-upload");
@@ -839,6 +893,10 @@ export default function CustomProductPage() {
                           setFrontFile(file);
                           if (file) setSavedFrontUrl(null);
                         }}
+                        onRemove={() => {
+                          setFrontFile(null);
+                          setSavedFrontUrl(null);
+                        }}
                       />
                       <UploadBox
                         title="Back design"
@@ -846,6 +904,10 @@ export default function CustomProductPage() {
                         onChange={(file) => {
                           setBackFile(file);
                           if (file) setSavedBackUrl(null);
+                        }}
+                        onRemove={() => {
+                          setBackFile(null);
+                          setSavedBackUrl(null);
                         }}
                       />
                       <UploadBox
@@ -855,6 +917,10 @@ export default function CustomProductPage() {
                           setLeftFile(file);
                           if (file) setSavedLeftUrl(null);
                         }}
+                        onRemove={() => {
+                          setLeftFile(null);
+                          setSavedLeftUrl(null);
+                        }}
                       />
                       <UploadBox
                         title="Right sleeve"
@@ -862,6 +928,10 @@ export default function CustomProductPage() {
                         onChange={(file) => {
                           setRightFile(file);
                           if (file) setSavedRightUrl(null);
+                        }}
+                        onRemove={() => {
+                          setRightFile(null);
+                          setSavedRightUrl(null);
                         }}
                       />
                     </div>

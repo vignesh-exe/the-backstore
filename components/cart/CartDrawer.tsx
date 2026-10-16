@@ -1,16 +1,13 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
-
 import {
   decrementQuantity,
   deleteItemFromCart,
   incrementQuantity,
 } from "@/lib/features/cart/cartSlice";
 import { supabase } from "@/lib/supabase";
-
 type ReduxCartItem = {
   productId: string;
   size: string;
@@ -25,11 +22,11 @@ type ReduxCartItem = {
     [key: string]: unknown;
   } | null;
 };
-
 type Product = {
   id: string;
   name: string;
   price?: number | null;
+  stock?: number | null;
   image_url?: string | null;
   product_images?: Array<{
     image_url?: string | null;
@@ -37,19 +34,15 @@ type Product = {
     sort_order?: number | null;
   }> | null;
 };
-
 type CartDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-
 function formatPrice(price: number) {
   return `₹${price.toLocaleString("en-IN")}`;
 }
-
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const dispatch = useDispatch();
-
   const cartItems = useSelector(
     (state: {
       cart?: {
@@ -57,20 +50,21 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       };
     }) => state.cart?.cartItems ?? {},
   );
-
   const [products, setProducts] = useState<Record<string, Product>>({});
-
   useEffect(() => {
     let cancelled = false;
-
     async function loadProducts() {
       try {
         const response = await fetch("/api/admin/products", {
           cache: "no-store",
         });
-
         const payload = response.ok ? await response.json() : null;
-
+        const collectiblesResponse = await fetch("/api/admin/collectibles", {
+          cache: "no-store",
+        });
+        const collectiblesPayload = collectiblesResponse.ok
+          ? await collectiblesResponse.json()
+          : null;
         const list = Array.isArray(payload)
           ? payload
           : Array.isArray(payload?.products)
@@ -78,36 +72,53 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             : Array.isArray(payload?.data)
               ? payload.data
               : [];
-
+        const collectibles = Array.isArray(collectiblesPayload?.collectibles)
+          ? collectiblesPayload.collectibles
+          : Array.isArray(collectiblesPayload?.products)
+            ? collectiblesPayload.products
+            : [];
         const nextProducts: Record<string, Product> = {};
-
         for (const product of list) {
-          if (product?.id) {
-            nextProducts[String(product.id)] = product;
-          }
+          if (product?.id) nextProducts[String(product.id)] = product;
         }
-
+        for (const collectible of collectibles) {
+          if (!collectible?.id) continue;
+          const images = Array.isArray(collectible.collectible_images)
+            ? [...collectible.collectible_images].sort((a, b) => {
+                if (a.is_primary && !b.is_primary) return -1;
+                if (!a.is_primary && b.is_primary) return 1;
+                return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+              })
+            : [];
+          nextProducts[String(collectible.id)] = {
+            id: String(collectible.id),
+            name: collectible.name || "Collectible",
+            price: Number(collectible.price ?? 0),
+            stock: Number(collectible.stock ?? 0),
+            image_url:
+              images.find((entry) => entry.image_url)?.image_url ||
+              collectible.image_url ||
+              null,
+            product_images: images,
+          };
+        }
         const customProductIds = Object.values(cartItems)
           .filter((item) => item.productType === "custom")
           .map((item) => item.productId)
           .filter(Boolean);
-
         if (customProductIds.length > 0) {
           const uniqueCustomProductIds = [...new Set(customProductIds)];
-
           const { data: customProducts, error: customProductsError } =
             await supabase
               .from("custom_products")
               .select("id, name, price, black_image, white_image")
               .in("id", uniqueCustomProductIds);
-
           if (customProductsError) {
             console.error(
               "Custom cart product lookup error:",
               customProductsError,
             );
           }
-
           for (const customProduct of customProducts ?? []) {
             nextProducts[String(customProduct.id)] = {
               id: String(customProduct.id),
@@ -118,51 +129,39 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             };
           }
         }
-
         if (cancelled) return;
-
         setProducts(nextProducts);
       } catch (error) {
         console.error("Cart product lookup error:", error);
       }
     }
-
     if (isOpen && Object.keys(cartItems).length > 0) {
       loadProducts();
     }
-
     return () => {
       cancelled = true;
     };
   }, [isOpen, cartItems]);
-
   const resolvedItems = useMemo(() => {
     return Object.entries(cartItems).map(([cartKey, item]) => {
       const product = products[String(item.productId)];
-
       const sortedImages = [...(product?.product_images ?? [])].sort((a, b) => {
         if (a.is_primary && !b.is_primary) return -1;
         if (!a.is_primary && b.is_primary) return 1;
-
         return (a.sort_order ?? 0) - (b.sort_order ?? 0);
       });
-
       const image =
         item.productImage ||
         sortedImages.find((entry) => entry.image_url)?.image_url ||
         product?.image_url ||
         "";
-
       const name = item.productName || product?.name || "Backstore Product";
-
       const price =
         typeof item.productPrice === "number"
           ? item.productPrice
           : Number(product?.price ?? 0);
-
       const color =
         item.customization?.color || item.customization?.colour || "";
-
       return {
         cartKey,
         ...item,
@@ -173,55 +172,42 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       };
     });
   }, [cartItems, products]);
-
   const subtotal = useMemo(() => {
     return resolvedItems.reduce(
       (total, item) => total + item.price * item.quantity,
       0,
     );
   }, [resolvedItems]);
-
   const FREE_SHIPPING_THRESHOLD = 2999;
   const qualifiesForFreeShipping =
     subtotal >= FREE_SHIPPING_THRESHOLD && subtotal > 0;
-
   const itemCount = resolvedItems.reduce(
     (total, item) => total + item.quantity,
     0,
   );
-
   useEffect(() => {
     if (!isOpen) return;
-
     const originalOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
-
     return () => {
       document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
-
   useEffect(() => {
     if (!isOpen) return;
-
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
       }
     };
-
     window.addEventListener("keydown", handleEscape);
-
     return () => {
       window.removeEventListener("keydown", handleEscape);
     };
   }, [isOpen, onClose]);
-
   if (!isOpen) {
     return null;
   }
-
   return (
     <div className="fixed inset-0 z-[100]">
       {/* Backdrop */}
@@ -231,7 +217,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         onClick={onClose}
         className="absolute inset-0 h-full w-full cursor-default bg-black/60 backdrop-blur-md"
       />
-
       {/* Drawer */}
       <aside
         role="dialog"
@@ -240,7 +225,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         className="absolute right-0 top-0 flex h-full w-full max-w-[460px] flex-col border-l border-white/10 bg-[#161616] text-[#CBCAC8] shadow-[-20px_0_80px_rgba(0,0,0,0.45)]"
       >
         {/* Header */}
-        <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#161616] px-5 py-5 sm:px-7">
+        <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#161616] px-5 pb-5 pt-8 sm:px-7 sm:pt-9">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#DA0D12]/30 bg-[#DA0D12]/10">
               <svg
@@ -265,24 +250,20 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 />
               </svg>
             </div>
-
             <div>
               <p className="text-[8px] font-semibold uppercase tracking-[0.3em] text-[#DA0D12]">
                 The Backstore
               </p>
-
               <h2 className="mt-0.5 text-xl font-semibold leading-none text-white">
                 Your Cart
               </h2>
             </div>
-
             {itemCount > 0 && (
               <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[#DA0D12] px-2 text-[9px] font-bold text-white">
                 {itemCount}
               </span>
             )}
           </div>
-
           <button
             type="button"
             onClick={onClose}
@@ -292,7 +273,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             ×
           </button>
         </header>
-
         {/* Content */}
         {resolvedItems.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
@@ -320,19 +300,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 />
               </svg>
             </div>
-
             <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[#DA0D12]">
               Join The Pack
             </p>
-
             <h3 className="mt-3 font-[family-name:var(--font-bebas-neue)] text-4xl uppercase tracking-wide text-white">
               Your Cart Is Empty
             </h3>
-
             <p className="mt-3 max-w-[290px] text-xs leading-6 text-[#666362]">
               Nothing in here yet. Find something you love and bring it home.
             </p>
-
             <Link
               href="/"
               onClick={onClose}
@@ -350,12 +326,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#666362]">
                   Your Picks
                 </p>
-
                 <p className="text-[9px] uppercase tracking-[0.15em] text-[#666362]">
                   {itemCount} {itemCount === 1 ? "Item" : "Items"}
                 </p>
               </div>
-
               <div className="space-y-4">
                 {resolvedItems.map((item) => (
                   <article
@@ -376,14 +350,12 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             <span className="block text-2xl opacity-60">
                               🐕
                             </span>
-
                             <span className="mt-1 block text-[7px] font-bold uppercase tracking-[0.18em] text-[#CBCAC8]/50">
                               Backstore
                             </span>
                           </div>
                         )}
                       </div>
-
                       {/* Details */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
@@ -391,12 +363,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             <p className="mb-1 text-[7px] font-semibold uppercase tracking-[0.22em] text-[#DA0D12]">
                               The Backstore
                             </p>
-
                             <h3 className="truncate text-sm font-semibold text-white">
                               {item.name}
                             </h3>
                           </div>
-
                           <button
                             type="button"
                             onClick={() =>
@@ -410,19 +380,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             ×
                           </button>
                         </div>
-
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <span className="rounded-full bg-[#161616] px-2.5 py-1 text-[7px] font-medium uppercase tracking-[0.1em] text-[#CBCAC8]">
-                            {item.size}
+                            {item.productType === "collectible"
+                              ? "Collectible"
+                              : item.size}
                           </span>
-
                           {item.color && (
                             <span className="rounded-full bg-[#161616] px-2.5 py-1 text-[7px] font-medium uppercase tracking-[0.1em] text-[#CBCAC8]">
                               {item.color}
                             </span>
                           )}
                         </div>
-
                         <div className="mt-4 flex items-center justify-between">
                           {/* Quantity */}
                           <div className="flex items-center rounded-full border border-white/10 bg-[#161616]">
@@ -442,11 +411,9 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             >
                               −
                             </button>
-
                             <span className="min-w-6 text-center text-[10px] font-semibold text-white">
                               {item.quantity}
                             </span>
-
                             <button
                               type="button"
                               onClick={() =>
@@ -463,7 +430,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                               +
                             </button>
                           </div>
-
                           <p className="text-sm font-semibold text-white">
                             {formatPrice(item.price * item.quantity)}
                           </p>
@@ -473,13 +439,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </article>
                 ))}
               </div>
-
               {/* Free shipping message */}
               {!qualifiesForFreeShipping && subtotal > 0 && (
                 <div className="mt-5 rounded-xl border border-[#DA0D12]/15 bg-[#DA0D12]/5 px-4 py-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">🐾</span>
-
                     <p className="text-[9px] leading-4 text-[#CBCAC8]">
                       Add{" "}
                       <span className="font-semibold text-white">
@@ -492,32 +456,26 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   </div>
                 </div>
               )}
-
               {qualifiesForFreeShipping && (
                 <div className="mt-5 flex items-center gap-2 rounded-xl border border-white/10 bg-[#424141]/20 px-4 py-3">
                   <span className="text-sm">🐾</span>
-
                   <p className="text-[9px] font-medium uppercase tracking-[0.1em] text-[#CBCAC8]">
                     You unlocked free shipping
                   </p>
                 </div>
               )}
             </div>
-
             {/* Footer / Summary */}
             <div className="shrink-0 border-t border-white/10 bg-[#161616] px-5 pb-6 pt-5 sm:px-7">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[#666362]">Subtotal</span>
-
                   <span className="text-sm font-medium text-[#CBCAC8]">
                     {formatPrice(subtotal)}
                   </span>
                 </div>
-
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[#666362]">Shipping</span>
-
                   <span
                     className={`text-sm font-medium ${
                       qualifiesForFreeShipping
@@ -530,26 +488,21 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       : "Calculated at checkout"}
                   </span>
                 </div>
-
                 <div className="my-4 h-px bg-white/10" />
-
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-[8px] uppercase tracking-[0.25em] text-[#666362]">
                       Total
                     </p>
-
                     <p className="mt-1 text-[8px] text-[#666362]">
                       Taxes included
                     </p>
                   </div>
-
                   <p className="font-[family-name:var(--font-bebas-neue)] text-3xl tracking-wide text-white">
                     {formatPrice(subtotal)}
                   </p>
                 </div>
               </div>
-
               <a
                 href="/checkout"
                 onClick={onClose}
@@ -558,7 +511,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 Proceed To Checkout
                 <span aria-hidden="true">→</span>
               </a>
-
               <p className="mt-4 text-center text-[8px] uppercase tracking-[0.16em] text-[#666362]">
                 Secure checkout · Built for the pack
               </p>

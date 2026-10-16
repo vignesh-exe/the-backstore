@@ -189,6 +189,80 @@ export async function PATCH(request: Request) {
       return jsonError("Order was not found or could not be updated.", 404);
     }
 
+    if (status === "Cancelled") {
+      const orderNumber = data.order_number?.trim() || null;
+
+      let cancellationRequest = null;
+
+      const { data: requestByOrderId, error: requestByOrderIdError } =
+        await supabaseAdmin
+          .from("cancellation_requests")
+          .select("id, order_id, order_number, status")
+          .eq("order_id", data.id)
+          .eq("status", "Pending")
+          .maybeSingle();
+
+      if (requestByOrderIdError) {
+        console.error(
+          "Find cancellation request by order_id failed:",
+          requestByOrderIdError,
+        );
+      } else if (requestByOrderId) {
+        cancellationRequest = requestByOrderId;
+      }
+
+      if (!cancellationRequest && orderNumber) {
+        const { data: requestByOrderNumber, error: requestByOrderNumberError } =
+          await supabaseAdmin
+            .from("cancellation_requests")
+            .select("id, order_id, order_number, status")
+            .eq("order_number", orderNumber)
+            .eq("status", "Pending")
+            .maybeSingle();
+
+        if (requestByOrderNumberError) {
+          console.error(
+            "Find cancellation request by order_number failed:",
+            requestByOrderNumberError,
+          );
+        } else if (requestByOrderNumber) {
+          cancellationRequest = requestByOrderNumber;
+        }
+      }
+
+      if (cancellationRequest) {
+        const { error: cancellationUpdateError } = await supabaseAdmin
+          .from("cancellation_requests")
+          .update({
+            status: "Cancelled",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", cancellationRequest.id);
+
+        if (cancellationUpdateError) {
+          console.error(
+            "Cancellation request update failed:",
+            cancellationUpdateError,
+          );
+
+          return jsonError(
+            `Order was cancelled, but the cancellation request could not be updated: ${cancellationUpdateError.message}`,
+            500,
+          );
+        }
+
+        console.log(
+          "Cancellation request marked as Cancelled:",
+          cancellationRequest.id,
+        );
+      } else {
+        console.warn("No pending cancellation request found for order:", {
+          orderId: data.id,
+          orderNumber,
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data,

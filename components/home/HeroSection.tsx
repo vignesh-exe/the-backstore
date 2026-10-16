@@ -1,8 +1,6 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
-import StrokeText from "@/components/StrokeText";
-
+import TechText from "@/components/TechText";
 /*
  * ============================================================
  * THE BACKSTORE — HERO SECTION
@@ -24,7 +22,6 @@ import StrokeText from "@/components/StrokeText";
  * Content + Collection Card side by side
  * ============================================================
  */
-
 const collectionMedia = [
   {
     id: 1,
@@ -67,11 +64,9 @@ const collectionMedia = [
     code: "TB / 005",
   },
 ];
-
 /* ============================================================
    ICONS
-   ============================================================ */
-
+   \\\\============================================================ */
 function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg
@@ -83,12 +78,10 @@ function PawIcon({ className = "h-4 w-4" }: { className?: string }) {
       <ellipse cx="7.1" cy="7.1" rx="2.05" ry="2.75" />
       <ellipse cx="12" cy="5.1" rx="2.05" ry="2.8" />
       <ellipse cx="16.9" cy="7.1" rx="2.05" ry="2.75" />
-
       <path d="M12 10.2c-3.25 0-5.85 2.3-5.85 5.05 0 2.15 1.7 3.25 3.6 2.65 1-.3 1.55-1.05 2.25-1.05s1.25.75 2.25 1.05c1.9.6 3.6-.5 3.6-2.65 0-2.75-2.6-5.05-5.85-5.05Z" />
     </svg>
   );
 }
-
 function ArrowRightIcon() {
   return (
     <svg
@@ -104,7 +97,6 @@ function ArrowRightIcon() {
     </svg>
   );
 }
-
 function ArrowDownIcon() {
   return (
     <svg
@@ -120,7 +112,6 @@ function ArrowDownIcon() {
     </svg>
   );
 }
-
 function TagIcon() {
   return (
     <svg
@@ -136,11 +127,9 @@ function TagIcon() {
     </svg>
   );
 }
-
 /* ============================================================
    COLLECTION CARD
  * ============================================================ */
-
 function CollectionCard({
   activeMedia,
   setActiveMedia,
@@ -151,39 +140,32 @@ function CollectionCard({
   mobile?: boolean;
 }) {
   const activeItem = collectionMedia[activeMedia];
-
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const isSwiping = useRef(false);
-
   const handleTouchStart = (event: React.TouchEvent<HTMLAnchorElement>) => {
     const touch = event.touches[0];
     touchStartX.current = touch.clientX;
     touchStartY.current = touch.clientY;
     isSwiping.current = false;
   };
-
   const handleTouchMove = (event: React.TouchEvent<HTMLAnchorElement>) => {
     const touch = event.touches[0];
     const deltaX = touch.clientX - touchStartX.current;
     const deltaY = touch.clientY - touchStartY.current;
-
     if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > Math.abs(deltaY)) {
       isSwiping.current = true;
       event.preventDefault();
     }
   };
-
   const handleTouchEnd = (event: React.TouchEvent<HTMLAnchorElement>) => {
     const touch = event.changedTouches[0];
     const deltaX = touch.clientX - touchStartX.current;
     const deltaY = touch.clientY - touchStartY.current;
-
     if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
       event.preventDefault();
       isSwiping.current = true;
-
       if (deltaX < 0) {
         setActiveMedia(
           activeMedia === collectionMedia.length - 1 ? 0 : activeMedia + 1,
@@ -195,7 +177,6 @@ function CollectionCard({
       }
     }
   };
-
   const handleCardClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (isSwiping.current) {
       event.preventDefault();
@@ -203,16 +184,12 @@ function CollectionCard({
       isSwiping.current = false;
     }
   };
-
   useEffect(() => {
     const video = videoRef.current;
-
     if (!video) return;
-
     const videoIndex = collectionMedia.findIndex(
       (media) => media.type === "video",
     );
-
     if (activeMedia === videoIndex) {
       video.currentTime = 0;
       video.play().catch(() => {});
@@ -221,7 +198,6 @@ function CollectionCard({
       video.currentTime = 0;
     }
   }, [activeMedia]);
-
   return (
     <div
       className={`
@@ -233,8 +209,7 @@ function CollectionCard({
     >
       {/* ======================================================
           SHADOW
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div
         className={`
           pointer-events-none
@@ -245,11 +220,9 @@ function CollectionCard({
           ${mobile ? "bottom-[-8px] h-[18px]" : "bottom-[-12px] h-[24px]"}
         `}
       />
-
       {/* ======================================================
           OUTER GLASS FRAME
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <a
         href="/shop/t-shirts"
         aria-label={`Shop ${activeItem.collection} collection`}
@@ -284,8 +257,7 @@ function CollectionCard({
         >
           {/* ==================================================
               MEDIA
-          ================================================== */}
-
+          \\\\================================================== */}
           <div className="absolute inset-0 flex">
             {collectionMedia.map((media) =>
               media.type === "video" ? (
@@ -321,19 +293,14 @@ function CollectionCard({
               ),
             )}
           </div>
-
           {/* ==================================================
               IMAGE OVERLAY
-          ================================================== */}
-
+          \\\\================================================== */}
           <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-[#161616]/85 via-transparent to-[#161616]/10" />
-
           <div className="pointer-events-none absolute bottom-[-80px] right-[-60px] z-20 h-[190px] w-[190px] rounded-full bg-[#DA0D12]/10 blur-[75px]" />
-
           {/* ==================================================
               CORNER MARKERS
-          ================================================== */}
-
+          \\\\================================================== */}
           <div
             className={`
               pointer-events-none
@@ -347,7 +314,6 @@ function CollectionCard({
               ${mobile ? "h-5 w-5" : "left-8 top-8 h-6 w-6"}
             `}
           />
-
           <div
             className={`
               pointer-events-none
@@ -361,7 +327,6 @@ function CollectionCard({
               ${mobile ? "h-5 w-5" : "right-8 top-8 h-6 w-6"}
             `}
           />
-
           <div
             className={`
               pointer-events-none
@@ -375,7 +340,6 @@ function CollectionCard({
               ${mobile ? "h-5 w-5" : "bottom-8 left-8 h-6 w-6"}
             `}
           />
-
           <div
             className={`
               pointer-events-none
@@ -389,11 +353,9 @@ function CollectionCard({
               ${mobile ? "h-5 w-5" : "bottom-8 right-8 h-6 w-6"}
             `}
           />
-
           {/* ==================================================
               TOP LEFT LABEL
-          ================================================== */}
-
+          \\\\================================================== */}
           <div
             className={`
               absolute
@@ -418,7 +380,6 @@ function CollectionCard({
                 mobile ? "h-2.5 w-2.5 text-[#DA0D12]" : "h-3 w-3 text-[#DA0D12]"
               }
             />
-
             <span
               className={`
                 font-mono
@@ -431,11 +392,9 @@ function CollectionCard({
               Pack collection
             </span>
           </div>
-
           {/* ==================================================
               TOP RIGHT CODE
-          ================================================== */}
-
+          \\\\================================================== */}
           <div
             className={`
               absolute
@@ -459,11 +418,9 @@ function CollectionCard({
           >
             {activeItem.code}
           </div>
-
           {/* ==================================================
               COLLECTION TITLE
-          ================================================== */}
-
+          \\\\================================================== */}
           <div
             className={`
               absolute
@@ -500,7 +457,6 @@ function CollectionCard({
                   }
                 />
               </span>
-
               <span
                 className={`
                   font-mono
@@ -513,7 +469,6 @@ function CollectionCard({
                 Current member
               </span>
             </div>
-
             <h2
               className={`
                 leading-[0.78]
@@ -530,11 +485,9 @@ function CollectionCard({
           </div>
         </div>
       </a>
-
       {/* ======================================================
           SWIPER INDICATORS
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div
         className={`
           flex
@@ -566,7 +519,6 @@ function CollectionCard({
             />
           ))}
         </div>
-
         <div className="font-mono text-[8px] tracking-[0.18em] text-[#666362]">
           <span className="text-[#CBCAC8]">
             {String(activeMedia + 1).padStart(2, "0")}
@@ -578,24 +530,19 @@ function CollectionCard({
     </div>
   );
 }
-
 /* ============================================================
    HERO
-   ============================================================ */
-
+   \\\\============================================================ */
 export default function HeroSection() {
   const [activeMedia, setActiveMedia] = useState(0);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveMedia((current) =>
         current === collectionMedia.length - 1 ? 0 : current + 1,
       );
     }, 2000);
-
     return () => clearInterval(timer);
   }, []);
-
   return (
     <section
       className={`
@@ -608,15 +555,13 @@ export default function HeroSection() {
     >
       {/* ======================================================
           BACKGROUND
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div
         className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.34]"
         style={{
           backgroundImage: "url('/images/hero/hero-background.png')",
         }}
       />
-
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="
@@ -632,7 +577,6 @@ export default function HeroSection() {
             blur-[140px]
           "
         />
-
         <div
           className="absolute inset-0 opacity-[0.028]"
           style={{
@@ -651,7 +595,6 @@ export default function HeroSection() {
             backgroundSize: "80px 80px",
           }}
         />
-
         <div
           className="absolute inset-0 opacity-[0.035]"
           style={{
@@ -665,7 +608,6 @@ export default function HeroSection() {
             backgroundSize: "44px 44px",
           }}
         />
-
         <div
           className="
             absolute
@@ -679,7 +621,6 @@ export default function HeroSection() {
             blur-[120px]
           "
         />
-
         <div
           className="
             absolute
@@ -693,23 +634,18 @@ export default function HeroSection() {
           "
         />
       </div>
-
       {/* ======================================================
           DECORATIVE PAWS
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div className="pointer-events-none absolute left-[4%] top-[30%] hidden opacity-[0.055] lg:block">
         <PawIcon className="h-24 w-24 text-[#CBCAC8]" />
       </div>
-
       <div className="pointer-events-none absolute right-[5%] bottom-[22%] hidden opacity-[0.04] lg:block">
         <PawIcon className="h-32 w-32 rotate-12 text-[#CBCAC8]" />
       </div>
-
       {/* ======================================================
           MAIN WRAPPER
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div
         className="
           relative
@@ -722,63 +658,52 @@ export default function HeroSection() {
           flex-col
           px-4
           pb-6
-          pt-[82px]
+          pt-[100px]
           sm:px-7
           sm:pb-7
-          sm:pt-[94px]
+          sm:pt-[115px]
           lg:px-12
           lg:pb-8
-          lg:pt-[106px]
+          lg:pt-[130px]
         "
       >
         {/* ====================================================
             TOP META
-        ==================================================== */}
-
+        \\\\==================================================== */}
         <div className="order-1 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#CBCAC8]/10 bg-[#CBCAC8]/[0.035]">
               <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
             </div>
-
             <div>
               <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#666362]">
                 The Backstore
               </p>
-
               <p className="mt-0.5 text-[11px] text-[#CBCAC8]/70">
                 Find your pack
               </p>
             </div>
           </div>
-
           <div className="hidden items-center gap-3 md:flex">
             <span className="h-px w-10 bg-[#CBCAC8]/10" />
-
             <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#666362]">
               Chennai / India
             </span>
-
             <span className="h-px w-10 bg-[#CBCAC8]/10" />
           </div>
-
           <div className="flex items-center gap-2.5">
             <span className="hidden font-mono text-[9px] uppercase tracking-[0.2em] text-[#666362] sm:block">
               EST. 2026
             </span>
-
             <span className="h-1.5 w-1.5 rounded-full bg-[#DA0D12] shadow-[0_0_12px_rgba(218,13,18,0.5)]" />
           </div>
         </div>
-
         {/* ====================================================
             MOBILE COLLECTION CARD
-
             IMPORTANT:
             ORDER 2
             This now appears BEFORE the hero content.
-        ==================================================== */}
-
+        \\\\==================================================== */}
         <div
           className="
             order-2
@@ -793,11 +718,9 @@ export default function HeroSection() {
             mobile
           />
         </div>
-
         {/* ====================================================
             MAIN CONTENT
-        ==================================================== */}
-
+        \\\\==================================================== */}
         <div
           className="
             order-3
@@ -812,8 +735,7 @@ export default function HeroSection() {
           <div className="grid w-full items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-12 xl:grid-cols-[0.88fr_1.12fr] xl:gap-16">
             {/* =================================================
                 CONTENT
-            ================================================= */}
-
+            \\\\================================================= */}
             <div
               className="
                 relative
@@ -821,38 +743,34 @@ export default function HeroSection() {
                 w-full
                 max-w-[650px]
                 text-center
+                lg:order-2
                 lg:mx-0
-                lg:text-left
+                lg:text-right
               "
             >
               {/* Pack label */}
-
-              <div className="mb-4 flex items-center justify-center gap-3 lg:mb-5 lg:justify-start">
+              <div className="mb-4 flex items-center justify-center gap-3 lg:mb-5 lg:justify-end">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DA0D12]/10">
                   <PawIcon className="h-3.5 w-3.5 text-[#DA0D12]" />
                 </div>
-
                 <div className="text-left">
                   <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#DA0D12]">
                     Pack member / 001
                   </p>
-
                   <p className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.22em] text-[#666362]">
                     New collection
                   </p>
                 </div>
               </div>
-
               {/* =================================================
                   TWO-LINE MAIN HEADING
-              ================================================= */}
-
+              \\\\================================================= */}
               <h1
                 className="
                   select-none
                   text-[clamp(5.3rem,17vw,10rem)]
-                  leading-[0.7]
-                  tracking-[-0.06em]
+                  leading-[0.9]
+                  tracking-[-0.02em]
                   sm:text-[clamp(6rem,15vw,10.5rem)]
                   lg:text-[clamp(6.5rem,9vw,10.5rem)]
                   xl:text-[clamp(7rem,8.5vw,11rem)]
@@ -862,81 +780,175 @@ export default function HeroSection() {
                 }}
               >
                 {/* LINE 1 */}
-
-                <span className="flex w-fit justify-center whitespace-nowrap text-center text-[#CBCAC8] sm:justify-start sm:text-left">
-                  <StrokeText
-                    text="WEAR IT."
-                    strokeColor="#CBCAC8"
-                    fillColor="#CBCAC8"
-                    strokeWidth={0.6}
-                    drawDuration={1.6}
-                    fillDelay={0.2}
-                    stagger={0.05}
-                    ease="power2.out"
-                    trigger="loop"
-                    fillMode="wipe"
-                    fontSize={158}
-                    fontWeight={1800}
-                    letterSpacing={-4}
-                    reverse={false}
-                  />
+                <span className="block h-[clamp(120px,13vw,160px)] w-full text-right text-[#F3EBDD] lg:ml-auto lg:text-right">
+                  <div className="block h-full w-full lg:hidden">
+                    <TechText
+                      text="WEAR IT."
+                      fontWeight={600}
+                      fontSize={158}
+                      reveal="letter"
+                      dashLength={4}
+                      dashGap={2}
+                      specks={15}
+                      intro="none"
+                      introDuration={2}
+                      clickKick
+                      guides={false}
+                      fontFamily=""
+                      letterSpacing={0.02}
+                      accentColor="currentColor"
+                      reach={200}
+                      softness={0.7}
+                      lineStyle="dashed"
+                      strokeWidth={1.5}
+                      speed={1}
+                      bounce={0.4}
+                      selection
+                      labels
+                      color="currentColor"
+                      align="center"
+                      draggable
+                      sweep
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                      }}
+                    />
+                  </div>
+                  <div className="hidden h-full w-full lg:block">
+                    <TechText
+                      text="WEAR IT."
+                      fontWeight={600}
+                      fontSize={158}
+                      reveal="letter"
+                      dashLength={4}
+                      dashGap={2}
+                      specks={15}
+                      intro="none"
+                      introDuration={2}
+                      clickKick
+                      guides={false}
+                      fontFamily=""
+                      letterSpacing={0.02}
+                      accentColor="currentColor"
+                      reach={200}
+                      softness={0.7}
+                      lineStyle="dashed"
+                      strokeWidth={1.5}
+                      speed={1}
+                      bounce={0.4}
+                      selection
+                      labels
+                      color="currentColor"
+                      align="right"
+                      draggable
+                      sweep
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                      }}
+                    />
+                  </div>
                 </span>
-
                 {/* LINE 2 */}
-
-                <span className="-mt-[85px] flex w-fit justify-center whitespace-nowrap text-center text-[#DA0D12] sm:justify-start sm:text-left">
-                  <StrokeText
-                    text="YOUR WAY."
-                    strokeColor="#DA0D12"
-                    fillColor="#DA0D12"
-                    strokeWidth={0.6}
-                    drawDuration={1.6}
-                    fillDelay={0.2}
-                    stagger={0.05}
-                    ease="power2.out"
-                    trigger="loop"
-                    fillMode="wipe"
-                    fontSize={158}
-                    fontWeight={1800}
-                    letterSpacing={-4}
-                    reverse={false}
-                  />
+                <span className="-mt-12 block h-[clamp(150px,16vw,190px)] w-full text-right text-[#DA0D12] sm:-mt-16 lg:-mt-12 lg:ml-auto lg:text-right">
+                  <div className="block h-full w-full lg:hidden">
+                    <TechText
+                      text="YOUR WAY."
+                      fontWeight={600}
+                      fontSize={158}
+                      reveal="letter"
+                      dashLength={4}
+                      dashGap={2}
+                      specks={15}
+                      intro="none"
+                      introDuration={2}
+                      clickKick
+                      guides={false}
+                      fontFamily=""
+                      letterSpacing={0.02}
+                      accentColor="currentColor"
+                      reach={200}
+                      softness={0.7}
+                      lineStyle="dashed"
+                      strokeWidth={1.5}
+                      speed={1}
+                      bounce={0.4}
+                      selection
+                      labels
+                      color="currentColor"
+                      align="center"
+                      draggable
+                      sweep
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                      }}
+                    />
+                  </div>
+                  <div className="hidden h-full w-full lg:block">
+                    <TechText
+                      text="YOUR WAY."
+                      fontWeight={600}
+                      fontSize={158}
+                      reveal="letter"
+                      dashLength={4}
+                      dashGap={2}
+                      specks={15}
+                      intro="none"
+                      introDuration={2}
+                      clickKick
+                      guides={false}
+                      fontFamily=""
+                      letterSpacing={0.02}
+                      accentColor="currentColor"
+                      reach={200}
+                      softness={0.7}
+                      lineStyle="dashed"
+                      strokeWidth={1.5}
+                      speed={1}
+                      bounce={0.4}
+                      selection
+                      labels
+                      color="currentColor"
+                      align="right"
+                      draggable
+                      sweep
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                      }}
+                    />
+                  </div>
                 </span>
               </h1>
-
               {/* =================================================
                   COLLAR LINE
-              ================================================= */}
-
-              <div className="relative mx-auto mt-6 h-[2px] w-full max-w-[570px] bg-[#424141] lg:mx-0 lg:mt-8">
+              \\\\================================================= */}
+              <div className="relative mx-auto mt-6 h-[2px] w-full max-w-[570px] bg-[#424141] lg:ml-auto lg:mr-0 lg:mt-8">
                 <div className="absolute left-0 top-1/2 h-[7px] w-[7px] -translate-y-1/2 rounded-full border border-[#DA0D12] bg-[#161616]" />
-
                 <div className="absolute left-[18%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
-
                 <div className="absolute left-[35%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
-
                 <div className="absolute left-[52%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
-
                 <div className="absolute left-[69%] top-1/2 h-[5px] w-[5px] -translate-y-1/2 rounded-full bg-[#666362]" />
-
                 <div className="absolute right-0 top-1/2 h-[7px] w-[7px] -translate-y-1/2 rounded-full border border-[#DA0D12] bg-[#161616]" />
               </div>
-
               {/* =================================================
                   DESCRIPTION
-              ================================================= */}
-
-              <p className="mx-auto mt-5 max-w-[500px] text-[12px] leading-[1.85] text-[#666362] sm:text-[13px] lg:mx-0 lg:mt-7 lg:text-sm">
+              \\\\================================================= */}
+              <p className="mx-auto mt-5 max-w-[500px] text-[12px] leading-[1.85] text-[#666362] sm:text-[13px] lg:ml-auto lg:mr-0 lg:mt-7 lg:text-sm">
                 Original designs. Relaxed fits. A little attitude. Built for the
                 ones who move together, stand apart and wear their identity
                 without asking permission.
               </p>
-
               {/* =================================================
                   BUTTONS
-              ================================================= */}
-
-              <div className="mt-6 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center lg:mt-8 lg:items-start lg:justify-start">
+              \\\\================================================= */}
+              <div className="mt-6 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center lg:mt-8 lg:items-start lg:justify-end">
                 <a
                   href="/shop/t-shirts"
                   className="
@@ -962,12 +974,10 @@ export default function HeroSection() {
                   "
                 >
                   <span>Explore the pack</span>
-
                   <span className="transition-transform duration-300 group-hover:translate-x-1">
                     <ArrowRightIcon />
                   </span>
                 </a>
-
                 <a
                   href="/customize"
                   className="
@@ -996,21 +1006,17 @@ export default function HeroSection() {
                   Customize
                 </a>
               </div>
-
               {/* =================================================
                   IDENTITY TAG
-              ================================================= */}
-
-              <div className="mt-7 flex items-center justify-center gap-3 lg:mt-9 lg:justify-start">
+              \\\\================================================= */}
+              <div className="mt-7 flex items-center justify-center gap-3 lg:mt-9 lg:justify-end">
                 <div className="flex h-10 w-10 rotate-[-5deg] items-center justify-center rounded-[10px] border border-[#CBCAC8]/10 bg-[#CBCAC8]/[0.025] text-[#666362]">
                   <TagIcon />
                 </div>
-
                 <div className="text-left">
                   <p className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#666362]">
                     Identity tag
                   </p>
-
                   <p
                     className="mt-1 text-[20px] leading-none text-[#CBCAC8]"
                     style={{
@@ -1020,50 +1026,38 @@ export default function HeroSection() {
                     WEAR IT. YOUR WAY.
                   </p>
                 </div>
-
                 <div className="ml-2 hidden h-8 w-px bg-[#CBCAC8]/10 sm:block" />
-
                 <div className="hidden sm:block">
                   <p className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#666362]">
                     Origin
                   </p>
-
                   <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.15em] text-[#CBCAC8]/65">
                     Made in India
                   </p>
                 </div>
               </div>
             </div>
-
             {/* =================================================
                 DESKTOP COLLECTION CARD
-            ================================================= */}
-
-            <div className="relative hidden lg:block">
+            \\\\================================================= */}
+            <div className="relative hidden lg:order-1 lg:block">
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[94%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#CBCAC8]/[0.045]" />
-
               <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 aspect-square w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#DA0D12]/[0.05]" />
-
               <CollectionCard
                 activeMedia={activeMedia}
                 setActiveMedia={setActiveMedia}
               />
-
               {/* =================================================
                   FLOATING DOG TAG
-              ================================================= */}
-
+              \\\\================================================= */}
               <div className="absolute -right-8 bottom-[70px] z-50 hidden rotate-[5deg] xl:block">
                 <div className="relative flex h-[74px] w-[110px] items-center justify-center rounded-[16px] border border-[#CBCAC8]/10 bg-[#161616]/85 shadow-[0_15px_45px_rgba(0,0,0,0.3)] backdrop-blur-xl">
                   <div className="absolute left-3 top-3 h-2 w-2 rounded-full border border-[#666362]" />
-
                   <div className="text-center">
                     <PawIcon className="mx-auto h-4 w-4 text-[#DA0D12]" />
-
                     <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.18em] text-[#666362]">
                       Member
                     </p>
-
                     <p
                       className="mt-0.5 text-[16px] leading-none text-[#CBCAC8]"
                       style={{
@@ -1079,35 +1073,27 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
-
         {/* ====================================================
             BOTTOM STRIP
-
             ORDER 4
-        ==================================================== */}
-
+        \\\\==================================================== */}
         <div className="order-4 border-t border-[#CBCAC8]/8 pt-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center justify-center gap-2 sm:justify-start">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#DA0D12]/10">
                 <PawIcon className="h-3 w-3 text-[#DA0D12]" />
               </span>
-
               <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#666362]">
                 Good clothes. Good energy. Same pack.
               </span>
             </div>
-
             <div className="hidden items-center gap-3 md:flex">
               <span className="h-px w-10 bg-[#CBCAC8]/10" />
-
               <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#424141]">
                 Designed for the pack
               </span>
-
               <span className="h-px w-10 bg-[#CBCAC8]/10" />
             </div>
-
             <a
               href="#new-drop"
               className="
@@ -1127,7 +1113,6 @@ export default function HeroSection() {
               "
             >
               <span>Discover more</span>
-
               <span className="transition-transform duration-300 group-hover:translate-y-1">
                 <ArrowDownIcon />
               </span>
@@ -1135,37 +1120,27 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-
       {/* ======================================================
           DESKTOP SIDE LABELS
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div className="pointer-events-none absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 -rotate-90 items-center gap-3 xl:flex">
         <span className="h-px w-8 bg-[#CBCAC8]/10" />
-
         <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-[#424141]">
           One pack / One identity
         </span>
       </div>
-
       <div className="pointer-events-none absolute right-4 top-1/2 z-20 hidden translate-y-1/2 rotate-90 items-center gap-3 xl:flex">
         <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-[#424141]">
           Wear your identity
         </span>
-
         <span className="h-px w-8 bg-[#CBCAC8]/10" />
       </div>
-
       {/* ======================================================
           CORNER MARKERS
-      ====================================================== */}
-
+      \\\\====================================================== */}
       <div className="pointer-events-none absolute left-5 top-[18%] hidden h-4 w-4 border-l border-t border-[#CBCAC8]/10 lg:block" />
-
       <div className="pointer-events-none absolute right-5 top-[18%] hidden h-4 w-4 border-r border-t border-[#CBCAC8]/10 lg:block" />
-
       <div className="pointer-events-none absolute bottom-[9%] left-5 hidden h-4 w-4 border-b border-l border-[#CBCAC8]/10 lg:block" />
-
       <div className="pointer-events-none absolute bottom-[9%] right-5 hidden h-4 w-4 border-b border-r border-[#CBCAC8]/10 lg:block" />
     </section>
   );

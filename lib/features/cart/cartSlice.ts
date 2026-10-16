@@ -14,11 +14,16 @@ export type CartItem = {
   productId: string;
   size: string;
   quantity: number;
-  productType?: "normal" | "custom" | string;
+  productType?: "normal" | "custom" | "collectible" | string;
   productImage?: string;
   productName?: string;
   productPrice?: number;
   customization?: CartCustomization | null;
+};
+
+type AddToCartPayload = Omit<CartItem, "size"> & {
+  size?: string;
+  quantity?: number;
 };
 
 type CartState = {
@@ -36,14 +41,7 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    addToCart: (
-      state,
-      action: PayloadAction<
-        CartItem & {
-          quantity?: number;
-        }
-      >,
-    ) => {
+    addToCart: (state, action: PayloadAction<AddToCartPayload>) => {
       const {
         productId,
         size,
@@ -55,39 +53,33 @@ const cartSlice = createSlice({
         customization = null,
       } = action.payload;
 
-      if (!productId || !size || quantity <= 0) {
+      const normalizedSize =
+        size?.trim() || (productType === "collectible" ? "ONE SIZE" : "");
+
+      if (!productId || !normalizedSize || quantity <= 0) {
         return;
       }
 
-      const cartKey = getCartKey(productId, size);
+      const normalizedProductId = String(productId);
+      const cartKey = getCartKey(normalizedProductId, normalizedSize);
       const existingItem = state.cartItems[cartKey];
 
       if (existingItem) {
         existingItem.quantity += quantity;
+        existingItem.productType = productType;
 
-        if (productType) {
-          existingItem.productType = productType;
-        }
-
-        if (productImage) {
-          existingItem.productImage = productImage;
-        }
-
-        if (productName) {
-          existingItem.productName = productName;
-        }
-
+        if (productImage) existingItem.productImage = productImage;
+        if (productName) existingItem.productName = productName;
         if (typeof productPrice === "number") {
           existingItem.productPrice = productPrice;
         }
-
         if (customization !== undefined) {
           existingItem.customization = customization;
         }
       } else {
         state.cartItems[cartKey] = {
-          productId: String(productId),
-          size: String(size),
+          productId: normalizedProductId,
+          size: normalizedSize,
           quantity,
           productType,
           ...(productImage ? { productImage } : {}),
@@ -100,13 +92,9 @@ const cartSlice = createSlice({
 
     removeFromCart: (
       state,
-      action: PayloadAction<{
-        productId: string | number;
-        size: string;
-      }>,
+      action: PayloadAction<{ productId: string | number; size: string }>,
     ) => {
       const cartKey = getCartKey(action.payload.productId, action.payload.size);
-
       delete state.cartItems[cartKey];
     },
 
@@ -132,34 +120,21 @@ const cartSlice = createSlice({
 
     incrementQuantity: (
       state,
-      action: PayloadAction<{
-        productId: string | number;
-        size: string;
-      }>,
+      action: PayloadAction<{ productId: string | number; size: string }>,
     ) => {
       const cartKey = getCartKey(action.payload.productId, action.payload.size);
-
       const item = state.cartItems[cartKey];
-
-      if (item) {
-        item.quantity += 1;
-      }
+      if (item) item.quantity += 1;
     },
 
     decrementQuantity: (
       state,
-      action: PayloadAction<{
-        productId: string | number;
-        size: string;
-      }>,
+      action: PayloadAction<{ productId: string | number; size: string }>,
     ) => {
       const cartKey = getCartKey(action.payload.productId, action.payload.size);
-
       const item = state.cartItems[cartKey];
 
-      if (!item) {
-        return;
-      }
+      if (!item) return;
 
       if (item.quantity > 1) {
         item.quantity -= 1;
@@ -180,9 +155,7 @@ const cartSlice = createSlice({
       const cartKey = getCartKey(productId, size);
       const item = state.cartItems[cartKey];
 
-      if (!item) {
-        return;
-      }
+      if (!item) return;
 
       if (quantity <= 0) {
         delete state.cartItems[cartKey];

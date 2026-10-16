@@ -167,7 +167,7 @@ function UploadBox({
     <label className="group block min-w-0 cursor-pointer overflow-hidden rounded-2xl border border-[#CBCAC8]/8 bg-[#0D0D0D] p-4 transition-colors hover:border-[#DA0D12]/30">
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-[#CBCAC8]">
+          <p className="font-mono text-[14px] uppercase tracking-[0.22em] text-[#CBCAC8]">
             {title}
           </p>
           <p className="mt-1 text-[12px] text-[#555]">

@@ -579,6 +579,112 @@ export default function AboutPage() {
       </section>
 
       {/* =========================================================
+    DEVELOPER - SECTION 05
+========================================================= */}
+      <section className="relative overflow-hidden bg-[#0D0D0D] px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-32">
+        <div className="absolute inset-0 opacity-30">
+          <DotsPattern />
+        </div>
+        <div
+          className="pointer-events-none absolute -right-40 top-20 h-[32rem] w-[32rem] rounded-full bg-[#DA0D12]/[0.08] blur-[140px]"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -left-40 bottom-0 h-[28rem] w-[28rem] rounded-full bg-[#DA0D12]/[0.05] blur-[130px]"
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto max-w-7xl">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-[9px] font-semibold text-[#CBCAC8]">
+                05
+              </span>
+              <span className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[#666362]">
+                The Developer
+              </span>
+            </div>
+            <span className="hidden text-[9px] uppercase tracking-[0.25em] text-[#444] sm:block">
+              Personal Portfolio
+            </span>
+          </div>
+          <div className="relative mt-16 overflow-hidden rounded-[2.5rem] border border-white/[0.08] bg-[#171717]">
+            <div className="absolute inset-y-0 right-0 hidden w-[38%] bg-[#DA0D12] lg:block" />
+            <div className="relative grid min-h-[620px] lg:grid-cols-[1fr_0.7fr]">
+              <div className="relative flex flex-col justify-between p-7 sm:p-10 lg:p-14">
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[#666362]">
+                    Designed & developed by
+                  </p>
+                  <div className="mt-8">
+                    <h2 className="font-display text-[clamp(5rem,11vw,10rem)] font-bold leading-[0.72] tracking-[-0.07em] text-[#CBCAC8]">
+                      VIGNESH
+                    </h2>
+                    <h2 className="font-display text-[clamp(5rem,11vw,10rem)] font-bold leading-[0.72] tracking-[-0.07em] text-[#DA0D12]">
+                      ASHOKAN.
+                    </h2>
+                  </div>
+                </div>
+                <div className="mt-16 max-w-xl">
+                  <p className="text-lg font-medium leading-8 text-[#CBCAC8] sm:text-xl">
+                    Building ideas into digital experiences with curiosity,
+                    creativity and purpose.
+                  </p>
+                  <p className="mt-5 text-sm leading-7 text-[#666362]">
+                    Always learning. Always experimenting. Always looking for a
+                    better way to build.
+                  </p>
+                  <a
+                    href="https://vigneshashokan.site"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group mt-8 inline-flex items-center gap-4 rounded-full bg-[#DA0D12] px-6 py-3.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-white transition duration-300 hover:bg-[#80060B]"
+                  >
+                    Explore Portfolio
+                    <ArrowUpRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+                  </a>
+                </div>
+              </div>
+              <div className="relative flex min-h-[320px] items-end overflow-hidden p-7 sm:p-10 lg:min-h-0 lg:p-12">
+                <div className="absolute -right-10 top-1/2 -translate-y-1/2 font-display text-[14rem] font-bold leading-none tracking-[-0.08em] text-white/[0.08] sm:text-[18rem]">
+                  V
+                </div>
+                <div className="relative z-10 max-w-sm">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-white/50">
+                    Developer's Vision
+                  </p>
+                  <p className="mt-6 font-display text-4xl leading-[0.95] tracking-[-0.03em] text-white sm:text-5xl">
+                    THINK
+                    <span className="block">DIFFERENT.</span>
+                  </p>
+                  <div className="my-6 h-px w-12 bg-white/40" />
+                  <p className="text-sm leading-7 text-white/65">
+                    Create with intention. Build with purpose. Keep evolving.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="h-2 w-2 rounded-full bg-[#DA0D12]" />
+              <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#555]">
+                Developer · Designer · Creator
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="font-display text-3xl tracking-[-0.03em] text-[#DA0D12] sm:text-4xl">
+                CREATE.
+              </span>
+              <span className="h-px w-12 bg-white/10" />
+              <span className="font-display text-3xl tracking-[-0.03em] text-[#CBCAC8] sm:text-4xl">
+                EVOLVE.
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================
           PACK STATEMENT
       ========================================================= */}
       <section className="relative overflow-hidden bg-[#424141] px-5 py-20 sm:px-8 sm:py-24 lg:px-12">

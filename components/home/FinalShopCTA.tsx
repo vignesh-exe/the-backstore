@@ -2,87 +2,122 @@ import Link from "next/link";
 
 export default function FinalShopCTA() {
   return (
-    <section className="relative overflow-hidden bg-[#080808] px-4 pb-16 pt-8 text-[#CBCAC8] sm:px-7 sm:pb-20 sm:pt-10 lg:px-10 lg:pb-24 lg:pt-12">
-      {/* Subtle background glow */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#DA0D12]/[0.045] blur-[130px]" />
-
-      {/* Decorative lines */}
-      <div className="pointer-events-none absolute left-0 top-1/2 h-px w-[18%] bg-gradient-to-r from-transparent to-[#DA0D12]/20" />
-
-      <div className="pointer-events-none absolute right-0 top-1/2 h-px w-[18%] bg-gradient-to-l from-transparent to-[#DA0D12]/20" />
+    <section className="relative overflow-hidden bg-[#F3EBDD] px-4 pb-4 pt-14 text-[#171717] sm:px-7 sm:pb-6 sm:pt-20 lg:px-10 lg:pb-8 lg:pt-24">
+      {/* Background Accents */}
+      <div className="pointer-events-none absolute -right-32 top-0 h-[400px] w-[400px] rounded-full bg-[#DA0D12]/[0.045] blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-32 -left-24 h-[320px] w-[320px] rounded-full bg-[#171717]/[0.035] blur-[100px]" />
 
       <div className="relative mx-auto max-w-[1280px]">
-        {/* Top label */}
-        <div className="mb-8 flex items-center justify-center gap-3">
+        {/* Section Label */}
+        <div className="mb-10 flex items-center gap-3 sm:mb-14">
           <span className="h-px w-8 bg-[#DA0D12]" />
-
           <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#DA0D12]">
-            The Backstore / Shop
+            The Backstore / Find Your Thing
           </span>
-
-          <span className="h-px w-8 bg-[#DA0D12]" />
         </div>
 
-        {/* Main content */}
-        <div className="mx-auto max-w-[950px] text-center">
-          <h2
-            className="text-[clamp(4rem,10vw,8rem)] uppercase leading-[0.78] tracking-[-0.01em] text-[#CBCAC8]"
-            style={{
-              fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
-            }}
-          >
-            FIND YOUR
-            <br />
-            <span className="text-[#DA0D12]">NEXT FAVORITE TEE.</span>
-          </h2>
+        {/* Main Heading */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end">
+          <div className="lg:col-span-8">
+            <h2
+              className="text-[clamp(4rem,11vw,9.5rem)] uppercase leading-[0.78] tracking-[-0.025em] text-[#171717]"
+              style={{
+                fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+              }}
+            >
+              YOUR STYLE.
+              <br />
+              <span className="text-[#DA0D12]">YOUR UNIVERSE.</span>
+            </h2>
+          </div>
+          <div className="max-w-sm lg:col-span-4 lg:justify-self-end lg:pb-2">
+            <p className="text-sm leading-7 text-[#45413B] sm:text-base">
+              From statement tees to collectibles worth showing off, find the
+              things that connect with your world. Wear what you love. Collect
+              what you believe in.
+            </p>
+          </div>
+        </div>
 
-          <p className="mx-auto mt-7 max-w-md text-[12px] leading-6 text-[#555] sm:text-[13px]">
-            Built for the culture. Made for everyday wear.
-            <br />
-            Find something that feels like you.
-          </p>
-
-          {/* CTA */}
-          <div className="mt-8 flex justify-center">
+        {/* Two Shopping Options */}
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:mt-16 sm:grid-cols-2 sm:gap-5 lg:mt-20">
+          {/* T-Shirts */}
+          <div className="group relative flex min-h-[230px] flex-col justify-between overflow-hidden border border-[#171717]/15 bg-[#EAE2D4] p-6 transition-colors duration-300 hover:border-[#DA0D12]/50 sm:min-h-[280px] sm:p-9">
+            <span className="pointer-events-none absolute -right-5 -top-12 select-none text-[150px] leading-none text-[#171717]/[0.035] transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-110 sm:text-[190px]">
+              T
+            </span>
+            <div className="relative">
+              <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
+                01 / Wear Your World
+              </p>
+              <h3
+                className="mt-5 text-5xl uppercase leading-[0.85] text-[#171717] sm:text-6xl lg:text-7xl"
+                style={{
+                  fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+                }}
+              >
+                STATEMENT
+                <br />
+                TEES.
+              </h3>
+              <p className="mt-4 max-w-xs text-sm leading-6 text-[#625D55]">
+                Oversized fits. Culture-inspired graphics. Everyday essentials
+                with personality.
+              </p>
+            </div>
             <Link
               href="/shop/t-shirts"
-              className="group inline-flex items-center gap-4 rounded-full border border-[#DA0D12]/50 bg-[#DA0D12] px-7 py-4 font-mono text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:bg-[#b90b0f] hover:shadow-[0_0_35px_rgba(218,13,18,0.18)]"
+              className="relative mt-8 inline-flex w-fit items-center gap-4 border-b border-[#DA0D12] pb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#F3EBDD] transition-colors hover:text-[#DA0D12]"
             >
-              Shop All T-Shirts
-              <span className="transition-transform duration-300 group-hover:translate-x-1">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-[16px] w-[16px]"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M5 12H18"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M13 7L18 12L13 17"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+              Shop T-Shirts
+              <span className="text-[#DA0D12] transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+          </div>
+
+          {/* Collectibles */}
+          <div className="group relative flex min-h-[230px] flex-col justify-between overflow-hidden border border-[#171717]/15 bg-[#171717] p-6 text-[#F3EBDD] transition-colors duration-300 hover:border-[#DA0D12]/60 sm:min-h-[280px] sm:p-9">
+            <span className="pointer-events-none absolute -right-4 -top-12 select-none text-[150px] leading-none text-white/[0.04] transition-transform duration-500 group-hover:rotate-[8deg] group-hover:scale-110 sm:text-[190px]">
+              C
+            </span>
+            <div className="relative">
+              <p className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#DA0D12]">
+                02 / Keep What You Love
+              </p>
+              <h3
+                className="mt-5 text-5xl uppercase leading-[0.85] text-[#F3EBDD] sm:text-6xl lg:text-7xl"
+                style={{
+                  fontFamily: "var(--font-bebas-neue), Impact, sans-serif",
+                }}
+              >
+                COLLECT
+                <br />
+                YOUR CULTURE.
+              </h3>
+              <p className="mt-4 max-w-xs text-sm leading-6 text-[#CBCAC8]">
+                Discover figures, fan favourites, and collectibles that deserve
+                a place in your world.
+              </p>
+            </div>
+            <Link
+              href="/shop/collectibles"
+              className="relative mt-8 inline-flex w-fit items-center gap-4 border-b border-[#DA0D12] pb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-[#F3EBDD] transition-colors hover:text-[#DA0D12]"
+            >
+              Explore Collectibles
+              <span className="text-[#DA0D12] transition-transform duration-300 group-hover:translate-x-1">
+                →
               </span>
             </Link>
           </div>
         </div>
 
-        {/* Bottom details */}
-        <div className="mt-14 flex items-center justify-between border-t border-[#CBCAC8]/10 pt-5">
-          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#444]">
+        {/* Bottom Details */}
+        <div className="mt-12 flex items-center justify-between border-t border-[#171717]/15 pt-5 sm:mt-16">
+          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#625D55]">
             THE BACKSTORE
           </span>
-
-          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#444]">
+          <span className="font-mono text-[8px] uppercase tracking-[0.25em] text-[#625D55]">
             MADE IN INDIA
           </span>
         </div>

@@ -652,7 +652,7 @@ export default function ProductsPage() {
                           <div className="flex justify-end">
                             <Link
                               href={`/admin/products/${product.id}/edit`}
-                              className="inline-flex h-[34px] items-center gap-1.5 rounded-[8px] border border-[#cddffb] bg-[#f8fbff] px-3 text-[11px] font-semibold text-[#2563eb] transition-colors hover:bg-[#eff6ff]"
+                              className="inline-flex h-[34px] cursor-pointer items-center gap-1.5 rounded-[8px] border border-[#17233b] bg-white px-3 text-[11px] font-semibold text-[#17233b] transition-colors hover:bg-[#17233b] hover:text-white"
                             >
                               <EditIcon />
                               Edit

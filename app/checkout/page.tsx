@@ -63,6 +63,7 @@ type Product = {
   fabric?: string | null;
   status?: string | null;
   product_images?: ProductImage[] | null;
+  productType?: "normal" | "collectible" | string;
   metadata?: {
     sizes?: Record<string, number>;
     [key: string]: unknown;
@@ -391,6 +392,8 @@ function getProductImage(item: ReduxCartItem, product?: Product) {
   return (
     item.productImage ||
     getSortedImages(product).find((image) => image.image_url)?.image_url ||
+    (product as (Product & { image_url?: string | null }) | undefined)
+      ?.image_url ||
     ""
   );
 }
@@ -509,27 +512,41 @@ export default function CheckoutPage() {
       try {
         setIsProductsLoading(true);
 
-        const [normalResponse, customResponse] = await Promise.all([
-          fetch("/api/admin/products", { cache: "no-store" }),
-          supabase
-            .from("custom_products")
-            .select(
-              "id,type,name,description,price,gsm,black_image,white_image",
-            )
-            .order("created_at", { ascending: true }),
-        ]);
+        const [normalResponse, collectibleResponse, customResponse] =
+          await Promise.all([
+            fetch("/api/admin/products", { cache: "no-store" }),
+            fetch("/api/admin/collectibles", { cache: "no-store" }),
+            supabase
+              .from("custom_products")
+              .select(
+                "id,type,name,description,price,gsm,black_image,white_image",
+              )
+              .order("created_at", { ascending: true }),
+          ]);
 
         if (!normalResponse.ok) {
           throw new Error("Unable to load product details.");
         }
+        if (!collectibleResponse.ok) {
+          throw new Error("Unable to load collectible details.");
+        }
 
         const payload = await normalResponse.json();
+        const collectiblePayload = await collectibleResponse.json();
         const list = Array.isArray(payload)
           ? payload
           : Array.isArray(payload?.products)
             ? payload.products
             : Array.isArray(payload?.data)
               ? payload.data
+              : [];
+
+        const collectibleList = Array.isArray(collectiblePayload)
+          ? collectiblePayload
+          : Array.isArray(collectiblePayload?.collectibles)
+            ? collectiblePayload.collectibles
+            : Array.isArray(collectiblePayload?.data)
+              ? collectiblePayload.data
               : [];
 
         if (customResponse.error) {
@@ -541,7 +558,30 @@ export default function CheckoutPage() {
         const nextProducts: Record<string, Product> = {};
         for (const product of list) {
           if (product?.id) {
-            nextProducts[String(product.id)] = product;
+            nextProducts[String(product.id)] = {
+              ...product,
+              productType: "normal",
+            };
+          }
+        }
+        for (const collectible of collectibleList) {
+          if (collectible?.id) {
+            const collectibleImages = Array.isArray(
+              collectible.collectible_images,
+            )
+              ? collectible.collectible_images
+              : [];
+            const primaryImage =
+              collectibleImages.find(
+                (image: ProductImage) => image?.is_primary && image?.image_url,
+              ) ||
+              collectibleImages.find((image: ProductImage) => image?.image_url);
+            nextProducts[String(collectible.id)] = {
+              ...collectible,
+              productType: "collectible",
+              product_images: collectibleImages,
+              image_url: collectible.image_url || primaryImage?.image_url || "",
+            };
           }
         }
 
@@ -686,7 +726,30 @@ export default function CheckoutPage() {
                 productId,
                 size,
                 quantity,
-                productType: "normal",
+                productType:
+                  products[productId]?.productType === "collectible"
+                    ? "collectible"
+                    : "normal",
+                productImage:
+                  products[productId]?.productType === "collectible"
+                    ? getProductImage(
+                        {
+                          productId,
+                          size,
+                          quantity,
+                          productType: "collectible",
+                        },
+                        products[productId],
+                      )
+                    : undefined,
+                productName:
+                  products[productId]?.productType === "collectible"
+                    ? products[productId]?.name
+                    : undefined,
+                productPrice:
+                  products[productId]?.productType === "collectible"
+                    ? Number(products[productId]?.price ?? 0)
+                    : undefined,
               }),
             );
           }
@@ -734,7 +797,7 @@ export default function CheckoutPage() {
     return () => {
       cancelled = true;
     };
-  }, [dispatch, cartItems, customProducts]);
+  }, [dispatch, cartItems, customProducts, products]);
 
   /* ==========================================================
      LOAD STATES
@@ -2386,7 +2449,9 @@ export default function CheckoutPage() {
                                 </p>
 
                                 <p className="mt-1 font-mono text-[7px] uppercase tracking-[0.18em] text-[#555]">
-                                  Size / {entry.item.size}
+                                  {entry.item.productType === "collectible"
+                                    ? "Collectible"
+                                    : `Size / ${entry.item.size}`}
                                   {entry.isCustom && entry.customColor
                                     ? ` / ${entry.customColor}`
                                     : ""}

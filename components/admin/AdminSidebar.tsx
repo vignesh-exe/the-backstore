@@ -67,7 +67,7 @@ function OrdersIcon() {
   );
 }
 
-function CouponIcon() {
+function CollectiblesIcon() {
   return (
     <svg
       width="22"
@@ -79,11 +79,10 @@ function CouponIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7Z" />
-      <path d="M12 8v1" />
-      <path d="M12 11v1" />
-      <path d="M12 14v1" />
-      <path d="M12 17v-1" />
+      <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4 7.5 8 4.5 8-4.5" />
+      <path d="M12 12v9" />
+      <path d="M8 5.25 16 9.75" />
     </svg>
   );
 }
@@ -124,9 +123,9 @@ const sidebarItems: SidebarItem[] = [
     icon: <OrdersIcon />,
   },
   {
-    label: "Coupons",
-    href: "/admin/coupons",
-    icon: <CouponIcon />,
+    label: "Collectibles",
+    href: "/admin/collectibles",
+    icon: <CollectiblesIcon />,
   },
 ];
 
@@ -164,14 +163,12 @@ export default function AdminSidebar() {
                 "polygon(3% 8%, 18% 4%, 34% 7%, 51% 3%, 67% 7%, 84% 4%, 98% 8%, 94% 91%, 77% 87%, 60% 95%, 42% 90%, 25% 95%, 7% 90%)",
             }}
           />
-
           <img
             src="/logo/backstore-logo.png"
             alt="The Backstore"
             className="relative z-10 h-[58px] w-auto max-w-[145px] object-contain"
           />
         </div>
-
         <div className="mt-2 rounded-full bg-black px-5 py-[6px]">
           <span className="font-bebas-neue text-[11px] tracking-[0.18em] text-white">
             ADMIN PANEL
@@ -192,15 +189,14 @@ export default function AdminSidebar() {
                 key={item.href}
                 href={item.href}
                 className={[
-                  "relative flex h-[52px] w-full shrink-0 items-center",
-                  "rounded-[13px] px-4",
+                  "relative flex h-[52px] w-full shrink-0",
+                  "items-center rounded-[13px] px-4",
                   "transition-all duration-200",
                   active
                     ? "bg-black shadow-[0_3px_8px_rgba(0,0,0,0.14)]"
                     : "bg-transparent hover:bg-[#f5f6f8]",
                 ].join(" ")}
               >
-                {/* Icon */}
                 <div
                   className={[
                     "relative z-10 flex h-[24px] w-[24px] shrink-0 items-center justify-center",
@@ -211,8 +207,6 @@ export default function AdminSidebar() {
                 >
                   {item.icon}
                 </div>
-
-                {/* Label */}
                 <div
                   className={[
                     "relative z-10 ml-4 block min-w-0 flex-1",
@@ -243,7 +237,6 @@ export default function AdminSidebar() {
           <div className="relative z-10 flex h-[24px] w-[24px] shrink-0 items-center justify-center !text-[#52627a] transition-colors group-hover:!text-black">
             <LogoutIcon />
           </div>
-
           <div className="relative z-10 ml-4 !whitespace-nowrap !text-[14px] !font-medium !leading-none !text-[#52627a] group-hover:!text-black">
             Logout
           </div>

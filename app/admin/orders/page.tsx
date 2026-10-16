@@ -414,6 +414,9 @@ export default function OrdersPage() {
   const [cancellationLoading, setCancellationLoading] = useState(true);
   const [cancellationError, setCancellationError] = useState("");
 
+  const [deleteRequestId, setDeleteRequestId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const loadCancellationRequests = async () => {
     setCancellationLoading(true);
     setCancellationError("");
@@ -422,18 +425,19 @@ export default function OrdersPage() {
       .from("cancellation_requests")
       .select(
         `
-        id,
-        order_id,
-        order_number,
-        user_id,
-        customer_email,
-        reason,
-        status,
-        admin_note,
-        created_at,
-        updated_at
-      `,
+    id,
+    order_id,
+    order_number,
+    user_id,
+    customer_email,
+    reason,
+    status,
+    admin_note,
+    created_at,
+    updated_at
+  `,
       )
+      .eq("status", "Pending")
       .order("created_at", { ascending: false });
 
     if (cancellationRequestError) {
@@ -601,13 +605,18 @@ export default function OrdersPage() {
     const requestIds = matchingRequests.map((request) => request.id);
     const cancelledAt = new Date().toISOString();
 
-    const { error: cancellationUpdateError } = await supabase
+    const {
+      data: updatedCancellationRequests,
+      error: cancellationUpdateError,
+    } = await supabase
       .from("cancellation_requests")
       .update({
         status: "Cancelled",
         updated_at: cancelledAt,
       })
-      .in("id", requestIds);
+      .in("id", requestIds)
+      .eq("status", "Pending")
+      .select("id, status, updated_at");
 
     if (cancellationUpdateError) {
       console.error(
@@ -617,6 +626,15 @@ export default function OrdersPage() {
 
       throw new Error(
         `Order was cancelled, but the cancellation request could not be updated: ${cancellationUpdateError.message}`,
+      );
+    }
+
+    if (
+      !updatedCancellationRequests ||
+      updatedCancellationRequests.length === 0
+    ) {
+      throw new Error(
+        "Order was cancelled, but the cancellation request was not updated.",
       );
     }
 
@@ -631,6 +649,38 @@ export default function OrdersPage() {
           : request,
       ),
     );
+  };
+
+  const deleteCancellationRequest = async (requestId: string) => {
+    setDeleteRequestId(requestId);
+  };
+
+  const confirmDeleteCancellationRequest = async () => {
+    if (!deleteRequestId) {
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    const { error } = await supabase
+      .from("cancellation_requests")
+      .delete()
+      .eq("id", deleteRequestId);
+
+    if (error) {
+      console.error("Delete cancellation request error:", error);
+      setError(error.message || "Unable to delete cancellation request.");
+      setDeleteLoading(false);
+      setDeleteRequestId(null);
+      return;
+    }
+
+    setCancellationRequests((current) =>
+      current.filter((request) => request.id !== deleteRequestId),
+    );
+
+    setDeleteLoading(false);
+    setDeleteRequestId(null);
   };
 
   const openCancellationRequest = (request: CancellationRequest) => {
@@ -739,7 +789,6 @@ export default function OrdersPage() {
       }
 
       if (status === "Cancelled") {
-        await updateCancellationRequestForOrder(databaseOrder);
         await loadCancellationRequests();
       }
 
@@ -785,10 +834,6 @@ export default function OrdersPage() {
       );
 
       setError("");
-
-      if (status === "Cancelled") {
-        await loadCancellationRequests();
-      }
     } catch (error) {
       console.error("Update order status API error:", error);
 
@@ -989,7 +1034,7 @@ export default function OrdersPage() {
                             </p>
                           </div>
 
-                          <div className="mt-2 flex items-center justify-between">
+                          <div className="mt-2 flex items-center justify-between gap-3">
                             <span className="text-[7px] text-[#9aa5b5]">
                               {new Date(request.created_at).toLocaleString(
                                 "en-IN",
@@ -1002,9 +1047,61 @@ export default function OrdersPage() {
                               )}
                             </span>
 
-                            <span className="text-[8px] font-black text-[#d81920]">
-                              View Order →
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[8px] font-black text-[#d81920]">
+                                View Order →
+                              </span>
+
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                aria-label="Delete cancellation request"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  deleteCancellationRequest(request.id);
+                                }}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === "Enter" ||
+                                    event.key === " "
+                                  ) {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    deleteCancellationRequest(request.id);
+                                  }
+                                }}
+                                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-[#fee2e2] bg-[#fff5f5] text-[#dc2626] transition-all hover:bg-[#fee2e2]"
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.8"
+                                  className="h-3.5 w-3.5"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3 6h18"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M8 6V4h8v2"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="m19 6-1 14H6L5 6"
+                                  />
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M10 11v5M14 11v5"
+                                  />
+                                </svg>
+                              </span>
+                            </div>
                           </div>
                         </button>
                       ))}
@@ -1399,6 +1496,71 @@ export default function OrdersPage() {
         onClose={closeOrderDrawer}
         onStatusUpdate={handleStatusUpdate}
       />
+      {deleteRequestId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#17233b]/45 px-4 backdrop-blur-[3px]">
+          <div className="w-full max-w-[390px] overflow-hidden rounded-[18px] border border-[#e1e6ed] bg-white shadow-[0_25px_70px_rgba(15,23,42,0.22)]">
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fff0f0] text-[#d81920]">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="h-5 w-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v4"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 17h.01"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10.3 4.7 2.8 18a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.7a2 2 0 0 0-3.4 0Z"
+                    />
+                  </svg>
+                </div>
+
+                <div>
+                  <h3 className="text-[16px] font-black text-[#17233b]">
+                    Delete Cancellation Request?
+                  </h3>
+                  <p className="mt-2 text-[12px] leading-5 text-[#71809a]">
+                    This cancellation request will be permanently removed from
+                    the notification list.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-[#edf0f3] bg-[#fafbfc] px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setDeleteRequestId(null)}
+                disabled={deleteLoading}
+                className="h-9 rounded-[8px] border border-[#dce3eb] bg-white px-4 text-[11px] font-bold text-[#52627a] transition hover:border-[#bfc9d6] hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmDeleteCancellationRequest}
+                disabled={deleteLoading}
+                className="h-9 rounded-[8px] bg-[#d81920] px-4 text-[11px] font-bold text-white transition hover:bg-[#b5161c] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleteLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

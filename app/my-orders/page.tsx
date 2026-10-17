@@ -17,6 +17,7 @@ import {
   Package,
   RefreshCw,
   ShoppingBag,
+  Star,
   Truck,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -167,19 +168,58 @@ function getAddressLines(address: DeliveryAddress | null | undefined) {
     address.country,
   ].filter(Boolean);
 }
+const INTERNAL_VARIANT_KEYS = new Set([
+  "collectible_id",
+  "is_collectible",
+  "product_type",
+  "productType",
+  "is_custom",
+  "custom_product_id",
+  "product_id",
+  "slug",
+]);
+
+function isCollectibleItem(item: OrderItem) {
+  const details = item.variant_details ?? {};
+  return (
+    details.is_collectible === true ||
+    String(details.is_collectible ?? "").toLowerCase() === "true" ||
+    Boolean(details.collectible_id)
+  );
+}
+
+function getCollectibleId(item: OrderItem) {
+  const value = item.variant_details?.collectible_id;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 function getVariantEntries(variantDetails: VariantDetails | null) {
   if (!variantDetails) {
     return [];
   }
   return Object.entries(variantDetails).filter(
-    ([, value]) =>
-      value !== null && value !== undefined && String(value).trim() !== "",
+    ([key, value]) =>
+      !INTERNAL_VARIANT_KEYS.has(key) &&
+      value !== null &&
+      value !== undefined &&
+      String(value).trim() !== "",
   );
 }
+
 function getVariantText(variantDetails: VariantDetails | null) {
   return getVariantEntries(variantDetails)
     .map(([key, value]) => `${key}: ${String(value)}`)
     .join(" • ");
+}
+
+function slugify(value: string) {
+  return value
+    .normalize("NFKD")
+    .toLowerCase()
+    .trim()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 /* ============================================================
    COMPACT STATUS TRACKER
@@ -442,6 +482,9 @@ export default function MyOrdersPage() {
         router.replace("/login");
         return;
       }
+      // Orders are currently associated with the checkout email. Normalize the
+      // signed-in email and use a case-insensitive comparison so capitalization
+      // differences do not cause valid orders to disappear.
       const email = session.user.email?.trim();
       if (!email) {
         throw new Error("Your account does not have an email address.");
@@ -484,7 +527,7 @@ export default function MyOrdersPage() {
             )
           `,
         )
-        .eq("customer_email", email)
+        .ilike("customer_email", email)
         .order("created_at", {
           ascending: false,
         });
@@ -493,6 +536,11 @@ export default function MyOrdersPage() {
         throw new Error(ordersError.message || "Unable to load your orders.");
       }
       const loadedOrders = (data ?? []) as Order[];
+      if (loadedOrders.length === 0) {
+        console.warn(
+          "No orders matched the signed-in account email. Check that orders.customer_email contains the same email used to sign in, and that the orders table RLS policy allows this user to read matching orders.",
+        );
+      }
       setOrders(loadedOrders);
       // The cancellation_requests table is created separately. Until it exists,
       // the orders page continues to work and simply shows no requests.
@@ -630,6 +678,50 @@ export default function MyOrdersPage() {
       setSubmittingCancellation(false);
     }
   }
+  async function openProductReview(item: OrderItem) {
+    try {
+      if (isCollectibleItem(item)) {
+        const collectibleId = getCollectibleId(item);
+        let slug = "";
+        if (collectibleId) {
+          const { data, error: lookupError } = await supabase
+            .from("collectibles")
+            .select("slug, name")
+            .eq("id", collectibleId)
+            .maybeSingle();
+          if (lookupError) throw lookupError;
+          slug = String(data?.slug || (data?.name ? slugify(data.name) : ""));
+        }
+        if (!slug) slug = slugify(item.product_name);
+        router.push(
+          `/shop/collectibles/product/${encodeURIComponent(slug)}#customer-reviews-heading`,
+        );
+        return;
+      }
+
+      if (item.product_id) {
+        const { data, error: lookupError } = await supabase
+          .from("products")
+          .select("slug, name")
+          .eq("id", item.product_id)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
+        const slug =
+          String(data?.slug || (data?.name ? slugify(data.name) : "")) ||
+          slugify(item.product_name);
+        router.push(
+          `/shop/t-shirts/product/${encodeURIComponent(slug)}#customer-reviews-heading`,
+        );
+        return;
+      }
+
+      toast.error("We couldn't find this product's page.");
+    } catch (error) {
+      console.error("Open product review error:", error);
+      toast.error("Unable to open the product review section.");
+    }
+  }
+
   async function downloadInvoice(
     order: Order,
     event?: React.MouseEvent<HTMLButtonElement>,
@@ -879,7 +971,20 @@ export default function MyOrdersPage() {
                           </p>
                         </div>
                         {/* STATUS */}
-                        <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                          {displayStatus.toLowerCase() === "delivered" && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedOrder(isExpanded ? null : order.id)
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#DA0D12]/30 bg-[#DA0D12]/10 px-2.5 py-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-[#FF3439] transition hover:bg-[#DA0D12]/20"
+                              aria-label="Open delivered order items to review"
+                            >
+                              <Star size={10} />
+                              Review
+                            </button>
+                          )}
                           <span
                             className={`rounded-full border px-2.5 py-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] ${getStatusClass(
                               order.status,
@@ -1133,6 +1238,7 @@ export default function MyOrdersPage() {
                             />
                             <div className="space-y-2">
                               {items.map((item) => {
+                                const collectibleItem = isCollectibleItem(item);
                                 const variants = getVariantEntries(
                                   item.variant_details,
                                 );
@@ -1166,15 +1272,30 @@ export default function MyOrdersPage() {
                                             <h4 className="truncate text-[15px] font-semibold text-[#E5E5E3]">
                                               {item.product_name}
                                             </h4>
-                                            {item.sku && (
+                                            {item.sku && !collectibleItem && (
                                               <p className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-[#555]">
                                                 SKU: {item.sku}
                                               </p>
                                             )}
                                           </div>
-                                          <p className="shrink-0 text-[15px] font-bold text-[#F2F2F0]">
-                                            {formatPrice(item.total_price)}
-                                          </p>
+                                          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                                            <p className="text-[15px] font-bold text-[#F2F2F0]">
+                                              {formatPrice(item.total_price)}
+                                            </p>
+                                            {displayStatus.toLowerCase() ===
+                                              "delivered" && (
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  void openProductReview(item)
+                                                }
+                                                className="inline-flex items-center gap-1 rounded-full border border-[#DA0D12]/30 bg-[#DA0D12]/10 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-[#FF3439] transition hover:bg-[#DA0D12]/20"
+                                              >
+                                                <Star size={10} />
+                                                Review
+                                              </button>
+                                            )}
+                                          </div>
                                         </div>
                                         {/* VARIANTS */}
                                         {variants.length > 0 && (
@@ -1217,18 +1338,19 @@ export default function MyOrdersPage() {
                                           )}
                                         </div>
                                         {/* PRODUCT DETAILS */}
-                                        {variants.length > 0 && (
-                                          <div className="mt-2 rounded-lg border border-white/[0.05] bg-[#111] px-2.5 py-2">
-                                            <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#555]">
-                                              Product Details
-                                            </p>
-                                            <p className="mt-1 text-[11px] text-[#777]">
-                                              {getVariantText(
-                                                item.variant_details,
-                                              )}
-                                            </p>
-                                          </div>
-                                        )}
+                                        {variants.length > 0 &&
+                                          !collectibleItem && (
+                                            <div className="mt-2 rounded-lg border border-white/[0.05] bg-[#111] px-2.5 py-2">
+                                              <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#555]">
+                                                Product Details
+                                              </p>
+                                              <p className="mt-1 text-[11px] text-[#777]">
+                                                {getVariantText(
+                                                  item.variant_details,
+                                                )}
+                                              </p>
+                                            </div>
+                                          )}
                                       </div>
                                     </div>
                                   </div>

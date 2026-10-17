@@ -189,6 +189,7 @@ const INDIA_LOCATION_API = "https://aniket-thapa.github.io/india-pincode-api";
 
 const FREE_DELIVERY_THRESHOLD = 2999;
 const FIRST_ORDER_COUPON = "THEBACK5";
+const FREE_DELIVERY_COUPON = "VICKYFREEDEL";
 
 const TAMIL_NADU_STATES = new Set(["tamil nadu"]);
 const SOUTH_INDIA_STATES = new Set([
@@ -1051,7 +1052,9 @@ export default function CheckoutPage() {
   }, [resolvedItems]);
 
   const normalizedState = address.state.trim().toLowerCase();
-  const isFreeDelivery = subtotal > FREE_DELIVERY_THRESHOLD;
+  const hasCouponFreeDelivery = appliedCoupon === FREE_DELIVERY_COUPON;
+  const isFreeDelivery =
+    subtotal > FREE_DELIVERY_THRESHOLD || hasCouponFreeDelivery;
 
   const baseDeliveryFee = useMemo(() => {
     if (TAMIL_NADU_STATES.has(normalizedState)) {
@@ -1386,8 +1389,16 @@ export default function CheckoutPage() {
     setCouponError("");
 
     if (!normalized) {
-      setCouponError("Enter a coupon code.");
-      toast.error("Enter a coupon code.");
+      const message = "Enter a coupon code.";
+      setCouponError(message);
+      toast.error(message);
+      return;
+    }
+
+    if (normalized === FREE_DELIVERY_COUPON) {
+      setAppliedCoupon(FREE_DELIVERY_COUPON);
+      setCouponInput(FREE_DELIVERY_COUPON);
+      toast.success("Free delivery coupon applied.");
       return;
     }
 
@@ -1404,28 +1415,38 @@ export default function CheckoutPage() {
         error: userError,
       } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        const message = "Please login to use this first-order coupon.";
+      if (userError || !user?.email) {
+        const message = "Please login with an account email to use THEBACK5.";
         setCouponError(message);
         toast.error(message);
         return;
       }
 
-      const { count, error: ordersError } = await supabase
+      // The orders table stores the purchaser in customer_email; it does not
+      // use user_id for this lookup. Checking by email avoids the invalid-column
+      // error from the previous query.
+      const { data: existingOrders, error: ordersError } = await supabase
         .from("orders")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .select("id")
+        .eq("customer_email", user.email.trim())
+        .limit(1);
 
       if (ordersError) {
-        console.error("First-order coupon validation failed:", ordersError);
-        const message = "Unable to validate the coupon. Please try again.";
+        console.error("First-order coupon validation failed:", {
+          message: ordersError.message,
+          code: ordersError.code,
+          details: ordersError.details,
+          hint: ordersError.hint,
+        });
+        const message =
+          "We couldn't verify your order history. Please try again or contact support.";
         setCouponError(message);
         toast.error(message);
         return;
       }
 
-      if ((count ?? 0) > 0) {
-        const message = "THEBACK5 is applicable only for first-time users.";
+      if ((existingOrders ?? []).length > 0) {
+        const message = "THEBACK5 is applicable only to first-time customers.";
         setCouponError(message);
         toast.error(message);
         return;
@@ -1433,9 +1454,13 @@ export default function CheckoutPage() {
 
       setAppliedCoupon(FIRST_ORDER_COUPON);
       setCouponInput(FIRST_ORDER_COUPON);
+      toast.success("5% first-order discount applied.");
     } catch (error) {
       console.error("First-order coupon validation failed:", error);
-      const message = "Unable to validate the coupon. Please try again.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to validate the coupon. Please try again.";
       setCouponError(message);
       toast.error(message);
     }
@@ -1493,30 +1518,35 @@ export default function CheckoutPage() {
         error: userError,
       } = await supabase.auth.getUser();
 
-      if (userError || !user) {
-        const message =
-          "Please login again before using the first-order coupon.";
+      if (userError || !user?.email) {
+        const message = "Please login again before using THEBACK5.";
         setPaymentError(message);
         toast.error(message);
         return;
       }
 
-      const { count, error: ordersError } = await supabase
+      const { data: existingOrders, error: ordersError } = await supabase
         .from("orders")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .select("id")
+        .eq("customer_email", user.email.trim())
+        .limit(1);
 
       if (ordersError) {
-        console.error("First-order coupon revalidation failed:", ordersError);
+        console.error("First-order coupon revalidation failed:", {
+          message: ordersError.message,
+          code: ordersError.code,
+          details: ordersError.details,
+          hint: ordersError.hint,
+        });
         const message =
-          "Unable to validate the first-order coupon. Please try again.";
+          "We couldn't verify your order history. Please try again or contact support.";
         setPaymentError(message);
         toast.error(message);
         return;
       }
 
-      if ((count ?? 0) > 0) {
-        const message = "THEBACK5 is applicable only for first-time users.";
+      if ((existingOrders ?? []).length > 0) {
+        const message = "THEBACK5 is applicable only to first-time customers.";
         setAppliedCoupon("");
         setCouponInput("");
         setCouponError(message);
@@ -2627,13 +2657,15 @@ export default function CheckoutPage() {
 
                     {!appliedCoupon && (
                       <p className="mt-3 text-[9px] leading-4 text-[#555]">
-                        THEBACK5 — 5% off for First Order
+                        THEBACK5 — 5% off for first order
                       </p>
                     )}
 
                     {appliedCoupon && (
                       <p className="mt-3 font-mono text-[8px] uppercase tracking-[0.1em] text-[#DA0D12]">
-                        5% discount applied
+                        {appliedCoupon === FIRST_ORDER_COUPON
+                          ? "5% first-order discount applied"
+                          : "Free delivery applied"}
                       </p>
                     )}
 

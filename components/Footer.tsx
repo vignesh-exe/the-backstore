@@ -437,21 +437,21 @@ export default function Footer() {
 
             <nav className="mt-2.5 flex flex-col gap-1.5 sm:gap-2">
               <Link
-                href="#"
+                href="/privacy-policy"
                 className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Privacy Policy
               </Link>
 
               <Link
-                href="#"
+                href="/terms-and-conditions"
                 className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 Terms & Conditions
               </Link>
 
               <Link
-                href="/contact"
+                href="/faqs"
                 className="text-[11px] text-[#666362] transition-colors hover:text-[#CBCAC8]"
               >
                 FAQs

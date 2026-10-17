@@ -495,13 +495,13 @@ export default function CollectibleSlugPage() {
   );
   const cartKey = collectible ? `${collectible.id}_ONE SIZE` : "";
   const quantityInCart = cartKey ? (cartItems[cartKey]?.quantity ?? 0) : 0;
-  const showViewCart = quantityInCart > 0;
   useEffect(() => {
     if (collectible) setQuantity(quantityInCart);
   }, [collectible?.id, quantityInCart]);
   const openCartDrawer = () => {
     window.dispatchEvent(new Event("backstore:open-cart"));
   };
+
   const handleShare = async () => {
     if (!collectible || typeof window === "undefined") return;
     const shareData = {
@@ -551,15 +551,12 @@ export default function CollectibleSlugPage() {
       setWishlistLoading(false);
     }
   };
-  const changeQuantity = (nextQuantity: number) => {
-    if (!collectible || isOutOfStock) return;
-    setQuantity(Math.min(Math.max(nextQuantity, 0), stock));
-  };
   const persistCartQuantity = async (nextQuantity: number) => {
-    if (!collectible || nextQuantity <= 0) return false;
+    if (!collectible) return false;
 
     const maxStock = Math.max(0, Number(collectible.stock) || 0);
-    if (maxStock <= 0 || nextQuantity > maxStock) {
+    if (nextQuantity < 0) return false;
+    if (nextQuantity > maxStock) {
       toast.error("Requested quantity is not available in stock.");
       return false;
     }
@@ -579,11 +576,34 @@ export default function CollectibleSlugPage() {
       .from("cart_items")
       .select("id, quantity")
       .eq("user_id", userId)
-      .eq("product_id", collectible.id)
+      .eq("collectible_id", collectible.id)
       .eq("size", "ONE SIZE")
       .maybeSingle();
 
     if (lookupError) throw lookupError;
+
+    // A quantity of zero means the user removed the collectible from the cart.
+    if (nextQuantity === 0) {
+      if (existingItem) {
+        const { error: deleteError } = await supabase
+          .from("cart_items")
+          .delete()
+          .eq("id", existingItem.id)
+          .eq("user_id", userId);
+        if (deleteError) throw deleteError;
+      }
+
+      dispatch(
+        updateCartItemQuantity({
+          productId: collectible.id,
+          size: "ONE SIZE",
+          quantity: 0,
+        }),
+      );
+      setQuantity(0);
+      window.dispatchEvent(new Event("backstore:cart-updated"));
+      return true;
+    }
 
     if (existingItem) {
       const { error: updateError } = await supabase
@@ -599,7 +619,8 @@ export default function CollectibleSlugPage() {
     } else {
       const { error: insertError } = await supabase.from("cart_items").insert({
         user_id: userId,
-        product_id: collectible.id,
+        product_id: null,
+        collectible_id: collectible.id,
         size: "ONE SIZE",
         quantity: nextQuantity,
       });
@@ -637,9 +658,10 @@ export default function CollectibleSlugPage() {
   };
 
   const addProductToCart = async (goToCheckout = false) => {
-    if (!collectible || !canPurchase || actionLoading) return;
+    if (!collectible || actionLoading) return;
 
     if (goToCheckout) {
+      if (!canPurchase) return;
       setActionLoading("buy");
       try {
         const buyNowItem = {
@@ -669,38 +691,49 @@ export default function CollectibleSlugPage() {
       return;
     }
 
-    if (showViewCart && quantity > 0) {
-      openCartDrawer();
+    // Quantity controls only change local state. Persist to Supabase only
+    // when the user explicitly clicks the Add/Update Cart button.
+    if (isOutOfStock && quantity > 0) return;
+    if (quantity > stock) {
+      toast.error("Requested quantity is not available in stock.");
       return;
     }
+    if (quantity === 0 && quantityInCart === 0) return;
 
     setActionLoading("cart");
     try {
       const saved = await persistCartQuantity(quantity);
-      if (saved) setAddedNotice(true);
+      if (saved) {
+        setAddedNotice(quantity > 0);
+        toast.success(
+          quantity === 0
+            ? "Collectible removed from cart."
+            : quantityInCart > 0
+              ? "Cart quantity updated."
+              : "Added to cart.",
+        );
+      }
     } catch (requestError) {
-      console.error("Add collectible to cart failed:", requestError);
+      console.error("Save collectible cart quantity failed:", requestError);
       setAddedNotice(false);
       toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "Unable to add collectible to cart.",
+          : "Unable to save collectible cart quantity.",
       );
     } finally {
       setActionLoading(null);
     }
   };
 
-  const increaseQuantity = () => {
-    if (!collectible || isOutOfStock || actionLoading) return;
-    changeQuantity(quantity + 1);
-  };
+  const increaseQuantity = async () => {
+    if (!collectible || isOutOfStock || actionLoading || quantity >= stock)
+      return;
 
-  const decreaseQuantity = async () => {
-    if (!collectible || quantity <= 0 || actionLoading) return;
-    const nextQuantity = Math.max(quantity - 1, 0);
+    const nextQuantity = Math.min(quantity + 1, stock);
 
-    // Before the item is added, quantity is only a local selection.
+    // Before the first Add to Cart, the counter is only a local selection.
+    // Once the collectible is in the cart, every + click persists immediately.
     if (quantityInCart <= 0) {
       setQuantity(nextQuantity);
       return;
@@ -708,68 +741,54 @@ export default function CollectibleSlugPage() {
 
     setActionLoading("cart");
     try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-      if (sessionError || !session?.user) {
-        window.dispatchEvent(new Event("backstore:open-login"));
-        return;
-      }
-
-      if (nextQuantity <= 0) {
-        const { error: deleteError } = await supabase
-          .from("cart_items")
-          .delete()
-          .eq("user_id", session.user.id)
-          .eq("product_id", collectible.id)
-          .eq("size", "ONE SIZE");
-        if (deleteError) throw deleteError;
-
-        dispatch(
-          updateCartItemQuantity({
-            productId: collectible.id,
-            size: "ONE SIZE",
-            quantity: 0,
-          }),
-        );
-        setQuantity(0);
-      } else {
-        const { error: updateError } = await supabase
-          .from("cart_items")
-          .update({
-            quantity: nextQuantity,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("user_id", session.user.id)
-          .eq("product_id", collectible.id)
-          .eq("size", "ONE SIZE");
-        if (updateError) throw updateError;
-
-        dispatch(
-          updateCartItemQuantity({
-            productId: collectible.id,
-            size: "ONE SIZE",
-            quantity: nextQuantity,
-          }),
-        );
-        setQuantity(nextQuantity);
-      }
-      window.dispatchEvent(new Event("backstore:cart-updated"));
+      const saved = await persistCartQuantity(nextQuantity);
+      if (saved) setQuantity(nextQuantity);
     } catch (requestError) {
       console.error(
-        "Failed to update collectible cart quantity:",
+        "Failed to increase collectible cart quantity:",
         requestError,
       );
       toast.error(
         requestError instanceof Error
           ? requestError.message
-          : "Unable to update cart quantity.",
+          : "Unable to increase cart quantity.",
       );
     } finally {
       setActionLoading(null);
     }
   };
+
+  const decreaseQuantity = async () => {
+    if (!collectible || quantity <= 0 || actionLoading) return;
+    const nextQuantity = Math.max(quantity - 1, 0);
+
+    // Before the first Add to Cart, the counter is only a local selection.
+    if (quantityInCart <= 0) {
+      setQuantity(nextQuantity);
+      return;
+    }
+
+    // Once in cart, every - click persists immediately. At zero the database
+    // row is deleted and Redux is cleared by persistCartQuantity.
+    setActionLoading("cart");
+    try {
+      const saved = await persistCartQuantity(nextQuantity);
+      if (saved) setQuantity(nextQuantity);
+    } catch (requestError) {
+      console.error(
+        "Failed to decrease collectible cart quantity:",
+        requestError,
+      );
+      toast.error(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to decrease cart quantity.",
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-[#080808] px-4 pb-20 pt-24 text-[#CBCAC8] sm:px-8">
@@ -1122,15 +1141,15 @@ export default function CollectibleSlugPage() {
                 <button
                   type="button"
                   disabled={
-                    Boolean(actionLoading) || quantity <= 0 || !canPurchase
+                    Boolean(actionLoading) ||
+                    (quantityInCart <= 0 &&
+                      (quantity <= 0 || !canPurchase || quantity > stock))
                   }
-                  onClick={() => {
-                    if (showViewCart && quantity > 0) {
-                      openCartDrawer();
-                      return;
-                    }
-                    addProductToCart(false);
-                  }}
+                  onClick={() =>
+                    quantityInCart > 0
+                      ? openCartDrawer()
+                      : addProductToCart(false)
+                  }
                   className="group flex h-16 min-w-0 items-center justify-between gap-2 rounded-2xl bg-[#DA0D12] px-3 text-white transition hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:bg-[#242323] disabled:text-white/25 sm:px-4"
                 >
                   <span>
@@ -1141,9 +1160,9 @@ export default function CollectibleSlugPage() {
                     </span>
                     <span className="mt-1 block text-xs font-bold uppercase tracking-[0.04em] sm:text-sm">
                       {actionLoading === "cart"
-                        ? "Adding..."
-                        : showViewCart && quantity > 0
-                          ? "View Cart"
+                        ? "Saving..."
+                        : quantityInCart > 0
+                          ? "Show Cart"
                           : isOutOfStock
                             ? "Out of stock"
                             : "Add to cart"}
@@ -1737,21 +1756,21 @@ export default function CollectibleSlugPage() {
           </button>
           <button
             type="button"
-            disabled={Boolean(actionLoading) || (!showViewCart && !canPurchase)}
-            onClick={() => {
-              if (showViewCart && quantity > 0) {
-                openCartDrawer();
-                return;
-              }
-              addProductToCart(false);
-            }}
+            disabled={
+              Boolean(actionLoading) ||
+              (quantityInCart <= 0 &&
+                (quantity <= 0 || !canPurchase || quantity > stock))
+            }
+            onClick={() =>
+              quantityInCart > 0 ? openCartDrawer() : addProductToCart(false)
+            }
             className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#DA0D12] px-4 font-mono text-[8px] font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#b90b10] disabled:cursor-not-allowed disabled:bg-[#242323] disabled:text-white/25"
           >
             {actionLoading === "cart"
-              ? "Adding"
-              : showViewCart
-                ? "View"
-                : "Add"}
+              ? "Saving"
+              : quantityInCart > 0
+                ? "Show Cart"
+                : "Add to Cart"}
             <ArrowIcon />
           </button>
         </div>

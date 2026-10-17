@@ -611,6 +611,44 @@ export async function POST(request: Request) {
       }
     }
 
+    /* ========================================================
+       DETECT COLLECTIBLES
+
+       Collectibles are stored in the collectibles table, not
+       products. order_items.product_id references products.id,
+       so collectible IDs must not be written into that column.
+    ======================================================== */
+
+    const collectibleProductIds = new Set<string>();
+
+    if (productIds.length > 0) {
+      const { data: collectibles, error: collectiblesError } =
+        await supabaseAdmin
+          .from("collectibles")
+          .select("id")
+          .in("id", productIds);
+
+      if (collectiblesError) {
+        console.error("Collectible lookup error:", collectiblesError);
+
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              collectiblesError.message ||
+              "Unable to validate collectible products.",
+          },
+          { status: 500 },
+        );
+      }
+
+      for (const collectible of collectibles ?? []) {
+        if (collectible?.id) {
+          collectibleProductIds.add(String(collectible.id));
+        }
+      }
+    }
+
     const isCustomCartItem = (item: CartItem) => {
       const explicitType = String(
         item.product_type ?? item.productType ?? "",
@@ -621,6 +659,17 @@ export async function POST(request: Request) {
         item.isCustom === true ||
         explicitType === "custom" ||
         customProductIds.has(String(getProductId(item) ?? ""))
+      );
+    };
+
+    const isCollectibleCartItem = (item: CartItem) => {
+      const explicitType = String(
+        item.product_type ?? item.productType ?? "",
+      ).toLowerCase();
+
+      return (
+        explicitType === "collectible" ||
+        collectibleProductIds.has(String(getProductId(item) ?? ""))
       );
     };
 
@@ -646,30 +695,38 @@ export async function POST(request: Request) {
       const totalPrice = Number((unitPrice * quantity).toFixed(2));
 
       const isCustom = isCustomCartItem(item);
+      const isCollectible = !isCustom && isCollectibleCartItem(item);
+      const isSeparateCatalogItem = isCustom || isCollectible;
 
       const baseVariantDetails = getVariantDetails(item);
 
-      const variantDetails = isCustom
+      const variantDetails = isSeparateCatalogItem
         ? {
             ...(baseVariantDetails &&
             typeof baseVariantDetails === "object" &&
             !Array.isArray(baseVariantDetails)
               ? baseVariantDetails
               : {}),
-            is_custom: true,
-            custom_product_id: getProductId(item),
-            customization: item.customization ?? null,
+            ...(isCustom
+              ? {
+                  is_custom: true,
+                  custom_product_id: getProductId(item),
+                  customization: item.customization ?? null,
+                }
+              : {
+                  is_collectible: true,
+                  collectible_id: getProductId(item),
+                }),
           }
         : baseVariantDetails;
 
       return {
         order_id: order.id,
 
-        // Custom product IDs belong to custom_products, not products.
-        // Keep product_id NULL for custom items because of the FK.
-        product_id: isCustom ? null : getProductId(item),
+        // Only normal product IDs can reference products.id.
+        product_id: isSeparateCatalogItem ? null : getProductId(item),
 
-        variant_id: isCustom ? null : getVariantId(item),
+        variant_id: isSeparateCatalogItem ? null : getVariantId(item),
 
         product_name: getProductName(item),
 
@@ -727,7 +784,7 @@ export async function POST(request: Request) {
 
       const purchasedQuantity = getQuantity(item);
 
-      // Custom products do not use the normal products.stock column.
+      // Custom products do not use stock updates in this flow.
       if (isCustomCartItem(item)) {
         continue;
       }
@@ -736,35 +793,35 @@ export async function POST(request: Request) {
         continue;
       }
 
+      const isCollectible = isCollectibleCartItem(item);
+      const inventoryTable = isCollectible ? "collectibles" : "products";
+
       const { data: product, error: productError } = await supabaseAdmin
-        .from("products")
+        .from(inventoryTable)
         .select("id, stock")
         .eq("id", productId)
         .single();
 
       if (productError || !product) {
-        console.error("Get product stock error:", productError);
+        console.error(`Get ${inventoryTable} stock error:`, productError);
 
         return NextResponse.json(
           {
             success: false,
             error:
               productError?.message ||
-              "Product not found while updating stock.",
+              `${isCollectible ? "Collectible" : "Product"} not found while updating stock.`,
           },
           { status: 500 },
         );
       }
 
       const currentStock = Number(product.stock ?? 0);
-
       const newStock = Math.max(0, currentStock - purchasedQuantity);
 
       const { error: updateStockError } = await supabaseAdmin
-        .from("products")
-        .update({
-          stock: newStock,
-        })
+        .from(inventoryTable)
+        .update({ stock: newStock })
         .eq("id", productId);
 
       if (updateStockError) {

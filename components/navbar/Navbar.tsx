@@ -9,6 +9,10 @@ import LoginModal from "@/components/auth/LoginModal";
 import RegisterModal from "@/components/auth/RegisterModal";
 import AccountModal from "@/components/account/AccountModal";
 import { supabase } from "@/lib/supabase";
+
+const AUTO_LOGOUT_TIMEOUT = 20 * 60 * 1000; // 20 minutes
+const LAST_ACTIVITY_KEY = "backstore_last_activity";
+
 const navItems = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop/t-shirts" },
@@ -353,6 +357,121 @@ export default function Navbar() {
     return 0;
   }, [wishlistItems, loggedInFirstName]);
   useEffect(() => {
+    let intervalId: number | undefined;
+    let isSigningOut = false;
+    let lastActivityWrite = 0;
+
+    const clearUserState = () => {
+      window.localStorage.removeItem("backstore_user_first_name");
+      window.localStorage.removeItem(LAST_ACTIVITY_KEY);
+      window.dispatchEvent(new CustomEvent("backstore:logout"));
+      window.dispatchEvent(new CustomEvent("janavi-auth-changed"));
+      setLoggedInFirstName(null);
+      setProfileMenuOpen(false);
+      setAccountOpen(false);
+    };
+
+    const signOutForInactivity = async () => {
+      if (isSigningOut) return;
+      isSigningOut = true;
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error("Automatic logout error:", error);
+          isSigningOut = false;
+          return;
+        }
+        clearUserState();
+        window.location.replace("/");
+      } catch (error) {
+        console.error("Unexpected automatic logout error:", error);
+        isSigningOut = false;
+      }
+    };
+
+    const recordActivity = () => {
+      const now = Date.now();
+      // Avoid writing to localStorage on every mousemove event.
+      if (now - lastActivityWrite < 5000) return;
+      lastActivityWrite = now;
+      window.localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+    };
+
+    const checkInactivity = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.user || isSigningOut) return;
+
+      const storedActivity = Number(
+        window.localStorage.getItem(LAST_ACTIVITY_KEY) || 0,
+      );
+
+      // If no timestamp exists for an existing session, start the timer now.
+      if (!storedActivity) {
+        window.localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+        return;
+      }
+
+      if (Date.now() - storedActivity >= AUTO_LOGOUT_TIMEOUT) {
+        await signOutForInactivity();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void checkInactivity();
+      }
+    };
+
+    const initializeInactivityTracking = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.user) {
+        window.localStorage.removeItem(LAST_ACTIVITY_KEY);
+        return;
+      }
+
+      const storedActivity = Number(
+        window.localStorage.getItem(LAST_ACTIVITY_KEY) || 0,
+      );
+
+      if (
+        storedActivity &&
+        Date.now() - storedActivity >= AUTO_LOGOUT_TIMEOUT
+      ) {
+        await signOutForInactivity();
+        return;
+      }
+
+      if (!storedActivity) {
+        window.localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      }
+
+      ["pointerdown", "keydown", "scroll", "touchstart", "mousemove"].forEach(
+        (eventName) =>
+          window.addEventListener(eventName, recordActivity, {
+            passive: true,
+          }),
+      );
+      window.addEventListener("focus", recordActivity);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      intervalId = window.setInterval(() => {
+        void checkInactivity();
+      }, 15_000);
+    };
+
+    void initializeInactivityTracking();
+
+    return () => {
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+      ["pointerdown", "keydown", "scroll", "touchstart", "mousemove"].forEach(
+        (eventName) => window.removeEventListener(eventName, recordActivity),
+      );
+      window.removeEventListener("focus", recordActivity);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loggedInFirstName]);
+
+  useEffect(() => {
     const storedFirstName = window.localStorage.getItem(
       "backstore_user_first_name",
     );
@@ -582,8 +701,8 @@ export default function Navbar() {
       window.localStorage.removeItem("backstore_user_first_name");
       window.dispatchEvent(new CustomEvent("backstore:logout"));
       window.dispatchEvent(new CustomEvent("janavi-auth-changed"));
-      // Refresh the page so the logged-out state is reflected everywhere.
-      window.location.reload();
+      // Refresh and navigate to the home page after logout.
+      window.location.replace("/");
     } catch (error) {
       console.error("Unexpected logout error:", error);
     } finally {

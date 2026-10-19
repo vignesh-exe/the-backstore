@@ -6,6 +6,8 @@ import StorefrontChrome from "@/components/layout/StorefrontChrome";
 import PageTransition from "@/components/PageTransition";
 import ReduxProvider from "@/components/ReduxProvider";
 import CookieBanner from "@/components/cookie/CookieBanner";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Analytics } from "@vercel/analytics/next";
 
 import { Toaster } from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -55,6 +57,8 @@ export default function RootLayout({
           </PageTransition>
         </ReduxProvider>
 
+        <ScrollToTop />
+        <Analytics />
         <CookieBanner />
 
         <Toaster

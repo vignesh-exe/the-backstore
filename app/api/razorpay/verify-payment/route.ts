@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import Razorpay from "razorpay";
 import { createClient } from "@supabase/supabase-js";
 
 type CartItem = {
@@ -237,6 +238,8 @@ export async function POST(request: Request) {
 
       subtotal,
       delivery_charge,
+      discount,
+      coupon_code,
       total_amount,
 
       cart,
@@ -253,6 +256,8 @@ export async function POST(request: Request) {
 
       subtotal?: number;
       delivery_charge?: number;
+      discount?: number;
+      coupon_code?: string | null;
       total_amount?: number;
 
       cart?: CartItem[];
@@ -308,7 +313,7 @@ export async function POST(request: Request) {
        VALIDATE CART
     ======================================================== */
 
-    if (!Array.isArray(cart) || cart.length === 0) {
+    if (!Array.isArray(cart) || cart.length === 0 || cart.length > 50) {
       return NextResponse.json(
         {
           success: false,
@@ -338,12 +343,19 @@ export async function POST(request: Request) {
 
       const mrp = getMrp(item);
 
-      if (quantity <= 0) {
+      if (quantity <= 0 || quantity > 100 || !Number.isSafeInteger(quantity)) {
         return NextResponse.json(
           {
             success: false,
             error: "Invalid product quantity in cart.",
           },
+          { status: 400 },
+        );
+      }
+
+      if (!getProductId(item)) {
+        return NextResponse.json(
+          { success: false, error: "A product ID is missing from the cart." },
           { status: 400 },
         );
       }
@@ -380,13 +392,16 @@ export async function POST(request: Request) {
     }
 
     /* ========================================================
-       VALIDATE AMOUNTS
+       RE-CALCULATE PRICES FROM THE DATABASE
+
+       Never trust prices, subtotal, shipping, discount, or total
+       sent by the browser. These calculations must match the
+       Create Order API pricing rules.
     ======================================================== */
 
     const subtotalValue = Number(subtotal ?? 0);
-
     const deliveryChargeValue = Number(delivery_charge ?? 0);
-
+    const discountValue = Number(discount ?? 0);
     const totalAmountValue = Number(total_amount ?? 0);
 
     if (
@@ -394,20 +409,226 @@ export async function POST(request: Request) {
       subtotalValue < 0 ||
       !Number.isFinite(deliveryChargeValue) ||
       deliveryChargeValue < 0 ||
+      !Number.isFinite(discountValue) ||
+      discountValue < 0 ||
       !Number.isFinite(totalAmountValue) ||
-      totalAmountValue < 0
+      totalAmountValue <= 0
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid order amount." },
+        { status: 400 },
+      );
+    }
+
+    const normalizedCoupon = String(coupon_code ?? "")
+      .trim()
+      .toUpperCase();
+    const firstOrderCoupon = "THEBACK5";
+    const freeDeliveryCoupon = "VICKYFREEDEL";
+    const freeDeliveryThreshold = 1999;
+    const state = String(address.state ?? "").trim();
+
+    if (!state) {
+      return NextResponse.json(
+        { success: false, error: "Delivery state is required." },
+        { status: 400 },
+      );
+    }
+
+    if (
+      normalizedCoupon &&
+      normalizedCoupon !== firstOrderCoupon &&
+      normalizedCoupon !== freeDeliveryCoupon
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid coupon code." },
+        { status: 400 },
+      );
+    }
+
+    const authoritativePrices = new Map<string, number>();
+    let calculatedSubtotal = 0;
+    let totalQuantity = 0;
+
+    for (const item of cart) {
+      const productId = String(getProductId(item) ?? "").trim();
+      const explicitType = String(
+        item.product_type ?? item.productType ?? "normal",
+      ).toLowerCase();
+      const isCustom =
+        item.is_custom === true ||
+        item.isCustom === true ||
+        explicitType === "custom";
+      const productType = isCustom ? "custom" : explicitType;
+      const quantity = getQuantity(item);
+
+      if (
+        !productId ||
+        !["normal", "collectible", "custom"].includes(productType)
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Invalid product in cart." },
+          { status: 400 },
+        );
+      }
+
+      const table =
+        productType === "custom"
+          ? "custom_products"
+          : productType === "collectible"
+            ? "collectibles"
+            : "products";
+
+      const { data: product, error: priceError } = await supabaseAdmin
+        .from(table)
+        .select("id, price")
+        .eq("id", productId)
+        .maybeSingle();
+
+      if (priceError) {
+        console.error(`Price lookup failed for ${table}:`, priceError.message);
+        return NextResponse.json(
+          { success: false, error: "Unable to validate product prices." },
+          { status: 500 },
+        );
+      }
+
+      const authoritativePrice = Number(product?.price);
+      if (
+        !product ||
+        !Number.isFinite(authoritativePrice) ||
+        authoritativePrice <= 0
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "A product is unavailable or has an invalid price.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const priceKey = `${productType}:${productId}`;
+      authoritativePrices.set(priceKey, authoritativePrice);
+      calculatedSubtotal += authoritativePrice * quantity;
+      totalQuantity += quantity;
+
+      // Reject manipulated client prices before writing order items.
+      if (
+        Math.round(getUnitPrice(item) * 100) !==
+        Math.round(authoritativePrice * 100)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Cart prices have changed. Please refresh your cart.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    calculatedSubtotal = Number(calculatedSubtotal.toFixed(2));
+
+    let calculatedDiscount = 0;
+    if (normalizedCoupon === firstOrderCoupon) {
+      const authenticatedEmail = String(user.email ?? "").trim();
+      if (
+        !authenticatedEmail ||
+        customer_email?.trim().toLowerCase() !==
+          authenticatedEmail.toLowerCase()
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Checkout email must match your signed-in account to use this coupon.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const { data: previousOrders, error: previousOrdersError } =
+        await supabaseAdmin
+          .from("orders")
+          .select("id")
+          .ilike("customer_email", authenticatedEmail)
+          .limit(1);
+
+      if (previousOrdersError) {
+        console.error(
+          "First-order coupon validation failed:",
+          previousOrdersError.message,
+        );
+        return NextResponse.json(
+          { success: false, error: "Unable to validate coupon eligibility." },
+          { status: 500 },
+        );
+      }
+
+      if ((previousOrders ?? []).length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "This coupon is only available to first-time customers.",
+          },
+          { status: 400 },
+        );
+      }
+
+      calculatedDiscount = Math.round(calculatedSubtotal * 5) / 100;
+    }
+
+    const normalizedState = state.toLowerCase();
+    const isTamilNadu = normalizedState === "tamil nadu";
+    const isSouthIndia = [
+      "kerala",
+      "telangana",
+      "andhra pradesh",
+      "karnataka",
+    ].includes(normalizedState);
+    const isFreeDelivery =
+      calculatedSubtotal > freeDeliveryThreshold ||
+      normalizedCoupon === freeDeliveryCoupon;
+    const calculatedDelivery = isFreeDelivery
+      ? 0
+      : isTamilNadu
+        ? totalQuantity <= 3
+          ? 50
+          : 80
+        : isSouthIndia
+          ? totalQuantity <= 3
+            ? 100
+            : 130
+          : totalQuantity <= 3
+            ? 200
+            : 230;
+
+    const calculatedTotal = Number(
+      (calculatedSubtotal + calculatedDelivery - calculatedDiscount).toFixed(2),
+    );
+
+    if (
+      Math.round(subtotalValue * 100) !==
+        Math.round(calculatedSubtotal * 100) ||
+      Math.round(deliveryChargeValue * 100) !==
+        Math.round(calculatedDelivery * 100) ||
+      Math.round(discountValue * 100) !==
+        Math.round(calculatedDiscount * 100) ||
+      Math.round(totalAmountValue * 100) !== Math.round(calculatedTotal * 100)
     ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid order amount.",
+          error:
+            "Order totals do not match current product pricing. Please restart checkout.",
         },
         { status: 400 },
       );
     }
 
     /* ========================================================
-       VERIFY RAZORPAY SIGNATURE
+       VERIFY RAZORPAY SIGNATURE AND FETCH PAYMENT STATE
     ======================================================== */
 
     const generatedSignature = crypto
@@ -416,27 +637,89 @@ export async function POST(request: Request) {
       .digest("hex");
 
     const generatedBuffer = Buffer.from(generatedSignature, "utf8");
-
     const receivedBuffer = Buffer.from(razorpay_signature, "utf8");
 
-    if (generatedBuffer.length !== receivedBuffer.length) {
+    if (
+      generatedBuffer.length !== receivedBuffer.length ||
+      !crypto.timingSafeEqual(generatedBuffer, receivedBuffer)
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Invalid payment signature." },
+        { status: 400 },
+      );
+    }
+
+    const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
+    if (!razorpayKeyId) {
+      return NextResponse.json(
+        { success: false, error: "Payment service is not configured." },
+        { status: 500 },
+      );
+    }
+
+    const razorpay = new Razorpay({
+      key_id: razorpayKeyId,
+      key_secret: razorpaySecret,
+    });
+    const [razorpayOrder, razorpayPayment] = await Promise.all([
+      razorpay.orders.fetch(razorpay_order_id),
+      razorpay.payments.fetch(razorpay_payment_id),
+    ]);
+
+    const expectedAmountPaise = Math.round(calculatedTotal * 100);
+    if (
+      razorpayOrder.id !== razorpay_order_id ||
+      razorpayOrder.currency !== "INR" ||
+      Number(razorpayOrder.amount) !== expectedAmountPaise ||
+      razorpayPayment.order_id !== razorpay_order_id ||
+      Number(razorpayPayment.amount) !== expectedAmountPaise ||
+      razorpayPayment.currency !== "INR" ||
+      razorpayPayment.status !== "captured"
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid payment signature.",
+          error:
+            "Payment is not captured or the paid amount does not match the order total.",
         },
         { status: 400 },
       );
     }
 
-    if (!crypto.timingSafeEqual(generatedBuffer, receivedBuffer)) {
+    /* ========================================================
+       IDEMPOTENCY: PREVENT THE SAME PAYMENT CREATING TWO ORDERS
+
+       Requires the migration that adds a UNIQUE
+       orders.razorpay_payment_id column.
+    ======================================================== */
+
+    const { data: existingOrder, error: existingOrderError } =
+      await supabaseAdmin
+        .from("orders")
+        .select("id, order_number, payment_status, total_amount")
+        .eq("razorpay_payment_id", razorpay_payment_id)
+        .maybeSingle();
+
+    if (existingOrderError) {
+      console.error("Idempotency lookup failed:", existingOrderError.message);
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid payment signature.",
+          error:
+            "Unable to confirm whether this payment was already processed.",
         },
-        { status: 400 },
+        { status: 500 },
       );
+    }
+
+    if (existingOrder) {
+      // A payment ID is processed once. Do not insert items or decrement stock again.
+      return NextResponse.json({
+        success: true,
+        alreadyProcessed: true,
+        message: "This payment has already been processed.",
+        order: existingOrder,
+      });
     }
 
     /* ========================================================
@@ -512,9 +795,13 @@ export async function POST(request: Request) {
 
       payment_status: "Paid",
 
+      razorpay_payment_id,
+
       subtotal: subtotalValue,
 
       shipping_amount: deliveryChargeValue,
+
+      discount_amount: discountValue,
 
       total_amount: totalAmountValue,
 
@@ -524,14 +811,7 @@ export async function POST(request: Request) {
     console.log("Creating order server-side:", {
       order_number: orderNumber,
 
-      customer_name: customer_name.trim(),
-
-      customer_email: customer_email.trim(),
-
-      customer_phone: customer_phone.trim(),
-
-      delivery_address: deliveryAddress,
-
+      user_id: user.id,
       subtotal: subtotalValue,
 
       shipping_amount: deliveryChargeValue,
@@ -687,10 +967,18 @@ export async function POST(request: Request) {
 
     const orderItems = cart.map((item) => {
       const quantity = getQuantity(item);
-
-      const unitPrice = getUnitPrice(item);
-
-      const mrp = getMrp(item);
+      const productId = String(getProductId(item) ?? "").trim();
+      const explicitType = String(
+        item.product_type ?? item.productType ?? "normal",
+      ).toLowerCase();
+      const isCustomByFlag =
+        item.is_custom === true ||
+        item.isCustom === true ||
+        explicitType === "custom";
+      const priceType = isCustomByFlag ? "custom" : explicitType;
+      const unitPrice =
+        authoritativePrices.get(`${priceType}:${productId}`) ?? 0;
+      const mrp = Math.max(getMrp(item), unitPrice);
 
       const totalPrice = Number((unitPrice * quantity).toFixed(2));
 
@@ -745,8 +1033,6 @@ export async function POST(request: Request) {
         total_price: totalPrice,
       };
     });
-
-    console.log("Creating order items:", orderItems);
 
     const { data: createdItems, error: orderItemsError } = await supabaseAdmin
       .from("order_items")
@@ -817,23 +1103,56 @@ export async function POST(request: Request) {
       }
 
       const currentStock = Number(product.stock ?? 0);
-      const newStock = Math.max(0, currentStock - purchasedQuantity);
+      if (!Number.isFinite(currentStock) || currentStock < purchasedQuantity) {
+        console.error("Insufficient stock after payment was captured:", {
+          productId,
+          currentStock,
+          purchasedQuantity,
+        });
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Payment was received, but stock needs manual order review. Please contact support.",
+          },
+          { status: 409 },
+        );
+      }
+      const newStock = currentStock - purchasedQuantity;
 
-      const { error: updateStockError } = await supabaseAdmin
-        .from(inventoryTable)
-        .update({ stock: newStock })
-        .eq("id", productId);
+      // Compare-and-set prevents two concurrent checkouts from overwriting
+      // each other's stock changes. A stock value changed by another request
+      // makes this update affect zero rows and requires manual review.
+      const { data: updatedStockRows, error: updateStockError } =
+        await supabaseAdmin
+          .from(inventoryTable)
+          .update({ stock: newStock })
+          .eq("id", productId)
+          .eq("stock", currentStock)
+          .select("id");
 
-      if (updateStockError) {
-        console.error("Update product stock error:", updateStockError);
+      if (
+        updateStockError ||
+        !updatedStockRows ||
+        updatedStockRows.length !== 1
+      ) {
+        console.error(
+          "Update product stock failed or stock changed concurrently:",
+          {
+            productId,
+            inventoryTable,
+            error: updateStockError?.message,
+          },
+        );
 
         return NextResponse.json(
           {
             success: false,
             error:
-              updateStockError.message || "Unable to update product stock.",
+              "Payment was received, but inventory could not be safely updated. Please contact support before retrying.",
+            manualReviewRequired: true,
           },
-          { status: 500 },
+          { status: 409 },
         );
       }
     }

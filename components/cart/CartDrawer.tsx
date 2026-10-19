@@ -178,7 +178,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       0,
     );
   }, [resolvedItems]);
-  const FREE_SHIPPING_THRESHOLD = 2999;
+  const FREE_SHIPPING_THRESHOLD = 1999;
   const qualifiesForFreeShipping =
     subtotal >= FREE_SHIPPING_THRESHOLD && subtotal > 0;
   const itemCount = resolvedItems.reduce(

@@ -187,7 +187,7 @@ declare global {
 
 const INDIA_LOCATION_API = "https://aniket-thapa.github.io/india-pincode-api";
 
-const FREE_DELIVERY_THRESHOLD = 2999;
+const FREE_DELIVERY_THRESHOLD = 1999;
 const FIRST_ORDER_COUPON = "THEBACK5";
 const FREE_DELIVERY_COUPON = "VICKYFREEDEL";
 
@@ -1591,9 +1591,17 @@ export default function CheckoutPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          amount: grandTotal,
+          cart: checkoutCart.map((item) => ({
+            product_id: item.product_id,
+            product_type: item.product_type,
+            quantity: item.quantity,
+          })),
+          state: address.state.trim(),
+          coupon_code: appliedCoupon || null,
+          customer_email: customer.email.trim(),
         }),
       });
 

@@ -188,7 +188,7 @@ export default function WishlistDrawer({
         aria-label="Wishlist"
         className="absolute right-0 top-0 flex h-full w-full max-w-[460px] flex-col border-l border-white/10 bg-[#161616] text-[#CBCAC8] shadow-[-20px_0_80px_rgba(0,0,0,0.45)]"
       >
-        <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#161616] px-5 py-5 sm:px-7">
+        <header className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#161616] px-5 py-8 sm:px-7 sm:py-9">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#DA0D12]/30 bg-[#DA0D12]/10">
               <svg
@@ -386,14 +386,14 @@ export default function WishlistDrawer({
                               {formatPrice(price)}
                             </p>
 
-                            <button
+                            {/* <button
                               type="button"
                               disabled={outOfStock}
                               onClick={() => handleAddToCart(product)}
                               className="rounded-full bg-[#DA0D12] px-3.5 py-2 text-[8px] font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[#80060B] disabled:cursor-not-allowed disabled:opacity-30"
                             >
                               {outOfStock ? "Out of Stock" : "Add to Cart"}
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </div>

@@ -557,11 +557,13 @@ export default function HeroSection() {
           BACKGROUND
       \\\\====================================================== */}
       <div
-        className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat opacity-[0.34]"
+        className="pointer-events-none absolute inset-0 scale-[1.05] bg-cover bg-center bg-no-repeat opacity-[0.34] blur-[6px]"
         style={{
           backgroundImage: "url('/images/hero/hero-background.png')",
         }}
       />
+      {/* Black blur overlay */}
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-black/40 backdrop-blur-[8px]" />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="

@@ -4,7 +4,7 @@ export default function PromoMarquee() {
   const items = [
     "5% OFF ON FIRST ORDER",
     "USE CODE: THEBACK5",
-    "FREE SHIPPING ABOVE ₹2999",
+    "FREE SHIPPING ABOVE ₹1999",
   ];
 
   return (

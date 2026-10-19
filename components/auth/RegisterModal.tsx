@@ -336,7 +336,7 @@ export default function RegisterModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md sm:p-6"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain bg-black/75 px-3 py-3 backdrop-blur-md sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="register-modal-title"
@@ -346,7 +346,7 @@ export default function RegisterModal({
         }
       }}
     >
-      <div className="relative w-full max-w-[390px] overflow-hidden rounded-[2rem] border border-white/[0.09] bg-[#161616] shadow-2xl shadow-black/60">
+      <div className="relative my-auto w-full max-w-[390px] shrink-0 overflow-hidden rounded-[1.5rem] border border-white/[0.09] bg-[#161616] shadow-2xl shadow-black/60 sm:rounded-[2rem]">
         {/* Glow */}
         <div
           className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-[#DA0D12]/10 blur-[85px]"
@@ -363,15 +363,15 @@ export default function RegisterModal({
           type="button"
           onClick={onClose}
           aria-label="Close register modal"
-          className="absolute right-5 top-5 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-[#424141]/50 text-[#666362] transition-all hover:border-[#DA0D12]/30 hover:bg-[#DA0D12]/10 hover:text-[#CBCAC8]"
+          className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-[#424141]/50 text-[#666362] transition-all hover:border-[#DA0D12]/30 hover:bg-[#DA0D12]/10 hover:text-[#CBCAC8] sm:right-5 sm:top-5 sm:h-9 sm:w-9"
         >
           <CloseIcon className="h-4 w-4" />
         </button>
 
-        <div className="relative p-5 sm:p-6">
+        <div className="relative px-4 pb-4 pt-3 sm:p-6">
           {/* Header */}
           <div className="text-center">
-            <div className="relative mx-auto flex h-[62px] w-[180px] items-center justify-center">
+            <div className="relative mx-auto flex h-[48px] w-[150px] items-center justify-center sm:h-[62px] sm:w-[180px]">
               <>
                 <div
                   className="absolute inset-[2px] bg-[#DA0D12]"
@@ -395,35 +395,38 @@ export default function RegisterModal({
                 <img
                   src="/logo/backstore-logo.png"
                   alt="The Backstore"
-                  className="relative z-10 h-[52px] w-auto max-w-[155px] object-contain"
+                  className="relative z-10 h-[42px] w-auto max-w-[130px] object-contain sm:h-[52px] sm:max-w-[155px]"
                 />
               </>
             </div>
 
-            <p className="mt-3 text-[8px] font-semibold uppercase tracking-[0.3em] text-[#666362]">
+            <p className="mt-2 text-[8px] font-semibold uppercase tracking-[0.3em] text-[#666362] sm:mt-3">
               Join the pack
             </p>
 
             <h2
               id="register-modal-title"
-              className="mt-2 font-display text-4xl leading-none tracking-wide text-[#CBCAC8]"
+              className="mt-1 font-display text-3xl leading-none tracking-wide text-[#CBCAC8] sm:mt-2 sm:text-4xl"
             >
               JOIN
               <span className="text-[#DA0D12]"> US.</span>
             </h2>
 
-            <p className="mx-auto mt-3 max-w-xs text-[11px] leading-5 text-[#666362]">
+            <p className="mx-auto mt-2 max-w-xs text-[11px] leading-4 text-[#666362] sm:mt-3 sm:leading-5">
               Create your Backstore account and become part of the pack.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            className="mt-4 space-y-3 sm:mt-6 sm:space-y-4"
+          >
             {/* Full Name */}
             <div>
               <label
                 htmlFor="register-full-name"
-                className="mb-1.5 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362]"
+                className="mb-1 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362] sm:mb-1.5"
               >
                 Full Name
               </label>
@@ -435,7 +438,7 @@ export default function RegisterModal({
                 autoComplete="name"
                 required
                 placeholder="ENTER YOUR FULL NAME"
-                className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-3 text-[13px] text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
+                className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-2.5 text-[13px] sm:py-3 text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
               />
             </div>
 
@@ -443,7 +446,7 @@ export default function RegisterModal({
             <div>
               <label
                 htmlFor="register-phone"
-                className="mb-1.5 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362]"
+                className="mb-1 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362] sm:mb-1.5"
               >
                 Phone Number
               </label>
@@ -455,7 +458,7 @@ export default function RegisterModal({
                 autoComplete="tel"
                 required
                 placeholder="ENTER YOUR PHONE NUMBER"
-                className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-3 text-[13px] text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
+                className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-2.5 text-[13px] sm:py-3 text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
               />
             </div>
 
@@ -463,7 +466,7 @@ export default function RegisterModal({
             <div>
               <label
                 htmlFor="register-email"
-                className="mb-1.5 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362]"
+                className="mb-1 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362] sm:mb-1.5"
               >
                 Email ID
               </label>
@@ -475,7 +478,7 @@ export default function RegisterModal({
                 autoComplete="email"
                 required
                 placeholder="ENTER YOUR EMAIL"
-                className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-3 text-[13px] text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
+                className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-2.5 text-[13px] sm:py-3 text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
               />
             </div>
 
@@ -483,7 +486,7 @@ export default function RegisterModal({
             <div>
               <label
                 htmlFor="register-password"
-                className="mb-1.5 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362]"
+                className="mb-1 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362] sm:mb-1.5"
               >
                 Password
               </label>
@@ -496,7 +499,7 @@ export default function RegisterModal({
                   autoComplete="new-password"
                   required
                   placeholder="CREATE A PASSWORD"
-                  className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-3 pr-11 text-[13px] text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-2.5 pr-11 text-[13px] sm:py-3 text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
                 />
 
                 <button
@@ -514,7 +517,7 @@ export default function RegisterModal({
             <div>
               <label
                 htmlFor="register-confirm-password"
-                className="mb-1.5 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362]"
+                className="mb-1 block text-[8px] font-semibold uppercase tracking-[0.25em] text-[#666362] sm:mb-1.5"
               >
                 Confirm Password
               </label>
@@ -527,7 +530,7 @@ export default function RegisterModal({
                   autoComplete="new-password"
                   required
                   placeholder="CONFIRM YOUR PASSWORD"
-                  className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-3 pr-11 text-[13px] text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
+                  className="w-full rounded-xl border border-white/[0.08] bg-[#080808] px-3.5 py-2.5 pr-11 text-[13px] sm:py-3 text-[#CBCAC8] outline-none transition-all placeholder:text-[#666362]/70 focus:border-[#DA0D12]/60"
                 />
 
                 <button
@@ -592,7 +595,7 @@ export default function RegisterModal({
           </form>
 
           {/* Login */}
-          <div className="mt-5 text-center">
+          <div className="mt-3 text-center sm:mt-5">
             <p className="text-xs text-[#666362]">Already have an account?</p>
 
             <button
@@ -605,7 +608,7 @@ export default function RegisterModal({
           </div>
 
           {/* Bottom brand line */}
-          <div className="mt-5 flex items-center justify-center gap-3">
+          <div className="mt-3 flex items-center justify-center gap-3 sm:mt-5">
             <span className="h-px w-8 bg-[#DA0D12]/50" />
             <PawIcon className="h-4 w-4 text-[#DA0D12]/50" />
             <span className="h-px w-8 bg-[#DA0D12]/50" />

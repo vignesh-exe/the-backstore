@@ -1474,7 +1474,7 @@ export default function ProductSlugPage() {
                   type="button"
                   disabled={!canPurchase || Boolean(actionLoading)}
                   onClick={() => addProductToCart(true)}
-                  className="flex h-16 min-w-0 flex-1 items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/[0.025] px-2 font-mono text-[7px] uppercase tracking-[0.12em] text-white/60 transition hover:border-[#DA0D12]/50 hover:bg-[#DA0D12]/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-25 sm:gap-2 sm:text-[8px] sm:tracking-[0.2em]"
+                  className="flex h-16 min-w-0 flex-1 items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/[0.025] px-2 font-mono text-[14px] uppercase tracking-[0.12em] text-white/60 transition hover:border-[#DA0D12]/50 hover:bg-[#DA0D12]/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-25 sm:gap-2 sm:text-[14px] sm:tracking-[0.2em]"
                 >
                   {actionLoading === "buy" ? "Preparing..." : "Buy now"}
                   <ArrowIcon />

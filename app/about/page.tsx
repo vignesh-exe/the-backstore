@@ -197,7 +197,7 @@ export default function AboutPage() {
       {/* =========================================================
           HERO
       ========================================================= */}
-      <section className="relative isolate px-5 pb-20 pt-16 sm:px-8 sm:pb-28 sm:pt-20 lg:px-12 lg:pb-32 lg:pt-24">
+      <section className="relative isolate px-5 pb-20 pt-24 sm:px-8 sm:pb-28 sm:pt-28 lg:px-12 lg:pb-32 lg:pt-32">
         <DotsPattern />
 
         <div

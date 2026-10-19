@@ -54,6 +54,7 @@ const categories = [
   "3D Toys",
   "Frames",
   "Die Cast Models",
+  "Katanas",
 ];
 
 const priceRanges = [

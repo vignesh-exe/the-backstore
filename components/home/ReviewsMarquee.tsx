@@ -2,128 +2,125 @@
 
 const reviews = [
   {
-    quote: "The oversized fit is exactly what I was looking for.",
+    quote: "T-shirt received bro Amazing 😻❤️",
+    name: "Bharani",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "The collectible looks amazing on my shelf.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "Great print quality and super comfortable fabric.",
+    quote: "Received bro Nalla irukku ♥️✨",
+    name: "Arun S/o Murugan",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "The detailing on the figure is seriously impressive.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "The design stands out without trying too hard.",
+    quote: "It's really looking good I like it 😍❤️",
+    name: "Dharineesh R. P.",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "A perfect addition to my collection.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "Comfortable enough for everyday wear.",
+    quote: "T-shirt super-ah irukku bro i loved it so much",
+    name: "Krigibopika",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "Looks even better in person than online.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "The fit, finish, and overall vibe are on point.",
+    quote: "Super bro💗🔥",
+    name: "Abimanyu",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "Love the sculpting and the little details.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "Finally, a tee that matches my personality.",
+    quote: "Nice bro 👌❤️",
+    name: "Soorya Kumar B.",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "The packaging made it feel special to unbox.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "The fabric feels good and the fit is relaxed.",
+    quote: "Vanthuduchu naa  Super-ah irukku Thanks naa 🫶💖",
+    name: "Pavithra",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "Exactly the collectible I wanted for my setup.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "Bold design, clean print, easy to style.",
+    quote: "It was so nice Thank you ♥️✨",
+    name: "Gokulalakshmi",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "Great display piece for any fan.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "The oversized silhouette looks great with cargos.",
+    quote: "Size quality ellame super anna 🔥🔥🔥",
+    name: "Harini",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "The finish and presentation are impressive.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "A fresh design compared with the usual basics.",
+    quote: "Nalla irukku arumai Thank you ❤️✨",
+    name: "Nasser Hussain S.",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "Adds the perfect touch to my collection shelf.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "Good quality, great graphics, and a relaxed fit.",
+    quote: "It's awesome 😍❤️",
+    name: "Prasanna",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "A great find for anyone into collectibles.",
-    category: "COLLECTIBLES",
-    rating: 5,
-  },
-  {
-    quote: "Easy to wear and makes the whole outfit better.",
+    quote: "T-shirt super-ah irukku bro Romba thanks 🤩👌❤️",
+    name: "Jayasurya P",
     category: "T-SHIRTS",
-    rating: 5,
   },
   {
-    quote: "The kind of collectible you want to show off.",
-    category: "COLLECTIBLES",
-    rating: 5,
+    quote: "Super bro 💓✨",
+    name: "Abimanyu",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Thanks bro! Quality super ah irukku 💯♥️",
+    name: "Nanthakumar",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Nalla irukku Quality vera level 🔥🔥❤️",
+    name: "Mothinivaas",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Quality is good and the fit is perfect.",
+    name: "Arun K.",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Loved the design, looks even better in person.",
+    name: "Karthik S.",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Good material and comfortable to wear.",
+    name: "Vignesh M.",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Print quality is really nice. Worth the price.",
+    name: "Praveen",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Loved the oversized fit. Will order again.",
+    name: "Hari P.",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Good quality and nice packaging.",
+    name: "Sanjay",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "Simple and unique designs. Really liked it.",
+    name: "Dinesh",
+    category: "T-SHIRTS",
+  },
+  {
+    quote: "T-shirt looks exactly like the pictures.",
+    name: "Ajay.",
+    category: "T-SHIRTS",
   },
 ];
 
-function ReviewCard({ quote, category, rating }: (typeof reviews)[number]) {
+type Review = (typeof reviews)[number];
+
+function ReviewCard({ quote, category, name }: Review) {
   return (
     <article className="flex w-[270px] shrink-0 flex-col justify-between border border-white/10 bg-[#111111] p-5 transition-colors duration-300 hover:border-[#DA0D12]/60 sm:w-[330px] sm:p-7">
       <div>
@@ -132,10 +129,10 @@ function ReviewCard({ quote, category, rating }: (typeof reviews)[number]) {
             {category}
           </span>
           <span
-            aria-label={`${rating} out of 5 stars`}
+            aria-label="Customer review"
             className="shrink-0 text-sm tracking-[0.1em] text-[#DA0D12]"
           >
-            {"★".repeat(rating)}
+            ♥
           </span>
         </div>
         <p className="mt-7 min-h-[90px] text-xl leading-snug tracking-tight text-[#F3EBDD] sm:text-2xl">
@@ -143,15 +140,15 @@ function ReviewCard({ quote, category, rating }: (typeof reviews)[number]) {
         </p>
       </div>
       <div className="mt-8 flex items-center gap-3 border-t border-white/10 pt-4">
-        <span className="flex h-8 w-8 items-center justify-center bg-[#DA0D12] text-sm font-bold text-white">
-          B
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center bg-[#DA0D12] text-sm font-bold text-white">
+          {name.trim().charAt(0).toUpperCase()}
         </span>
-        <div>
-          <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#F3EBDD]">
-            THE BACKSTORE
+        <div className="min-w-0">
+          <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-[#F3EBDD]">
+            {name}
           </p>
           <p className="mt-1 font-mono text-[8px] uppercase tracking-[0.12em] text-[#777777]">
-            TEE & COLLECTIBLE CULTURE
+            VERIFIED CUSTOMER FEEDBACK
           </p>
         </div>
       </div>
@@ -190,14 +187,14 @@ export default function ReviewsMarquee() {
       <div className="group relative">
         <div className="flex w-max gap-4 pr-4 animate-review-marquee group-hover:[animation-play-state:paused] motion-reduce:animate-none">
           {[...reviews, ...reviews].map((review, index) => (
-            <ReviewCard key={`${review.category}-${index}`} {...review} />
+            <ReviewCard key={`${review.name}-${index}`} {...review} />
           ))}
         </div>
       </div>
 
       <div className="mx-auto mt-8 flex max-w-[1280px] items-center justify-between px-4 sm:mt-10 sm:px-7 lg:px-10">
         <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#777777]">
-          T-SHIRTS / COLLECTIBLES
+          T-SHIRTS / CUSTOMER REVIEWS
         </span>
         <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#DA0D12]">
           KEEP IT DIFFERENT →

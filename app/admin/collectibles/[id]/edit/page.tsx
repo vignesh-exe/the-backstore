@@ -28,6 +28,7 @@ const categories = [
   "3D Toys",
   "Frames",
   "Die Cast Models",
+  "Katanas",
 ];
 const initialImageSlots: ImageSlot[] = [
   { id: 1, file: null, preview: "" },

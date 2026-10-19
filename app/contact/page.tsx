@@ -236,7 +236,7 @@ export default function ContactPage() {
       {/* =========================================================
           HERO
       ========================================================= */}
-      <section className="relative isolate px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-20 lg:px-12 lg:pb-28 lg:pt-24">
+      <section className="relative isolate px-5 pb-16 pt-24 sm:px-8 sm:pb-24 sm:pt-28 lg:px-12 lg:pb-28 lg:pt-32">
         <DotsPattern />
 
         <div
